@@ -102,6 +102,8 @@ h1 {
   margin: 0;
   font-size: 1.8rem;
   color: #0c1a33;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 h3 {
@@ -340,6 +342,8 @@ textarea::placeholder {
   background: rgba(240, 247, 255, 0.9);
   border-radius: 10px;
   color: #0c1a33;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .preview-image {
