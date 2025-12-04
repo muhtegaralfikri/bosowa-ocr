@@ -7,7 +7,7 @@ import type { Letter, PaginatedResponse } from '../api/types';
 
 const PAGE_SIZE = 10;
 const columns = [
-  { key: 'letterNumber', label: 'Letter Number' },
+  { key: 'letterNumber', label: 'Nomor Surat' },
   { key: 'jenisSurat', label: 'Jenis Surat' },
   { key: 'jenisDokumen', label: 'Jenis Dokumen' },
   { key: 'tanggalSurat', label: 'Tanggal' },
@@ -84,7 +84,7 @@ export default function LettersListPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Cari letter number"
+            placeholder="Cari nomor surat"
             className="search-input"
           />
           <Link to="/surat/baru" className="ghost-btn">
@@ -130,7 +130,7 @@ export default function LettersListPage() {
           onClick={goToPrev}
           disabled={page <= 1}
         >
-          Prev
+          Sebelumnya
         </button>
         <span>
           Halaman {page} / {totalPages} {isFetching && '(memuat...)'}
@@ -141,7 +141,7 @@ export default function LettersListPage() {
           onClick={goToNext}
           disabled={page >= totalPages}
         >
-          Next
+          Berikutnya
         </button>
       </div>
     </section>

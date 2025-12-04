@@ -39,7 +39,7 @@ export default function LoginPage() {
             <h1>Masuk</h1>
             <p>Admin ke dashboard, Sekretaris/COSM langsung ke halaman upload.</p>
           </div>
-          <div className="login-badge">Secure Access</div>
+          <div className="login-badge">Akses Aman</div>
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <label>

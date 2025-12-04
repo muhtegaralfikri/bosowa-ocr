@@ -62,7 +62,7 @@ export default function LetterDetailPage() {
           {letter.fileUrl ? (
             <img
               src={letter.fileUrl}
-              alt="Letter"
+              alt="Lampiran surat"
               className="preview-image"
             />
           ) : (

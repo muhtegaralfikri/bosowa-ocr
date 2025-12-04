@@ -45,8 +45,8 @@ export default function LettersFormPage() {
     setErrors(null);
 
     if (!form.letterNumber || !form.tanggalSurat) {
-      setErrors('Lengkapi Letter Number dan Tanggal Surat sebelum menyimpan.');
-      toast.error('Lengkapi Letter Number dan Tanggal Surat sebelum menyimpan.');
+      setErrors('Lengkapi Nomor Surat dan Tanggal Surat sebelum menyimpan.');
+      toast.error('Lengkapi Nomor Surat dan Tanggal Surat sebelum menyimpan.');
       return;
     }
     try {
@@ -79,7 +79,7 @@ export default function LettersFormPage() {
       </div>
       <form className="form-grid two-col" onSubmit={handleSubmit}>
         <label>
-          Letter Number
+          Nomor Surat
           <input
             value={form.letterNumber}
             onChange={(e) => setForm({ ...form, letterNumber: e.target.value })}

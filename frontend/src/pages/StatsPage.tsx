@@ -17,7 +17,7 @@ export default function StatsPage() {
     <section className="panel">
       <div className="panel-head">
         <div>
-          <p className="eyebrow">Stats</p>
+          <p className="eyebrow">Statistik</p>
           <h1>Ringkasan Admin</h1>
         </div>
       </div>
@@ -25,7 +25,7 @@ export default function StatsPage() {
       {stats && (
         <div className="grid two-col">
           <div className="card">
-            <h3>Kesalahan input per user</h3>
+            <h3>Kesalahan input per pengguna</h3>
             <ul>
               {stats.inputErrors.map((item) => (
                 <li key={item.user}>

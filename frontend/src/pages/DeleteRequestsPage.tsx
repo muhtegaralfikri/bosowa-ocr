@@ -82,8 +82,8 @@ export default function DeleteRequestsPage() {
     <section className="panel">
       <div className="panel-head">
         <div>
-          <p className="eyebrow">Delete Request</p>
-          <h1>Ajukan atau approve</h1>
+          <p className="eyebrow">Permintaan Hapus</p>
+          <h1>Ajukan atau setujui penolakan</h1>
         </div>
       </div>
 
@@ -108,7 +108,7 @@ export default function DeleteRequestsPage() {
         </label>
         <div className="full-row">
           <button type="submit" className="primary-btn block-btn">
-            Submit request
+            Kirim permintaan
           </button>
         </div>
       </form>
@@ -159,7 +159,7 @@ export default function DeleteRequestsPage() {
                     onClick={() => approve(req.id)}
                     disabled={req.status !== 'PENDING'}
                   >
-                    Approve
+                    Setujui
                   </button>
                   <button
                     type="button"
@@ -167,7 +167,7 @@ export default function DeleteRequestsPage() {
                     disabled={req.status !== 'PENDING'}
                     className="danger"
                   >
-                    Reject
+                    Tolak
                   </button>
                 </span>
               ) : (
