@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 export const AUTH_STORAGE_KEY = 'bosowa-user';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://IP-SERVER-ANDA:3000',
 });
 
 api.interceptors.request.use((config) => {

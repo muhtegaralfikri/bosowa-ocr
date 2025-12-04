@@ -9,7 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableCors({
-    origin: 'http://localhost:5173', // alamat React (Vite)
+    origin: process.env.FRONTEND_URL || '*',
     credentials: true,
   });
 

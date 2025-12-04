@@ -36,7 +36,7 @@ import { UsersModule } from './modules/users/users.module';
           password,
           database,
           autoLoadEntities: true,
-          synchronize: true,
+          synchronize: process.env.NODE_ENV !== 'production',
         };
       },
     }),
