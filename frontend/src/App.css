@@ -1068,8 +1068,9 @@ button.mobile-menu-link.logout {
   transition: all 0.2s ease;
 }
 
-.icon-btn:hover {
+.icon-btn:hover:not(:disabled) {
   background: rgba(15, 61, 122, 0.15);
+  transform: scale(1.05);
 }
 
 .icon-btn.danger {
@@ -1077,8 +1078,24 @@ button.mobile-menu-link.logout {
   color: #dc2626;
 }
 
-.icon-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.2);
+.icon-btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.25);
+  transform: scale(1.05);
+}
+
+.icon-btn.success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.icon-btn.success:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.25);
+  transform: scale(1.05);
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .action-buttons {

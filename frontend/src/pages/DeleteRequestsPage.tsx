@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
+import { Check, X } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
@@ -157,18 +158,21 @@ export default function DeleteRequestsPage() {
                   <span className="actions table-actions">
                     <button
                       type="button"
+                      className="icon-btn success"
                       onClick={() => approve(req.id)}
                       disabled={req.status !== 'PENDING'}
+                      title="Setujui"
                     >
-                      Setujui
+                      <Check size={16} />
                     </button>
                     <button
                       type="button"
+                      className="icon-btn danger"
                       onClick={() => reject(req.id)}
                       disabled={req.status !== 'PENDING'}
-                      className="danger"
+                      title="Tolak"
                     >
-                      Tolak
+                      <X size={16} />
                     </button>
                   </span>
                 ) : (
