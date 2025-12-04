@@ -10,7 +10,8 @@ interface LocationState {
     perihal: string | null;
     totalNominal: number;
   };
-  uploadMeta?: { fileId: string };
+  uploadMeta?: { fileId: string }; // legacy
+  originalMeta?: { fileId: string };
 }
 
 export default function LettersFormPage() {
@@ -30,6 +31,7 @@ export default function LettersFormPage() {
     totalNominal: state.ocrResult?.totalNominal || 0,
   });
   const [message, setMessage] = useState('');
+  const [errors, setErrors] = useState<string | null>(null);
 
   const disabled = useMemo(
     () => !form.letterNumber || !form.tanggalSurat || !form.perihal,
@@ -39,16 +41,24 @@ export default function LettersFormPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setMessage('');
+    setErrors(null);
+
+    if (!form.letterNumber || !form.tanggalSurat || !form.perihal) {
+      setErrors('Lengkapi Letter Number, Tanggal Surat, dan Perihal sebelum menyimpan.');
+      window.alert('Lengkapi Letter Number, Tanggal Surat, dan Perihal sebelum menyimpan.');
+      return;
+    }
     try {
       await api.post('/letters', {
         ...form,
         totalNominal: Number(form.totalNominal),
-        fileId: state.uploadMeta?.fileId,
+        fileId: state.originalMeta?.fileId || state.uploadMeta?.fileId,
       });
       setMessage('Surat tersimpan');
       navigate('/letters');
     } catch {
       setMessage('Gagal menyimpan surat');
+      window.alert('Gagal menyimpan surat. Pastikan semua field wajib terisi dan backend aktif.');
     }
   };
 
@@ -151,6 +161,7 @@ export default function LettersFormPage() {
           <button type="submit" className="primary-btn" disabled={disabled}>
             Simpan surat
           </button>
+          {errors && <div className="error-box">{errors}</div>}
           {message && <p>{message}</p>}
         </div>
       </form>

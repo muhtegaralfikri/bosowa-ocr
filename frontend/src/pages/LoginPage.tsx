@@ -29,36 +29,42 @@ export default function LoginPage() {
   };
 
   return (
-    <section className="panel">
-      <div className="panel-head">
-        <h1>Masuk</h1>
-        <p>Admin ke dashboard, Sekretaris/COSM langsung ke halaman upload.</p>
-      </div>
-      <form className="form-grid" onSubmit={handleSubmit}>
-        <label>
-          Username
-          <input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="admin / sekretaris / cosm"
-            required
-          />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="****"
-            required
-          />
-        </label>
-        {error && <div className="error-box">{error}</div>}
-        <button type="submit" className="primary-btn">
-          Login
-        </button>
-      </form>
-    </section>
+    <div className="page-center login-page">
+      <section className="panel login-panel">
+        <div className="login-header">
+          <div>
+            <p className="eyebrow">Bosowa Bandar Agency</p>
+            <h1>Masuk</h1>
+            <p>Admin ke dashboard, Sekretaris/COSM langsung ke halaman upload.</p>
+          </div>
+          <div className="login-badge">Secure Access</div>
+        </div>
+        <form className="form-grid" onSubmit={handleSubmit}>
+          <label>
+            Username
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="admin / sekretaris / cosm"
+              required
+            />
+          </label>
+          <label>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••"
+              required
+            />
+          </label>
+          {error && <div className="error-box">{error}</div>}
+          <button type="submit" className="primary-btn full-width">
+            Login
+          </button>
+        </form>
+      </section>
+    </div>
   );
 }

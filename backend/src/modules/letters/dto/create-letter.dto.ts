@@ -1,5 +1,4 @@
 import {
-  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -19,7 +18,8 @@ export class CreateLetterDto {
   @IsEnum(JenisDokumenEnum)
   jenisDokumen: JenisDokumenEnum;
 
-  @IsDateString()
+  @IsString()
+  @IsNotEmpty()
   tanggalSurat: string;
 
   @IsString()

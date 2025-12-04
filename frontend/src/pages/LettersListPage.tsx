@@ -5,10 +5,14 @@ import type { Letter } from '../api/types';
 
 export default function LettersListPage() {
   const [letters, setLetters] = useState<Letter[]>([]);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    api.get('/letters').then((res) => setLetters(res.data));
-  }, []);
+    api
+      .get('/letters', { params: { letterNumber: search || undefined } })
+      .then((res) => setLetters(res.data))
+      .catch(() => setLetters([]));
+  }, [search]);
 
   return (
     <section className="panel">
@@ -17,9 +21,17 @@ export default function LettersListPage() {
           <p className="eyebrow">Daftar</p>
           <h1>Surat & Invoice</h1>
         </div>
-        <Link to="/letters/new" className="ghost-btn">
-          Tambah Surat
-        </Link>
+        <div className="actions">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari letter number"
+            className="search-input"
+          />
+          <Link to="/letters/new" className="ghost-btn">
+            Tambah Surat
+          </Link>
+        </div>
       </div>
       <div className="table">
         <div className="table-row table-head">
@@ -30,6 +42,11 @@ export default function LettersListPage() {
           <span>Pengirim</span>
           <span>Perihal</span>
         </div>
+        {letters.length === 0 && (
+          <div className="table-row">
+            <span>Tidak ada surat</span>
+          </div>
+        )}
         {letters.map((letter) => (
           <Link
             key={letter.id}

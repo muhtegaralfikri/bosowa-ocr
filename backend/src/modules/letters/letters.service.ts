@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { FilesService } from '../files/files.service';
 import { EditLogsService } from '../edit-logs/edit-logs.service';
 import {
@@ -69,8 +69,11 @@ export class LettersService {
     return this.lettersRepo.save(letter);
   }
 
-  findAll() {
-    return this.lettersRepo.find({ order: { createdAt: 'DESC' } });
+  findAll(letterNumber?: string) {
+    const where = letterNumber
+      ? { letterNumber: ILike(`%${letterNumber}%`) }
+      : {};
+    return this.lettersRepo.find({ where, order: { createdAt: 'DESC' } });
   }
 
   async findOne(id: string) {

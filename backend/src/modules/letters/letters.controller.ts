@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   Request,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
@@ -31,8 +32,8 @@ export class LettersController {
   }
 
   @Get()
-  findAll() {
-    return this.lettersService.findAll();
+  findAll(@Query('letterNumber') letterNumber?: string) {
+    return this.lettersService.findAll(letterNumber);
   }
 
   @Get(':id')
