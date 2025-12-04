@@ -59,9 +59,11 @@ export default function DeleteRequestsPage() {
             placeholder="Opsional"
           />
         </label>
-        <button type="submit" className="primary-btn">
-          Submit request
-        </button>
+        <div className="full-row">
+          <button type="submit" className="primary-btn block-btn">
+            Submit request
+          </button>
+        </div>
       </form>
       <div className="table">
         <div className="table-row table-head">
