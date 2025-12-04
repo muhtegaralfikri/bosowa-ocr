@@ -87,7 +87,7 @@ export default function LettersListPage() {
             placeholder="Cari letter number"
             className="search-input"
           />
-          <Link to="/letters/new" className="ghost-btn">
+          <Link to="/surat/baru" className="ghost-btn">
             Tambah Surat
           </Link>
         </div>
@@ -111,7 +111,7 @@ export default function LettersListPage() {
         {letters.map((letter: Letter) => (
           <Link
             key={letter.id}
-            to={`/letters/${letter.id}`}
+            to={`/surat/${letter.id}`}
             className="table-row table-body-row"
           >
             {columns.map((col) => (

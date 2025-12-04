@@ -20,8 +20,8 @@ api.interceptors.request.use((config) => {
 
 const logoutAndRedirect = () => {
   localStorage.removeItem(AUTH_STORAGE_KEY);
-  if (window.location.pathname !== '/login') {
-    window.location.href = '/login';
+  if (window.location.pathname !== '/masuk') {
+    window.location.href = '/masuk';
   }
 };
 

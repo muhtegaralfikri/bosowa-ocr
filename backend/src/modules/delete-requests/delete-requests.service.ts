@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateDeleteRequestDto } from './dto/create-delete-request.dto';
@@ -24,6 +28,16 @@ export class DeleteRequestsService {
       throw new NotFoundException('Letter not found');
     }
 
+    const existingPending = await this.deleteRequestsRepo.findOne({
+      where: { letterId: letter.id, status: DeleteRequestStatus.PENDING },
+    });
+
+    if (existingPending) {
+      throw new ConflictException(
+        'Delete request for this letter is already pending',
+      );
+    }
+
     const request = this.deleteRequestsRepo.create({
       letterId: letter.id,
       letter,
@@ -33,8 +47,9 @@ export class DeleteRequestsService {
     return this.deleteRequestsRepo.save(request);
   }
 
-  findAll() {
+  findAll(status?: DeleteRequestStatus) {
     return this.deleteRequestsRepo.find({
+      where: status ? { status } : {},
       relations: ['letter'],
       order: { createdAt: 'DESC' },
     });
@@ -43,7 +58,16 @@ export class DeleteRequestsService {
   async updateStatus(id: string, dto: UpdateDeleteRequestDto) {
     const request = await this.findOne(id);
     request.status = dto.status;
-    return this.deleteRequestsRepo.save(request);
+    const saved = await this.deleteRequestsRepo.save(request);
+
+    if (dto.status === DeleteRequestStatus.APPROVED) {
+      // letterId can be null if the letter was already removed
+      if (request.letterId) {
+        await this.lettersRepo.delete(request.letterId);
+      }
+    }
+
+    return saved;
   }
 
   private async findOne(id: string) {

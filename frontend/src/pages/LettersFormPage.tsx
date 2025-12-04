@@ -57,7 +57,7 @@ export default function LettersFormPage() {
       });
       setMessage('Surat tersimpan');
       toast.success('Surat tersimpan');
-      navigate('/letters');
+      navigate('/surat');
     } catch {
       setMessage('Gagal menyimpan surat');
       toast.error(

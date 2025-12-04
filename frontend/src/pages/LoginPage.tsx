@@ -21,9 +21,9 @@ export default function LoginPage() {
       const { accessToken, user } = res.data;
       login({ username: user.username, role: user.role, token: accessToken });
       if (user.role === 'ADMIN') {
-        navigate('/stats');
+        navigate('/statistik');
       } else {
-        navigate('/upload');
+        navigate('/unggah');
       }
     } catch {
       setError('Login gagal. Cek username/password.');

@@ -5,10 +5,10 @@ import logo from '../assets/bosowa-agensi.png';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
-  { path: '/upload', label: 'Upload', icon: Upload },
-  { path: '/letters', label: 'Daftar', icon: FileText },
-  { path: '/delete-requests', label: 'Delete', icon: Trash2 },
-  { path: '/stats', label: 'Stats', icon: LineChart },
+  { path: '/unggah', label: 'Unggah', icon: Upload },
+  { path: '/surat', label: 'Daftar', icon: FileText },
+  { path: '/permintaan-hapus', label: 'Hapus', icon: Trash2 },
+  { path: '/statistik', label: 'Statistik', icon: LineChart },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -19,7 +19,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   const visibleNavItems = navItems.filter((item) => {
-    if (item.path === '/stats' && user?.role !== 'ADMIN') return false;
+    if (item.path === '/statistik' && user?.role !== 'ADMIN') return false;
     return true;
   });
   return (
@@ -44,8 +44,8 @@ export default function Layout({ children }: { children: ReactNode }) {
               </button>
             </>
           ) : (
-            <Link to="/login" className="ghost-btn">
-              Login
+            <Link to="/masuk" className="ghost-btn">
+              Masuk
             </Link>
           )}
         </div>

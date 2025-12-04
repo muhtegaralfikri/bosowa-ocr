@@ -110,6 +110,15 @@ h3 {
   margin: 0 0 0.5rem 0;
 }
 
+/* Prevent long paths/IDs from blowing up layout on mobile */
+p,
+.card,
+.panel,
+.code-box {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 .ghost-btn,
 .primary-btn {
   border: none;

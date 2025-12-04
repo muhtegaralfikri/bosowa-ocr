@@ -20,14 +20,14 @@ export class DeleteRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  letterId: string;
+  @Column({ nullable: true })
+  letterId: string | null;
 
   @ManyToOne(() => Letter, (letter) => letter.deleteRequests, {
-    onDelete: 'CASCADE',
+    onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'letterId' })
-  letter: Letter;
+  letter: Letter | null;
 
   @Column({
     type: 'enum',

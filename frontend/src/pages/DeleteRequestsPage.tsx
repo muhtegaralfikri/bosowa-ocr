@@ -2,6 +2,8 @@ import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
+import type { AxiosError } from 'axios';
 
 interface DeleteRequest {
   id: string;
@@ -24,25 +26,57 @@ export default function DeleteRequestsPage() {
     api.get('/delete-requests').then((res) => setRequests(res.data));
   };
 
+  const getErrorMessage = (error: unknown) => {
+    const axiosError = error as AxiosError<{ message?: string } | string[]>;
+    const data = axiosError.response?.data;
+    if (Array.isArray(data)) return data.join(', ');
+    if (data && typeof data === 'object' && 'message' in data) {
+      const message = (data as { message?: unknown }).message;
+      if (typeof message === 'string') return message;
+    }
+    return 'Terjadi kesalahan';
+  };
+
   useEffect(() => {
     load();
   }, []);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    await api.post('/delete-requests', {
-      letterNumber: letterNumber.trim(),
-      reason,
-    });
-    setLetterNumber('');
-    setReason('');
-    load();
+    try {
+      await api.post('/delete-requests', {
+        letterNumber: letterNumber.trim(),
+        reason,
+      });
+      toast.success('Request penghapusan dikirim');
+      setLetterNumber('');
+      setReason('');
+      load();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || 'Gagal mengirim request');
+    }
   };
 
   const approve = (id: string) =>
-    api.patch(`/delete-requests/${id}`, { status: 'APPROVED' }).then(load);
+    api
+      .patch(`/delete-requests/${id}`, { status: 'APPROVED' })
+      .then(() => {
+        toast.success('Request disetujui, surat dihapus');
+        load();
+      })
+      .catch((err: unknown) => {
+        toast.error(getErrorMessage(err) || 'Gagal menyetujui');
+      });
   const reject = (id: string) =>
-    api.patch(`/delete-requests/${id}`, { status: 'REJECTED' }).then(load);
+    api
+      .patch(`/delete-requests/${id}`, { status: 'REJECTED' })
+      .then(() => {
+        toast.success('Request ditolak');
+        load();
+      })
+      .catch((err: unknown) => {
+        toast.error(getErrorMessage(err) || 'Gagal menolak');
+      });
 
   return (
     <section className="panel">
