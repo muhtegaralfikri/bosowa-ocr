@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -132,10 +133,10 @@ export default function LettersListPage() {
           onClick={goToPrev}
           disabled={page <= 1}
         >
-          Sebelumnya
+          <ChevronLeft size={18} />
         </button>
         <span>
-          Halaman {page} / {totalPages} {isFetching && '(memuat...)'}
+{page} / {totalPages} {isFetching && '(memuat...)'}
         </span>
         <button
           type="button"
@@ -143,7 +144,7 @@ export default function LettersListPage() {
           onClick={goToNext}
           disabled={page >= totalPages}
         >
-          Berikutnya
+          <ChevronRight size={18} />
         </button>
       </div>
     </section>

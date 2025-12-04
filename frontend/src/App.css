@@ -164,6 +164,11 @@ a {
   width: calc(100% - 260px); 
 }
 
+/* Responsive helpers */
+.show-mobile {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .sidebar {
     display: none;
@@ -174,6 +179,14 @@ a {
     width: 100%;
     padding: 1rem;
     padding-bottom: 5rem;
+  }
+
+  .hide-mobile {
+    display: none;
+  }
+
+  .show-mobile {
+    display: inline;
   }
 }
 
@@ -644,6 +657,16 @@ textarea::placeholder {
 .actions {
   display: flex;
   gap: 0.5rem;
+}
+
+.pagination-actions {
+  align-items: center;
+}
+
+.pagination-actions .ghost-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .search-input {

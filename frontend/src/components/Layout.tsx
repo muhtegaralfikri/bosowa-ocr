@@ -15,12 +15,12 @@ import logo from '../assets/bosowa-agensi.png';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
-  { path: '/unggah', label: 'Unggah', icon: Upload },
-  { path: '/surat', label: 'Daftar Surat', icon: FileText },
-  { path: '/permintaan-hapus', label: 'Permintaan Hapus', icon: Trash2 },
-  { path: '/statistik', label: 'Statistik', icon: LineChart, adminOnly: true },
-  { path: '/users', label: 'Kelola User', icon: Users, adminOnly: true },
-  { path: '/audit-log', label: 'Audit Log', icon: History, adminOnly: true },
+  { path: '/unggah', label: 'Unggah', mobileLabel: 'Unggah', icon: Upload },
+  { path: '/surat', label: 'Daftar Surat', mobileLabel: 'Surat', icon: FileText },
+  { path: '/permintaan-hapus', label: 'Permintaan Hapus', mobileLabel: 'Hapus', icon: Trash2 },
+  { path: '/statistik', label: 'Statistik', mobileLabel: 'Statistik', icon: LineChart, adminOnly: true },
+  { path: '/users', label: 'Kelola User', mobileLabel: 'User', icon: Users, adminOnly: true },
+  { path: '/audit-log', label: 'Audit Log', mobileLabel: 'Log', icon: History, adminOnly: true },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -99,7 +99,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               className={`mobile-nav-item ${isActive(item.path) ? 'active' : ''}`}
             >
               <Icon className="mobile-nav-icon" aria-hidden="true" />
-              <span className="mobile-nav-label">{item.label}</span>
+              <span className="mobile-nav-label">{item.mobileLabel}</span>
             </Link>
           );
         })}

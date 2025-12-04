@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -152,10 +153,10 @@ export default function AuditLogPage() {
           onClick={() => setPage((p) => Math.max(p - 1, 1))}
           disabled={page <= 1}
         >
-          Sebelumnya
+          <ChevronLeft size={18} />
         </button>
         <span>
-          Halaman {page} / {totalPages} {isFetching && '(memuat...)'}
+{page} / {totalPages} {isFetching && '(memuat...)'}
         </span>
         <button
           type="button"
@@ -163,7 +164,7 @@ export default function AuditLogPage() {
           onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
           disabled={page >= totalPages}
         >
-          Berikutnya
+          <ChevronRight size={18} />
         </button>
       </div>
     </section>
