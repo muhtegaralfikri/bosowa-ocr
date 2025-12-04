@@ -4,6 +4,7 @@ import { ILike, Repository } from 'typeorm';
 import { FilesService } from '../files/files.service';
 import { EditLogsService } from '../edit-logs/edit-logs.service';
 import {
+  calculateOcrConfidence,
   extractLetterNumber,
   extractNamaPengirim,
   extractNominalList,
@@ -40,6 +41,16 @@ export class LettersService {
       source: senderSource,
     } = extractNamaPengirim(ocrRawText);
 
+    const ocrConfidence = calculateOcrConfidence({
+      letterNumber,
+      tanggalSurat,
+      namaPengirim,
+      senderConfidence,
+      perihal,
+      totalNominal,
+      ocrRawText,
+    });
+
     return {
       letterNumber,
       candidates,
@@ -51,6 +62,7 @@ export class LettersService {
       nominalList,
       totalNominal,
       ocrRawText,
+      ocrConfidence,
     };
   }
 

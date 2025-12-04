@@ -1,14 +1,24 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FileText, LineChart, Trash2, Upload } from 'lucide-react';
+import {
+  FileText,
+  History,
+  LineChart,
+  LogOut,
+  Trash2,
+  Upload,
+  Users,
+} from 'lucide-react';
 import logo from '../assets/bosowa-agensi.png';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
   { path: '/unggah', label: 'Unggah', icon: Upload },
-  { path: '/surat', label: 'Daftar', icon: FileText },
-  { path: '/permintaan-hapus', label: 'Hapus', icon: Trash2 },
-  { path: '/statistik', label: 'Statistik', icon: LineChart },
+  { path: '/surat', label: 'Daftar Surat', icon: FileText },
+  { path: '/permintaan-hapus', label: 'Permintaan Hapus', icon: Trash2 },
+  { path: '/statistik', label: 'Statistik', icon: LineChart, adminOnly: true },
+  { path: '/users', label: 'Kelola User', icon: Users, adminOnly: true },
+  { path: '/audit-log', label: 'Audit Log', icon: History, adminOnly: true },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -19,40 +29,58 @@ export default function Layout({ children }: { children: ReactNode }) {
     location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   const visibleNavItems = navItems.filter((item) => {
-    if (item.path === '/statistik' && user?.role !== 'ADMIN') return false;
+    if (item.adminOnly && user?.role !== 'ADMIN') return false;
     return true;
   });
+
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div className="brand">
-          <img src={logo} alt="Bosowa Bandar Agency" className="brand-logo" />
+    <div className="app-layout">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <img src={logo} alt="Bosowa Bandar Agency" className="sidebar-logo" />
         </div>
-        <nav>
-          {visibleNavItems.map((item) => (
-            <Link key={item.path} to={item.path}>
-              {item.label}
-            </Link>
-          ))}
+
+        <nav className="sidebar-nav">
+          {visibleNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`sidebar-link ${isActive(item.path) ? 'active' : ''}`}
+              >
+                <Icon size={20} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
-        <div className="user-box">
-          {user ? (
-            <>
-              <span className="user-role">{user.role}</span>
-              <button type="button" onClick={logout} className="ghost-btn">
-                Keluar
+
+        <div className="sidebar-footer">
+          {user && (
+            <div className="sidebar-user">
+              <div className="sidebar-user-info">
+                <span className="sidebar-username">{user.username}</span>
+                <span className="sidebar-role">{user.role}</span>
+              </div>
+              <button
+                type="button"
+                onClick={logout}
+                className="sidebar-logout"
+                title="Keluar"
+              >
+                <LogOut size={20} />
+                <span>Keluar</span>
               </button>
-            </>
-          ) : (
-            <Link to="/masuk" className="ghost-btn">
-              Masuk
-            </Link>
+            </div>
           )}
         </div>
-      </header>
-      <main className="app-content">{children}</main>
+      </aside>
+
+      <main className="main-content">{children}</main>
+
       <nav className="mobile-bottom-bar">
-        {visibleNavItems.map((item) => {
+        {visibleNavItems.slice(0, 4).map((item) => {
           const Icon = item.icon;
           return (
             <Link

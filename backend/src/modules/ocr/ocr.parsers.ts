@@ -351,18 +351,61 @@ export const extractPerihal = (text: string) => {
 };
 
 export const extractNominalList = (text: string) => {
-  const regex = /Rp\.?\s*([\d.,]+)/gi;
   const nominalList: number[] = [];
+  const seen = new Set<number>();
 
-  let match = regex.exec(text);
-  while (match) {
-    const raw = match[1];
-    const normalized = raw.replace(/\./g, '').replace(',', '.');
-    const value = parseFloat(normalized);
-    if (!Number.isNaN(value)) {
+  const bankAccountPatterns = [
+    /rekening|account|a\/c|no\.?\s*rek|bank/i,
+    /swift|iban|bic/i,
+    /in\s*favour/i,
+  ];
+
+  const isBankAccountLine = (line: string): boolean => {
+    return bankAccountPatterns.some((pattern) => pattern.test(line));
+  };
+
+  const addNominal = (value: number) => {
+    if (!Number.isNaN(value) && value >= 1000 && !seen.has(value)) {
+      seen.add(value);
       nominalList.push(value);
     }
-    match = regex.exec(text);
+  };
+
+  const parseIndonesianNumber = (raw: string): number => {
+    let normalized = raw.trim();
+    if (/^\d{1,3}(\.\d{3})+(,\d{2})?$/.test(normalized)) {
+      normalized = normalized.replace(/\./g, '').replace(',', '.');
+    } else if (/^\d{1,3}(\.\d{3})+(\.\d{2})?$/.test(normalized)) {
+      const parts = normalized.split('.');
+      if (parts.length > 1 && parts[parts.length - 1].length === 2) {
+        const decimal = parts.pop();
+        normalized = parts.join('') + '.' + decimal;
+      } else {
+        normalized = normalized.replace(/\./g, '');
+      }
+    } else {
+      normalized = normalized.replace(/\./g, '').replace(',', '.');
+    }
+    return parseFloat(normalized);
+  };
+
+  const rpRegex = /Rp\.?\s*([\d.,]+)/gi;
+  let match = rpRegex.exec(text);
+  while (match) {
+    addNominal(parseIndonesianNumber(match[1]));
+    match = rpRegex.exec(text);
+  }
+
+  const lines = text.split(/\r?\n/);
+  const lineEndNumberRegex = /(\d{1,3}(?:\.\d{3})+(?:[.,]\d{2})?)\s*$/;
+
+  for (const line of lines) {
+    if (isBankAccountLine(line)) continue;
+
+    const lineMatch = line.match(lineEndNumberRegex);
+    if (lineMatch) {
+      addNominal(parseIndonesianNumber(lineMatch[1]));
+    }
   }
 
   const totalNominal = nominalList.reduce((acc, val) => acc + val, 0);
@@ -516,5 +559,65 @@ export const extractNamaPengirim = (
     namaPengirim: null,
     confidence: 'low',
     source: null,
+  };
+};
+
+export const calculateOcrConfidence = (params: {
+  letterNumber: string | null;
+  tanggalSurat: string | null;
+  namaPengirim: string | null;
+  senderConfidence: 'high' | 'medium' | 'low';
+  perihal: string | null;
+  totalNominal: number;
+  ocrRawText: string;
+}): {
+  overallScore: number;
+  overallConfidence: 'high' | 'medium' | 'low';
+  details: {
+    letterNumber: number;
+    tanggalSurat: number;
+    namaPengirim: number;
+    perihal: number;
+    textQuality: number;
+  };
+} => {
+  const scores = {
+    letterNumber: params.letterNumber ? 25 : 0,
+    tanggalSurat: params.tanggalSurat ? 20 : 0,
+    namaPengirim:
+      params.senderConfidence === 'high'
+        ? 25
+        : params.senderConfidence === 'medium'
+          ? 15
+          : params.namaPengirim
+            ? 5
+            : 0,
+    perihal: params.perihal ? 15 : 0,
+    textQuality: 0,
+  };
+
+  const text = params.ocrRawText;
+  const totalChars = text.length;
+  const alphanumericChars = (text.match(/[a-zA-Z0-9]/g) || []).length;
+  const ratio = totalChars > 0 ? alphanumericChars / totalChars : 0;
+
+  if (ratio > 0.5) scores.textQuality = 15;
+  else if (ratio > 0.3) scores.textQuality = 10;
+  else if (ratio > 0.1) scores.textQuality = 5;
+
+  const overallScore =
+    scores.letterNumber +
+    scores.tanggalSurat +
+    scores.namaPengirim +
+    scores.perihal +
+    scores.textQuality;
+
+  const overallConfidence: 'high' | 'medium' | 'low' =
+    overallScore >= 70 ? 'high' : overallScore >= 40 ? 'medium' : 'low';
+
+  return {
+    overallScore,
+    overallConfidence,
+    details: scores,
   };
 };

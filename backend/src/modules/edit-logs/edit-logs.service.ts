@@ -22,7 +22,32 @@ export class EditLogsService {
     return this.editLogsRepo.save(record);
   }
 
-  findAll() {
-    return this.editLogsRepo.find({ order: { createdAt: 'DESC' } });
+  async findAll(page = 1, limit = 20) {
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const safePage = Math.max(page, 1);
+
+    const [data, total] = await this.editLogsRepo.findAndCount({
+      order: { createdAt: 'DESC' },
+      take: safeLimit,
+      skip: (safePage - 1) * safeLimit,
+      relations: ['letter'],
+    });
+
+    return {
+      data,
+      meta: {
+        total,
+        page: safePage,
+        limit: safeLimit,
+        pageCount: Math.ceil(total / safeLimit),
+      },
+    };
+  }
+
+  findByLetterId(letterId: string) {
+    return this.editLogsRepo.find({
+      where: { letterId },
+      order: { createdAt: 'DESC' },
+    });
   }
 }

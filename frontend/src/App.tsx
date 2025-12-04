@@ -3,6 +3,7 @@ import { Navigate, Outlet, Route, BrowserRouter, Routes } from 'react-router-dom
 import './App.css';
 import Layout from './components/Layout';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import AuditLogPage from './pages/AuditLogPage';
 import DeleteRequestsPage from './pages/DeleteRequestsPage';
 import LetterDetailPage from './pages/LetterDetailPage';
 import LettersFormPage from './pages/LettersFormPage';
@@ -10,6 +11,7 @@ import LettersListPage from './pages/LettersListPage';
 import LoginPage from './pages/LoginPage';
 import StatsPage from './pages/StatsPage';
 import UploadPage from './pages/UploadPage';
+import UsersPage from './pages/UsersPage';
 
 function ProtectedRoute({
   children,
@@ -85,6 +87,22 @@ export default function App() {
               element={
                 <ProtectedRoute roles={['ADMIN']}>
                   <StatsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute roles={['ADMIN']}>
+                  <UsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audit-log"
+              element={
+                <ProtectedRoute roles={['ADMIN']}>
+                  <AuditLogPage />
                 </ProtectedRoute>
               }
             />
