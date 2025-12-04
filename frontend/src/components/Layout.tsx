@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import logo from '../assets/bosowa-agensi.png';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -8,7 +9,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="app-shell">
       <header className="app-header">
         <div className="brand">
-          <span className="dot" />
+          <img src={logo} alt="Bosowa Bandar Agency" className="brand-logo" />
           <span>Bosowa Bandar Agency</span>
         </div>
         <nav>
