@@ -41,6 +41,8 @@ export default function DeleteRequestsPage() {
           <h1>Ajukan atau approve</h1>
         </div>
       </div>
+      
+      {/* Form Area */}
       <form className="form-grid" onSubmit={submit}>
         <label>
           Letter ID
@@ -65,28 +67,43 @@ export default function DeleteRequestsPage() {
           </button>
         </div>
       </form>
-      <div className="table">
-        <div className="table-row table-head">
-          <span>ID</span>
-          <span>Letter</span>
-          <span>Status</span>
-          <span>Aksi</span>
-        </div>
-        {requests.map((req) => (
-          <div key={req.id} className="table-row">
-            <span>{req.id}</span>
-            <span>{req.letterId}</span>
-            <span>{req.status}</span>
-            <span className="actions">
-              <button type="button" onClick={() => approve(req.id)}>
-                Approve
-              </button>
-              <button type="button" onClick={() => reject(req.id)}>
-                Reject
-              </button>
-            </span>
+
+      {/* Visual Separator & Table Area */}
+      <div style={{ marginTop: '3rem' }}>
+        <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem' }}>
+          Riwayat Pengajuan
+        </h3>
+        
+        <div className="table">
+          <div className="table-row table-head">
+            <span>ID</span>
+            <span>Letter</span>
+            <span>Status</span>
+            <span>Aksi</span>
           </div>
-        ))}
+          {requests.length === 0 && (
+            <div className="table-row" style={{ gridTemplateColumns: '1fr' }}>
+              <span style={{ textAlign: 'center', color: '#888' }}>Belum ada request</span>
+            </div>
+          )}
+          {requests.map((req) => (
+            <div key={req.id} className="table-row">
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }} title={req.id}>
+                {req.id.slice(0, 8)}...
+              </span>
+              <span>{req.letterId}</span>
+              <span>{req.status}</span>
+              <span className="actions">
+                <button type="button" onClick={() => approve(req.id)}>
+                  Approve
+                </button>
+                <button type="button" onClick={() => reject(req.id)}>
+                  Reject
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

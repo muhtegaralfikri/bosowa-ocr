@@ -423,6 +423,8 @@ textarea::placeholder {
   gap: 0.15rem;
   font-size: 0.85rem;
   min-width: 72px;
+  padding: 0.25rem 0.35rem;
+  border-radius: 12px;
 }
 
 .mobile-nav-icon {
@@ -431,6 +433,16 @@ textarea::placeholder {
 
 .mobile-nav-label {
   line-height: 1;
+}
+
+.mobile-nav-item.active {
+  background: rgba(29, 116, 216, 0.12);
+  color: #0c1a33;
+  border: 1px solid rgba(29, 116, 216, 0.2);
+}
+
+.mobile-nav-item:not(.active) {
+  opacity: 0.75;
 }
 
 @media (max-width: 720px) {
