@@ -284,6 +284,35 @@ textarea::placeholder {
   font-weight: 500;
 }
 
+.table-body-row {
+  text-decoration: none;
+}
+
+.table-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cell-label {
+  display: none;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0f5cbf;
+  font-weight: 700;
+}
+
+.cell-value {
+  font-weight: 600;
+  color: #0c1a33;
+  word-break: break-word;
+}
+
+.table-message {
+  grid-template-columns: 1fr;
+}
+
 .table-row:nth-child(odd) {
   background: rgba(245, 249, 255, 0.96);
 }
@@ -548,7 +577,31 @@ textarea::placeholder {
     display: none;
   }
 
+  .table {
+    border-radius: 14px;
+    overflow-x: auto;
+  }
+
   .table-row {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    min-width: 760px;
+  }
+
+  .table-body-row {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.5rem;
+    padding: 0.9rem 1rem;
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  .table-head {
+    display: grid;
+  }
+
+  .cell-label {
+    display: none;
+  }
+
+  .table-message {
+    padding: 0.85rem 1rem;
   }
 }

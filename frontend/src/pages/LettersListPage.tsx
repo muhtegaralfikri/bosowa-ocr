@@ -6,10 +6,40 @@ import api from '../api/client';
 import type { Letter, PaginatedResponse } from '../api/types';
 
 const PAGE_SIZE = 10;
+const columns = [
+  { key: 'letterNumber', label: 'Letter Number' },
+  { key: 'jenisSurat', label: 'Jenis Surat' },
+  { key: 'jenisDokumen', label: 'Jenis Dokumen' },
+  { key: 'tanggalSurat', label: 'Tanggal' },
+  { key: 'namaPengirim', label: 'Pengirim' },
+  { key: 'perihal', label: 'Perihal' },
+] as const;
 
 export default function LettersListPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+
+  const getCellValue = (
+    letter: Letter,
+    key: (typeof columns)[number]['key'],
+  ) => {
+    switch (key) {
+      case 'letterNumber':
+        return letter.letterNumber;
+      case 'jenisSurat':
+        return letter.jenisSurat;
+      case 'jenisDokumen':
+        return letter.jenisDokumen;
+      case 'tanggalSurat':
+        return letter.tanggalSurat;
+      case 'namaPengirim':
+        return letter.namaPengirim || '-';
+      case 'perihal':
+        return letter.perihal || '-';
+      default:
+        return '';
+    }
+  };
 
   const { data, isLoading, isFetching } = useQuery<PaginatedResponse<Letter>>(
     {
@@ -64,20 +94,17 @@ export default function LettersListPage() {
       </div>
       <div className="table">
         <div className="table-row table-head">
-          <span>Letter Number</span>
-          <span>Jenis Surat</span>
-          <span>Jenis Dokumen</span>
-          <span>Tanggal</span>
-          <span>Pengirim</span>
-          <span>Perihal</span>
+          {columns.map((col) => (
+            <span key={col.key}>{col.label}</span>
+          ))}
         </div>
         {isLoading && (
-          <div className="table-row">
+          <div className="table-row table-message">
             <span>Sedang memuat surat...</span>
           </div>
         )}
         {!isLoading && letters.length === 0 && (
-          <div className="table-row">
+          <div className="table-row table-message">
             <span>Tidak ada surat</span>
           </div>
         )}
@@ -85,14 +112,14 @@ export default function LettersListPage() {
           <Link
             key={letter.id}
             to={`/letters/${letter.id}`}
-            className="table-row"
+            className="table-row table-body-row"
           >
-            <span>{letter.letterNumber}</span>
-            <span>{letter.jenisSurat}</span>
-            <span>{letter.jenisDokumen}</span>
-            <span>{letter.tanggalSurat}</span>
-            <span>{letter.namaPengirim || '-'}</span>
-            <span>{letter.perihal || '-'}</span>
+            {columns.map((col) => (
+              <div key={col.key} className="table-cell">
+                <span className="cell-label">{col.label}</span>
+                <span className="cell-value">{getCellValue(letter, col.key)}</span>
+              </div>
+            ))}
           </Link>
         ))}
       </div>
