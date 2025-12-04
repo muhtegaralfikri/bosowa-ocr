@@ -579,7 +579,9 @@ textarea::placeholder {
 
   .table {
     border-radius: 14px;
+    display: block;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .table-row {
