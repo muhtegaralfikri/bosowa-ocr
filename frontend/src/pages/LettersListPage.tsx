@@ -92,36 +92,38 @@ export default function LettersListPage() {
           </Link>
         </div>
       </div>
-      <div className="table">
-        <div className="table-row table-head">
-          {columns.map((col) => (
-            <span key={col.key}>{col.label}</span>
+      <div className="table-container">
+        <div className="table">
+          <div className="table-row table-head">
+            {columns.map((col) => (
+              <span key={col.key}>{col.label}</span>
+            ))}
+          </div>
+          {isLoading && (
+            <div className="table-row table-message">
+              <span>Sedang memuat surat...</span>
+            </div>
+          )}
+          {!isLoading && letters.length === 0 && (
+            <div className="table-row table-message">
+              <span>Tidak ada surat</span>
+            </div>
+          )}
+          {letters.map((letter: Letter) => (
+            <Link
+              key={letter.id}
+              to={`/surat/${letter.id}`}
+              className="table-row table-body-row"
+            >
+              {columns.map((col) => (
+                <div key={col.key} className="table-cell">
+                  <span className="cell-label">{col.label}</span>
+                  <span className="cell-value">{getCellValue(letter, col.key)}</span>
+                </div>
+              ))}
+            </Link>
           ))}
         </div>
-        {isLoading && (
-          <div className="table-row table-message">
-            <span>Sedang memuat surat...</span>
-          </div>
-        )}
-        {!isLoading && letters.length === 0 && (
-          <div className="table-row table-message">
-            <span>Tidak ada surat</span>
-          </div>
-        )}
-        {letters.map((letter: Letter) => (
-          <Link
-            key={letter.id}
-            to={`/surat/${letter.id}`}
-            className="table-row table-body-row"
-          >
-            {columns.map((col) => (
-              <div key={col.key} className="table-cell">
-                <span className="cell-label">{col.label}</span>
-                <span className="cell-value">{getCellValue(letter, col.key)}</span>
-              </div>
-            ))}
-          </Link>
-        ))}
       </div>
       <div className="actions" style={{ marginTop: '1rem', gap: '0.75rem' }}>
         <button

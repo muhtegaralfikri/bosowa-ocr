@@ -106,62 +106,64 @@ export default function UsersPage() {
         </button>
       </div>
 
-      <div className="table">
-        <div className="table-row table-head">
-          <span>Username</span>
-          <span>Role</span>
-          <span>Tanggal Dibuat</span>
-          <span>Aksi</span>
-        </div>
-        {isLoading && (
-          <div className="table-row table-message">
-            <span>Memuat...</span>
+      <div className="table-container">
+        <div className="table cols-4">
+          <div className="table-row table-head">
+            <span>Username</span>
+            <span>Role</span>
+            <span>Tanggal Dibuat</span>
+            <span>Aksi</span>
           </div>
-        )}
-        {!isLoading && users.length === 0 && (
-          <div className="table-row table-message">
-            <span>Tidak ada user</span>
-          </div>
-        )}
-        {users.map((user) => (
-          <div key={user.id} className="table-row table-body-row">
-            <div className="table-cell">
-              <span className="cell-label">Username</span>
-              <span className="cell-value">{user.username}</span>
+          {isLoading && (
+            <div className="table-row table-message">
+              <span>Memuat...</span>
             </div>
-            <div className="table-cell">
-              <span className="cell-label">Role</span>
-              <span className={`role-badge ${user.role.toLowerCase()}`}>{user.role}</span>
+          )}
+          {!isLoading && users.length === 0 && (
+            <div className="table-row table-message">
+              <span>Tidak ada user</span>
             </div>
-            <div className="table-cell">
-              <span className="cell-label">Tanggal Dibuat</span>
-              <span className="cell-value">
-                {new Date(user.createdAt).toLocaleDateString('id-ID')}
-              </span>
-            </div>
-            <div className="table-cell">
-              <span className="cell-label">Aksi</span>
-              <div className="action-buttons">
-                <button
-                  type="button"
-                  className="icon-btn"
-                  onClick={() => openEditModal(user)}
-                  title="Ubah Password"
-                >
-                  <Pencil size={16} />
-                </button>
-                <button
-                  type="button"
-                  className="icon-btn danger"
-                  onClick={() => handleDelete(user)}
-                  title="Hapus"
-                >
-                  <Trash2 size={16} />
-                </button>
+          )}
+          {users.map((user) => (
+            <div key={user.id} className="table-row table-body-row">
+              <div className="table-cell">
+                <span className="cell-label">Username</span>
+                <span className="cell-value">{user.username}</span>
+              </div>
+              <div className="table-cell">
+                <span className="cell-label">Role</span>
+                <span className={`role-badge ${user.role.toLowerCase()}`}>{user.role}</span>
+              </div>
+              <div className="table-cell">
+                <span className="cell-label">Tanggal Dibuat</span>
+                <span className="cell-value">
+                  {new Date(user.createdAt).toLocaleDateString('id-ID')}
+                </span>
+              </div>
+              <div className="table-cell">
+                <span className="cell-label">Aksi</span>
+                <div className="action-buttons">
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => openEditModal(user)}
+                    title="Ubah Password"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn danger"
+                    onClick={() => handleDelete(user)}
+                    title="Hapus"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {showModal && (

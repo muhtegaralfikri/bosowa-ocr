@@ -119,66 +119,68 @@ export default function DeleteRequestsPage() {
           Riwayat Pengajuan
         </h3>
         
-        <div className="table">
-          <div
-            className="table-row table-head"
-            style={{ gridTemplateColumns: '1.2fr 2fr 2fr 1.2fr 1.6fr' }}
-          >
-            <span>ID</span>
-            <span>Nomor Surat</span>
-            <span>Alasan</span>
-            <span>Status</span>
-            <span>{actionHeader}</span>
-          </div>
-          {requests.length === 0 && (
-            <div className="table-row" style={{ gridTemplateColumns: '1fr' }}>
-              <span style={{ textAlign: 'center', color: '#888' }}>Belum ada request</span>
-            </div>
-          )}
-          {requests.map((req) => (
+        <div className="table-container">
+          <div className="table cols-5">
             <div
-              key={req.id}
-              className="table-row"
+              className="table-row table-head"
               style={{ gridTemplateColumns: '1.2fr 2fr 2fr 1.2fr 1.6fr' }}
             >
-              <span
-                style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
-                title={req.id}
-              >
-                {req.id.slice(0, 8)}...
-              </span>
-              <span>{req.letter?.letterNumber || req.letterId}</span>
-              <span className="cell-muted">{req.reason || '-'}</span>
-              <span>
-                <span className={`pill pill-${req.status.toLowerCase()}`}>{req.status}</span>
-              </span>
-              {canModerate ? (
-                <span className="actions table-actions">
-                  <button
-                    type="button"
-                    onClick={() => approve(req.id)}
-                    disabled={req.status !== 'PENDING'}
-                  >
-                    Setujui
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => reject(req.id)}
-                    disabled={req.status !== 'PENDING'}
-                    className="danger"
-                  >
-                    Tolak
-                  </button>
-                </span>
-              ) : (
-                <span className="cell-muted">
-                  {req.status === 'PENDING' && 'Menunggu konfirmasi admin'}
-                  {req.status === 'APPROVED' && 'Sudah disetujui admin'}
-                  {req.status === 'REJECTED' && 'Ditolak admin'}
-                </span>
-              )}
+              <span>ID</span>
+              <span>Nomor Surat</span>
+              <span>Alasan</span>
+              <span>Status</span>
+              <span>{actionHeader}</span>
             </div>
-          ))}
+            {requests.length === 0 && (
+              <div className="table-row" style={{ gridTemplateColumns: '1fr' }}>
+                <span style={{ textAlign: 'center', color: '#888' }}>Belum ada request</span>
+              </div>
+            )}
+            {requests.map((req) => (
+              <div
+                key={req.id}
+                className="table-row"
+                style={{ gridTemplateColumns: '1.2fr 2fr 2fr 1.2fr 1.6fr' }}
+              >
+                <span
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                  title={req.id}
+                >
+                  {req.id.slice(0, 8)}...
+                </span>
+                <span>{req.letter?.letterNumber || req.letterId}</span>
+                <span className="cell-muted">{req.reason || '-'}</span>
+                <span>
+                  <span className={`pill pill-${req.status.toLowerCase()}`}>{req.status}</span>
+                </span>
+                {canModerate ? (
+                  <span className="actions table-actions">
+                    <button
+                      type="button"
+                      onClick={() => approve(req.id)}
+                      disabled={req.status !== 'PENDING'}
+                    >
+                      Setujui
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => reject(req.id)}
+                      disabled={req.status !== 'PENDING'}
+                      className="danger"
+                    >
+                      Tolak
+                    </button>
+                  </span>
+                ) : (
+                  <span className="cell-muted">
+                    {req.status === 'PENDING' && 'Menunggu konfirmasi admin'}
+                    {req.status === 'APPROVED' && 'Sudah disetujui admin'}
+                    {req.status === 'REJECTED' && 'Ditolak admin'}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

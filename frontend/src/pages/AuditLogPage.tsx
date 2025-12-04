@@ -92,55 +92,57 @@ export default function AuditLogPage() {
         </div>
       </div>
 
-      <div className="table audit-table">
-        <div className="table-row table-head">
-          <span>Waktu</span>
-          <span>User</span>
-          <span>Surat</span>
-          <span>Field</span>
-          <span>Sebelum</span>
-          <span>Sesudah</span>
+      <div className="table-container">
+        <div className="table audit-table">
+          <div className="table-row table-head">
+            <span>Waktu</span>
+            <span>User</span>
+            <span>Surat</span>
+            <span>Field</span>
+            <span>Sebelum</span>
+            <span>Sesudah</span>
+          </div>
+          {isLoading && (
+            <div className="table-row table-message">
+              <span>Memuat...</span>
+            </div>
+          )}
+          {!isLoading && logs.length === 0 && (
+            <div className="table-row table-message">
+              <span>Tidak ada log</span>
+            </div>
+          )}
+          {logs.map((log) => (
+            <div key={log.id} className="table-row table-body-row">
+              <div className="table-cell">
+                <span className="cell-label">Waktu</span>
+                <span className="cell-value">{formatDate(log.createdAt)}</span>
+              </div>
+              <div className="table-cell">
+                <span className="cell-label">User</span>
+                <span className="cell-value user-badge">{log.updatedBy}</span>
+              </div>
+              <div className="table-cell">
+                <span className="cell-label">Surat</span>
+                <Link to={`/surat/${log.letterId}`} className="cell-value link">
+                  {log.letter?.letterNumber || log.letterId.substring(0, 8)}
+                </Link>
+              </div>
+              <div className="table-cell">
+                <span className="cell-label">Field</span>
+                <span className="cell-value field-name">{getFieldLabel(log.field)}</span>
+              </div>
+              <div className="table-cell">
+                <span className="cell-label">Sebelum</span>
+                <span className="cell-value old-value">{formatValue(log.oldValue)}</span>
+              </div>
+              <div className="table-cell">
+                <span className="cell-label">Sesudah</span>
+                <span className="cell-value new-value">{formatValue(log.newValue)}</span>
+              </div>
+            </div>
+          ))}
         </div>
-        {isLoading && (
-          <div className="table-row table-message">
-            <span>Memuat...</span>
-          </div>
-        )}
-        {!isLoading && logs.length === 0 && (
-          <div className="table-row table-message">
-            <span>Tidak ada log</span>
-          </div>
-        )}
-        {logs.map((log) => (
-          <div key={log.id} className="table-row table-body-row">
-            <div className="table-cell">
-              <span className="cell-label">Waktu</span>
-              <span className="cell-value">{formatDate(log.createdAt)}</span>
-            </div>
-            <div className="table-cell">
-              <span className="cell-label">User</span>
-              <span className="cell-value user-badge">{log.updatedBy}</span>
-            </div>
-            <div className="table-cell">
-              <span className="cell-label">Surat</span>
-              <Link to={`/surat/${log.letterId}`} className="cell-value link">
-                {log.letter?.letterNumber || log.letterId.substring(0, 8)}
-              </Link>
-            </div>
-            <div className="table-cell">
-              <span className="cell-label">Field</span>
-              <span className="cell-value field-name">{getFieldLabel(log.field)}</span>
-            </div>
-            <div className="table-cell">
-              <span className="cell-label">Sebelum</span>
-              <span className="cell-value old-value">{formatValue(log.oldValue)}</span>
-            </div>
-            <div className="table-cell">
-              <span className="cell-label">Sesudah</span>
-              <span className="cell-value new-value">{formatValue(log.newValue)}</span>
-            </div>
-          </div>
-        ))}
       </div>
 
       <div className="actions" style={{ marginTop: '1rem', gap: '0.75rem' }}>
