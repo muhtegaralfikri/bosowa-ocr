@@ -34,7 +34,7 @@ export default function LettersFormPage() {
   const [errors, setErrors] = useState<string | null>(null);
 
   const disabled = useMemo(
-    () => !form.letterNumber || !form.tanggalSurat || !form.perihal,
+    () => !form.letterNumber || !form.tanggalSurat,
     [form],
   );
 
@@ -43,9 +43,9 @@ export default function LettersFormPage() {
     setMessage('');
     setErrors(null);
 
-    if (!form.letterNumber || !form.tanggalSurat || !form.perihal) {
-      setErrors('Lengkapi Letter Number, Tanggal Surat, dan Perihal sebelum menyimpan.');
-      window.alert('Lengkapi Letter Number, Tanggal Surat, dan Perihal sebelum menyimpan.');
+    if (!form.letterNumber || !form.tanggalSurat) {
+      setErrors('Lengkapi Letter Number dan Tanggal Surat sebelum menyimpan.');
+      window.alert('Lengkapi Letter Number dan Tanggal Surat sebelum menyimpan.');
       return;
     }
     try {
@@ -79,6 +79,7 @@ export default function LettersFormPage() {
           <input
             value={form.letterNumber}
             onChange={(e) => setForm({ ...form, letterNumber: e.target.value })}
+            placeholder="007/SS/IV/2018"
             required
           />
         </label>
@@ -107,10 +108,10 @@ export default function LettersFormPage() {
         <label>
           Tanggal Surat
           <input
-            type="text"
+            type="date"
             value={form.tanggalSurat}
             onChange={(e) => setForm({ ...form, tanggalSurat: e.target.value })}
-            placeholder="12/02/2025"
+            placeholder="2025-02-12"
             required
           />
         </label>
@@ -119,6 +120,7 @@ export default function LettersFormPage() {
           <input
             value={form.namaPengirim}
             onChange={(e) => setForm({ ...form, namaPengirim: e.target.value })}
+            placeholder="PT Contoh Abadi"
           />
         </label>
         <label>
@@ -128,6 +130,7 @@ export default function LettersFormPage() {
             onChange={(e) =>
               setForm({ ...form, alamatPengirim: e.target.value })
             }
+            placeholder="Jl. Boulevard No. 123"
           />
         </label>
         <label>
@@ -137,6 +140,7 @@ export default function LettersFormPage() {
             onChange={(e) =>
               setForm({ ...form, teleponPengirim: e.target.value })
             }
+            placeholder="0812xxxxxxx"
           />
         </label>
         <label>
@@ -144,6 +148,7 @@ export default function LettersFormPage() {
           <input
             value={form.perihal}
             onChange={(e) => setForm({ ...form, perihal: e.target.value })}
+            placeholder="Penawaran"
             required
           />
         </label>
@@ -155,6 +160,7 @@ export default function LettersFormPage() {
             onChange={(e) =>
               setForm({ ...form, totalNominal: Number(e.target.value) })
             }
+            placeholder="0"
           />
         </label>
         <div className="full-row">
