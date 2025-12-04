@@ -145,7 +145,7 @@ export default function AuditLogPage() {
         </div>
       </div>
 
-      <div className="actions" style={{ marginTop: '1rem', gap: '0.75rem' }}>
+      <div className="actions pagination-actions" style={{ marginTop: '1rem', gap: '0.75rem' }}>
         <button
           type="button"
           className="ghost-btn"
