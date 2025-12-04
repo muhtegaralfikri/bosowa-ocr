@@ -69,11 +69,29 @@ export class LettersService {
     return this.lettersRepo.save(letter);
   }
 
-  findAll(letterNumber?: string) {
+  async findAll(letterNumber?: string, page = 1, limit = 10) {
+    const safeLimit = Math.min(Math.max(limit ?? 10, 1), 100);
+    const safePage = Math.max(page ?? 1, 1);
     const where = letterNumber
       ? { letterNumber: ILike(`%${letterNumber}%`) }
       : {};
-    return this.lettersRepo.find({ where, order: { createdAt: 'DESC' } });
+
+    const [data, total] = await this.lettersRepo.findAndCount({
+      where,
+      order: { createdAt: 'DESC' },
+      take: safeLimit,
+      skip: (safePage - 1) * safeLimit,
+    });
+
+    return {
+      data,
+      meta: {
+        total,
+        page: safePage,
+        limit: safeLimit,
+        pageCount: Math.ceil(total / safeLimit),
+      },
+    };
   }
 
   async findOne(id: string) {

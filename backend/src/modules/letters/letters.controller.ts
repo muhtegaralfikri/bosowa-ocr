@@ -12,6 +12,7 @@ import {
 import { Request as ExpressRequest } from 'express';
 import { CreateLetterDto } from './dto/create-letter.dto';
 import { OcrPreviewDto } from './dto/ocr-preview.dto';
+import { ListLettersQueryDto } from './dto/list-letters-query.dto';
 import { UpdateLetterDto } from './dto/update-letter.dto';
 import { LettersService } from './letters.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -32,8 +33,12 @@ export class LettersController {
   }
 
   @Get()
-  findAll(@Query('letterNumber') letterNumber?: string) {
-    return this.lettersService.findAll(letterNumber);
+  findAll(@Query() query: ListLettersQueryDto) {
+    return this.lettersService.findAll(
+      query.letterNumber,
+      query.page,
+      query.limit,
+    );
   }
 
   @Get(':id')

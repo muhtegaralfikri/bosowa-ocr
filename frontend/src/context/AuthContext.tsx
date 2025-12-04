@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useMemo, useState } from 'react';
+import { AUTH_STORAGE_KEY } from '../api/client';
 
 type Role = 'ADMIN' | 'SEKRETARIS' | 'COSM';
 
@@ -19,7 +20,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
-    const raw = localStorage.getItem('bosowa-user');
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
   });
 
@@ -28,11 +29,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       login: (next) => {
         setUser(next);
-        localStorage.setItem('bosowa-user', JSON.stringify(next));
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next));
       },
       logout: () => {
         setUser(null);
-        localStorage.removeItem('bosowa-user');
+        localStorage.removeItem(AUTH_STORAGE_KEY);
       },
     }),
     [user],

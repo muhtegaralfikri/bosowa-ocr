@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import type { Express } from 'express';
 import { Repository } from 'typeorm';
-import { join } from 'path';
 import { UploadedFile } from './file.entity';
+import { FILE_STORAGE_ADAPTER } from './storage/file-storage.interface';
+import type { FileStorageAdapter } from './storage/file-storage.interface';
 
 export interface UploadedFileMeta {
   fileId: string;
@@ -14,25 +16,16 @@ export interface UploadedFileMeta {
 
 @Injectable()
 export class FilesService {
-  private readonly baseUrl =
-    process.env.APP_BASE_URL || 'http://localhost:3000';
-
   constructor(
     @InjectRepository(UploadedFile)
     private readonly filesRepo: Repository<UploadedFile>,
+    @Inject(FILE_STORAGE_ADAPTER)
+    private readonly storageAdapter: FileStorageAdapter,
   ) {}
 
-  async registerFile(filePath: string): Promise<UploadedFileMeta> {
-    const relativePath = filePath
-      .replace(process.cwd(), '')
-      .replace(/^[\\/]/, '');
-    const urlFull = `${this.baseUrl}/${relativePath.replace(/\\/g, '/')}`;
-
-    const record = this.filesRepo.create({
-      filePath,
-      urlFull,
-      filename: join(relativePath),
-    });
+  async registerFile(file: Express.Multer.File): Promise<UploadedFileMeta> {
+    const stored = this.storageAdapter.toStoredFile(file);
+    const record = this.filesRepo.create(stored);
     const saved = await this.filesRepo.save(record);
 
     return {

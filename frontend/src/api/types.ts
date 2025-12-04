@@ -22,3 +22,15 @@ export interface Letter {
   totalNominal: number;
   fileUrl?: string | null;
 }
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  pageCount: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+}

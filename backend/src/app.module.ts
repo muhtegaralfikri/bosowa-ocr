@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -16,16 +16,29 @@ import { UsersModule } from './modules/users/users.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
-      useFactory: () => ({
-        type: 'mysql',
-        host: process.env.DB_HOST || 'localhost',
-        port: +(process.env.DB_PORT || 3306),
-        username: process.env.DB_USER || 'root',
-        password: process.env.DB_PASS || '',
-        database: process.env.DB_NAME || 'letterdb',
-        autoLoadEntities: true,
-        synchronize: true,
-      }),
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const username = config.getOrThrow<string>('DB_USER');
+        const password =
+          config.get<string>('DB_PASSWORD') ??
+          config.get<string>('DB_PASS') ??
+          (() => {
+            throw new Error('DB_PASSWORD is not set');
+          })();
+        const database = config.getOrThrow<string>('DB_NAME');
+
+        return {
+          type: 'mysql',
+          host: config.get<string>('DB_HOST') || 'localhost',
+          port: +(config.get<string>('DB_PORT') || 3306),
+          username,
+          password,
+          database,
+          autoLoadEntities: true,
+          synchronize: true,
+        };
+      },
     }),
     AuthModule,
     UsersModule,

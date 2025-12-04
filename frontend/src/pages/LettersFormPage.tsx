@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import api from '../api/client';
 
 interface LocationState {
@@ -45,7 +46,7 @@ export default function LettersFormPage() {
 
     if (!form.letterNumber || !form.tanggalSurat) {
       setErrors('Lengkapi Letter Number dan Tanggal Surat sebelum menyimpan.');
-      window.alert('Lengkapi Letter Number dan Tanggal Surat sebelum menyimpan.');
+      toast.error('Lengkapi Letter Number dan Tanggal Surat sebelum menyimpan.');
       return;
     }
     try {
@@ -55,10 +56,13 @@ export default function LettersFormPage() {
         fileId: state.originalMeta?.fileId || state.uploadMeta?.fileId,
       });
       setMessage('Surat tersimpan');
+      toast.success('Surat tersimpan');
       navigate('/letters');
     } catch {
       setMessage('Gagal menyimpan surat');
-      window.alert('Gagal menyimpan surat. Pastikan semua field wajib terisi dan backend aktif.');
+      toast.error(
+        'Gagal menyimpan surat. Pastikan semua field wajib terisi dan backend aktif.',
+      );
     }
   };
 

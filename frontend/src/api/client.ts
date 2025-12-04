@@ -1,11 +1,14 @@
 import axios from 'axios';
+import { toast } from 'sonner';
+
+export const AUTH_STORAGE_KEY = 'bosowa-user';
 
 const api = axios.create({
   baseURL: 'http://localhost:3000',
 });
 
 api.interceptors.request.use((config) => {
-  const raw = localStorage.getItem('bosowa-user');
+  const raw = localStorage.getItem(AUTH_STORAGE_KEY);
   if (raw) {
     const { token } = JSON.parse(raw);
     if (token) {
@@ -14,5 +17,28 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+const logoutAndRedirect = () => {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login';
+  }
+};
+
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    const status = error.response?.status;
+    if (status === 401 || status === 403) {
+      toast.error('Sesi berakhir, silakan login kembali.');
+      logoutAndRedirect();
+    }
+    if (status && status >= 500) {
+      console.error('Server error response', error.response?.data);
+      toast.error('Terjadi kesalahan server. Coba lagi beberapa saat lagi.');
+    }
+    return Promise.reject(error);
+  },
+);
 
 export default api;

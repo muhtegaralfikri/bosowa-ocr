@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import api from '../api/client';
 import type { OcrPreviewResponse } from '../api/types';
 import CameraCapture from '../components/CameraCapture';
@@ -70,8 +71,10 @@ export default function UploadPage() {
         fileId: ocrFileMeta.fileId,
       });
       setOcrResult(preview.data);
+      toast.success('Berhasil upload dan memproses OCR.');
     } catch {
       setError('Upload atau OCR gagal. Pastikan backend jalan dan login masih aktif.');
+      toast.error('Upload atau OCR gagal. Pastikan backend jalan dan login masih aktif.');
     } finally {
       setLoading(false);
     }
