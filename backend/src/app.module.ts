@@ -55,6 +55,15 @@ import { UsersModule } from './modules/users/users.module';
           database,
           autoLoadEntities: true,
           synchronize: process.env.NODE_ENV !== 'production',
+          // Connection Pool Settings
+          extra: {
+            connectionLimit: 10,
+            waitForConnections: true,
+            queueLimit: 0,
+          },
+          // Connection retry settings
+          retryAttempts: 3,
+          retryDelay: 3000,
         };
       },
     }),

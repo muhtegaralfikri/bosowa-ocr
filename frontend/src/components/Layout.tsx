@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import logo from '../assets/bosowa-agensi.png';
 import { useAuth } from '../context/AuthContext';
+import OfflineIndicator from './OfflineIndicator';
 
 const navItems = [
   { path: '/unggah', label: 'Unggah', mobileLabel: 'Unggah', icon: Upload },
@@ -161,6 +162,8 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
         </div>
       )}
+
+      <OfflineIndicator />
     </div>
   );
 }

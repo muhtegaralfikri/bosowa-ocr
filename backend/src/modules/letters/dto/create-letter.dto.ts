@@ -8,40 +8,42 @@ import {
 import { JenisDokumenEnum, JenisSuratEnum } from '../letter.types';
 
 export class CreateLetterDto {
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'Nomor surat harus berupa teks' })
+  @IsNotEmpty({ message: 'Nomor surat tidak boleh kosong' })
   letterNumber: string;
 
-  @IsEnum(JenisSuratEnum)
+  @IsEnum(JenisSuratEnum, { message: 'Jenis surat harus MASUK atau KELUAR' })
   jenisSurat: JenisSuratEnum;
 
-  @IsEnum(JenisDokumenEnum)
+  @IsEnum(JenisDokumenEnum, {
+    message: 'Jenis dokumen harus SURAT atau INVOICE',
+  })
   jenisDokumen: JenisDokumenEnum;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'Tanggal surat harus berupa teks' })
+  @IsNotEmpty({ message: 'Tanggal surat tidak boleh kosong' })
   tanggalSurat: string;
 
-  @IsString()
+  @IsString({ message: 'Nama pengirim harus berupa teks' })
   @IsOptional()
   namaPengirim?: string | null;
 
-  @IsString()
+  @IsString({ message: 'Alamat pengirim harus berupa teks' })
   @IsOptional()
   alamatPengirim?: string | null;
 
-  @IsString()
+  @IsString({ message: 'Telepon pengirim harus berupa teks' })
   @IsOptional()
   teleponPengirim?: string | null;
 
-  @IsString()
+  @IsString({ message: 'Perihal harus berupa teks' })
   @IsOptional()
   perihal?: string | null;
 
-  @IsNumber()
+  @IsNumber({}, { message: 'Total nominal harus berupa angka' })
   totalNominal: number;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'File ID harus berupa teks' })
   fileId?: string;
 }

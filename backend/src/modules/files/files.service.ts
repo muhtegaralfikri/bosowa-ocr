@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { UploadedFile } from './file.entity';
 import { FILE_STORAGE_ADAPTER } from './storage/file-storage.interface';
 import type { FileStorageAdapter } from './storage/file-storage.interface';
+import { ImageProcessorService } from './image-processor.service';
 
 export interface UploadedFileMeta {
   fileId: string;
@@ -21,9 +22,12 @@ export class FilesService {
     private readonly filesRepo: Repository<UploadedFile>,
     @Inject(FILE_STORAGE_ADAPTER)
     private readonly storageAdapter: FileStorageAdapter,
+    private readonly imageProcessor: ImageProcessorService,
   ) {}
 
   async registerFile(file: Express.Multer.File): Promise<UploadedFileMeta> {
+    await this.imageProcessor.compressImage(file.path);
+
     const stored = this.storageAdapter.toStoredFile(file);
     const record = this.filesRepo.create(stored);
     const saved = await this.filesRepo.save(record);

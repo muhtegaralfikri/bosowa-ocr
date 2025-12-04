@@ -8,6 +8,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FilesService } from './files.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { FileValidationPipe } from '../../common/pipes/file-validation.pipe';
 
 @Controller('files')
 @UseGuards(JwtAuthGuard)
@@ -16,7 +17,9 @@ export class FilesController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async upload(@UploadedFile() file: Express.Multer.File) {
+  async upload(
+    @UploadedFile(new FileValidationPipe()) file: Express.Multer.File,
+  ) {
     const meta = await this.filesService.registerFile(file);
     return meta;
   }

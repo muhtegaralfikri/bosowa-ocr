@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
   OneToMany,
   UpdateDateColumn,
@@ -11,6 +12,9 @@ import { DeleteRequest } from '../delete-requests/delete-request.entity';
 import { EditLog } from '../edit-logs/edit-log.entity';
 
 @Entity({ name: 'letters' })
+@Index('idx_letters_number', ['letterNumber'])
+@Index('idx_letters_created', ['createdAt'])
+@Index('idx_letters_jenis', ['jenisSurat', 'jenisDokumen'])
 export class Letter {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -101,9 +101,15 @@ export default function LettersListPage() {
             ))}
           </div>
           {isLoading && (
-            <div className="table-row table-message">
-              <span>Sedang memuat surat...</span>
-            </div>
+            <>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="skeleton-row">
+                  {columns.map((col) => (
+                    <div key={col.key} className="skeleton skeleton-cell" />
+                  ))}
+                </div>
+              ))}
+            </>
           )}
           {!isLoading && letters.length === 0 && (
             <div className="table-row table-message">

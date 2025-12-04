@@ -1,25 +1,59 @@
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import helmet from 'helmet';
+import compression from 'compression';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const logger = new Logger('Bootstrap');
+
+  // Security Headers
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: false,
+    }),
+  );
+
+  // Gzip Compression
+  app.use(compression());
+
+  // CORS Configuration
+  const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
+    : ['http://localhost:5173', 'http://localhost:4173'];
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL || '*',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
+  // Global Validation Pipe with custom messages
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
       forbidUnknownValues: false,
+      validationError: { target: false, value: false },
     }),
   );
+
+  // API Versioning
+  app.setGlobalPrefix('api/v1', {
+    exclude: ['health', 'docs', 'uploads/(.*)'],
+  });
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
@@ -34,6 +68,11 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);
 
-  await app.listen(3000);
+  // Graceful Shutdown
+  app.enableShutdownHooks();
+
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  logger.log(`Application running on port ${port}`);
 }
 void bootstrap();

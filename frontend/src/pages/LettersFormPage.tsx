@@ -1,8 +1,10 @@
 import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import api from '../api/client';
+
+const DRAFT_KEY = 'bosowa-letter-draft';
 
 interface LocationState {
   ocrResult?: {
@@ -17,25 +19,67 @@ interface LocationState {
   originalMeta?: { fileId: string };
 }
 
+const getInitialForm = (state: LocationState) => {
+  if (state.ocrResult) {
+    return {
+      letterNumber: state.ocrResult.letterNumber || '',
+      jenisSurat: 'MASUK',
+      jenisDokumen: 'SURAT',
+      tanggalSurat: state.ocrResult.tanggalSurat || '',
+      namaPengirim: state.ocrResult.namaPengirim || '',
+      alamatPengirim: '',
+      teleponPengirim: '',
+      perihal: state.ocrResult.perihal || '',
+      totalNominal: state.ocrResult.totalNominal || 0,
+    };
+  }
+
+  const saved = localStorage.getItem(DRAFT_KEY);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+  }
+
+  return {
+    letterNumber: '',
+    jenisSurat: 'MASUK',
+    jenisDokumen: 'SURAT',
+    tanggalSurat: '',
+    namaPengirim: '',
+    alamatPengirim: '',
+    teleponPengirim: '',
+    perihal: '',
+    totalNominal: 0,
+  };
+};
+
 export default function LettersFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state || {}) as LocationState;
 
-  const [form, setForm] = useState({
-    letterNumber: state.ocrResult?.letterNumber || '',
-    jenisSurat: 'MASUK',
-    jenisDokumen: 'SURAT',
-    tanggalSurat: state.ocrResult?.tanggalSurat || '',
-    namaPengirim: state.ocrResult?.namaPengirim || '',
-    alamatPengirim: '',
-    teleponPengirim: '',
-    perihal: state.ocrResult?.perihal || '',
-    totalNominal: state.ocrResult?.totalNominal || 0,
-  });
+  const [form, setForm] = useState(() => getInitialForm(state));
   const senderConfidence = state.ocrResult?.senderConfidence;
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<string | null>(null);
+  const [hasDraft, setHasDraft] = useState(
+    () => !state.ocrResult && !!localStorage.getItem(DRAFT_KEY),
+  );
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [form]);
+
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setHasDraft(false);
+  };
 
   const disabled = useMemo(
     () => !form.letterNumber || !form.tanggalSurat,
@@ -60,6 +104,7 @@ export default function LettersFormPage() {
       });
       setMessage('Surat tersimpan');
       toast.success('Surat tersimpan');
+      clearDraft();
       navigate('/surat');
     } catch {
       setMessage('Gagal menyimpan surat');
@@ -80,6 +125,12 @@ export default function LettersFormPage() {
           Kembali
         </button>
       </div>
+      {hasDraft && (
+        <div className="draft-notice">
+          <span>Draft tersimpan dipulihkan</span>
+          <button type="button" onClick={clearDraft}>Hapus draft</button>
+        </div>
+      )}
       <form className="form-grid two-col" onSubmit={handleSubmit}>
         <label>
           Nomor Surat

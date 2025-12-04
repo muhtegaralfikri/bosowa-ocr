@@ -6,6 +6,7 @@ import { FILE_STORAGE_ADAPTER } from './storage/file-storage.interface';
 import { FilesController } from './files.controller';
 import { FilesService } from './files.service';
 import { UploadedFile } from './file.entity';
+import { ImageProcessorService } from './image-processor.service';
 
 @Module({
   imports: [
@@ -20,11 +21,12 @@ import { UploadedFile } from './file.entity';
   controllers: [FilesController],
   providers: [
     FilesService,
+    ImageProcessorService,
     {
       provide: FILE_STORAGE_ADAPTER,
       useClass: DiskStorageAdapter,
     },
   ],
-  exports: [FilesService],
+  exports: [FilesService, ImageProcessorService],
 })
 export class FilesModule {}
