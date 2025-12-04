@@ -835,68 +835,6 @@ button.mobile-menu-link.logout {
   to { transform: translateY(0); }
 }
 
-@media (max-width: 720px) {
-  .app-shell {
-    max-width: 100%;
-    padding: 0.5rem 1rem 4.5rem;
-  }
-
-  .app-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.5rem 0;
-    margin-bottom: 1rem;
-  }
-
-  .app-header nav {
-    display: none;
-  }
-
-  .mobile-bottom-bar {
-    display: flex;
-  }
-
-  .login-panel {
-    margin: 1.5rem auto;
-    padding: 1.25rem;
-  }
-
-  .login-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .page-center {
-    padding: 1.5rem 1rem 2rem;
-  }
-
-  .panel {
-    padding: 1.1rem;
-  }
-
-  .panel-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.6rem;
-  }
-
-  .actions {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-
-  .search-input {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .form-grid.two-col {
-    grid-template-columns: 1fr;
-  }
-}
-
 .camera-box {
   margin-top: 1rem;
   padding: 1rem;
@@ -974,41 +912,161 @@ button.mobile-menu-link.logout {
   color: #a12720;
   border-color: rgba(244, 68, 56, 0.4);
 }
+
+/* === START MOBILE VIEW FIXES === */
 @media (max-width: 720px) {
+  /* Layout Dasar Mobile */
+  .app-shell {
+    max-width: 100%;
+    padding: 0.5rem 1rem 5rem; /* Tambahan padding bawah agar tidak tertutup nav bar */
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+  }
+
   .app-header nav {
-    display: none;
+    display: none; /* Sembunyikan menu desktop */
+  }
+
+  .mobile-bottom-bar {
+    display: flex; /* Tampilkan menu bawah */
+  }
+
+  /* Penyesuaian Panel Login & Main */
+  .login-panel {
+    margin: 1.5rem auto;
+    padding: 1.25rem;
+  }
+
+  .login-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-center {
+    padding: 1.5rem 1rem 2rem;
   }
 
   .panel {
+    padding: 1.1rem;
     max-width: 100%;
     width: 100%;
   }
 
+  .panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .search-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .form-grid.two-col {
+    grid-template-columns: 1fr;
+  }
+
+  /* --- TRANSFORMASI TABEL KE KARTU (CARD VIEW) --- */
+  
   .table-container {
+    width: 100%;
     margin: 0;
     padding: 0;
-    overflow-x: auto;
-    width: 100%;
-    max-width: 100%;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: visible; /* Matikan scroll horizontal */
   }
 
-  .table {
-    min-width: 560px;
+  /* Reset properti tabel agar pas di layar */
+  .table,
+  .table.cols-4,
+  .table.cols-5 {
+    min-width: 100%;
+    display: block;
+    border: none;
+    background: transparent;
   }
 
+  /* Sembunyikan header tabel (judul kolom) */
   .table-head {
-    display: grid;
-  }
-
-  .cell-label {
     display: none;
   }
 
+  /* Ubah setiap baris tabel menjadi kartu */
+  .table-row,
+  .table-row:nth-child(odd) {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1px solid rgba(15, 61, 122, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    gap: 0.5rem;
+  }
+
+  /* Ubah sel menjadi baris flex (Label di kiri, Nilai di kanan) */
+  .table-cell {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    padding: 0.25rem 0;
+    border-bottom: 1px dashed #f0f0f0;
+  }
+
+  .table-cell:last-child {
+    border-bottom: none;
+  }
+
+  /* Tampilkan label kolom (misal: "Nomor Surat") */
+  .cell-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0f5cbf;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    width: 40%; /* Lebar label */
+  }
+
+  .cell-value {
+    width: 60%;
+    text-align: right;
+    word-break: break-word;
+    font-size: 0.9rem;
+  }
+
+  /* Penyesuaian tombol aksi di dalam kartu */
+  .table .actions button,
+  .table .actions a {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+  
   .table-message {
-    padding: 0.85rem 1rem;
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px dashed rgba(15, 61, 122, 0.2);
+    border-radius: 12px;
   }
 }
+/* === END MOBILE VIEW FIXES === */
 
 /* Modal */
 .modal-overlay {
