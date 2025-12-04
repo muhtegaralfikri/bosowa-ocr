@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
-import { Letter } from '../api/types';
+import type { Letter } from '../api/types';
 
 export default function LetterDetailPage() {
   const { id } = useParams();

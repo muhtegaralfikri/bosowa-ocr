@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,7 +9,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <header className="app-header">
         <div className="brand">
           <span className="dot" />
-          <span>Bosowa OCR</span>
+          <span>Bosowa Bandar Agency</span>
         </div>
         <nav>
           <Link to="/upload">Upload</Link>

@@ -1,4 +1,5 @@
-import { PointerEvent, useEffect, useMemo, useRef, useState } from 'react';
+import type { PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 interface Props {
   file: File;

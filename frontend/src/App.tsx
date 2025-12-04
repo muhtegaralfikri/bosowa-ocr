@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Navigate, Outlet, Route, BrowserRouter, Routes } from 'react-router-dom';
 import './App.css';
 import Layout from './components/Layout';

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
-import { OcrPreviewResponse } from '../api/types';
+import type { OcrPreviewResponse } from '../api/types';
 import CameraCapture from '../components/CameraCapture';
 import ManualCropper from '../components/ManualCropper';
 import UploadBox from '../components/UploadBox';
