@@ -60,9 +60,9 @@
 }
 
 .user-role {
-  padding: 0.35rem 0.7rem;
-  background: rgba(29, 116, 216, 0.12);
-  border-radius: 12px;
+  padding: 0;
+  background: none;
+  border-radius: 0;
   color: #0f3d7a;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -175,6 +175,39 @@ select:focus,
 textarea:focus {
   outline: 1px solid #1d74d8;
   border-color: #1d74d8;
+}
+
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 4.5rem;
+}
+
+.toggle-visibility {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: #0f5cbf;
+  cursor: pointer;
+  padding: 0.25rem 0.35rem;
+}
+
+.toggle-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.toggle-visibility:focus {
+  outline: 1px solid #1d74d8;
+  border-radius: 8px;
 }
 
 input::placeholder,
@@ -309,6 +342,10 @@ textarea::placeholder {
   font-weight: 600;
   color: #0c1a33;
   word-break: break-word;
+}
+
+.cell-muted {
+  color: #5f7595;
 }
 
 .table-message {
@@ -568,14 +605,55 @@ textarea::placeholder {
 }
 
 .table .actions button {
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(120deg, #0f5cbf, #1d74d8);
   color: #fff;
   border: none;
-  padding: 0.35rem 0.6rem;
-  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 700;
+  transition: opacity 0.2s ease;
 }
 
+.table .actions button.danger {
+  background: #f04438;
+}
+
+.table .actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+}
+
+.pill.pending {
+  background: rgba(255, 193, 7, 0.12);
+  color: #a66a00;
+  border-color: rgba(255, 193, 7, 0.4);
+}
+
+.pill.approved {
+  background: rgba(0, 178, 115, 0.12);
+  color: #0f6c4f;
+  border-color: rgba(0, 178, 115, 0.4);
+}
+
+.pill.rejected {
+  background: rgba(244, 68, 56, 0.12);
+  color: #a12720;
+  border-color: rgba(244, 68, 56, 0.4);
+}
 @media (max-width: 720px) {
   .app-header nav {
     display: none;

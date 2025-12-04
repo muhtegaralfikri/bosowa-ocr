@@ -1,18 +1,24 @@
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 interface DeleteRequest {
   id: string;
   letterId: string;
+  letter?: { letterNumber: string };
   reason?: string;
   status: string;
+  createdAt?: string;
 }
 
 export default function DeleteRequestsPage() {
-  const [letterId, setLetterId] = useState('');
+  const { user } = useAuth();
+  const [letterNumber, setLetterNumber] = useState('');
   const [reason, setReason] = useState('');
   const [requests, setRequests] = useState<DeleteRequest[]>([]);
+  const canModerate = user?.role === 'ADMIN';
+  const actionHeader = canModerate ? 'Aksi' : 'Keterangan';
 
   const load = () => {
     api.get('/delete-requests').then((res) => setRequests(res.data));
@@ -24,8 +30,9 @@ export default function DeleteRequestsPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    await api.post(`/letters/${letterId}/delete-requests`, { reason });
-    setLetterId('');
+    const encodedLetterNumber = encodeURIComponent(letterNumber.trim());
+    await api.post(`/letters/${encodedLetterNumber}/delete-requests`, { reason });
+    setLetterNumber('');
     setReason('');
     load();
   };
@@ -41,15 +48,15 @@ export default function DeleteRequestsPage() {
           <h1>Ajukan atau approve</h1>
         </div>
       </div>
-      
+
       {/* Form Area */}
       <form className="form-grid" onSubmit={submit}>
         <label>
-          Letter ID
+          Nomor Surat / Invoice
           <input
-            value={letterId}
-            onChange={(e) => setLetterId(e.target.value)}
-            placeholder="ID surat"
+            value={letterNumber}
+            onChange={(e) => setLetterNumber(e.target.value)}
+            placeholder="Contoh: 007/SS/MIW2018"
             required
           />
         </label>
@@ -75,11 +82,15 @@ export default function DeleteRequestsPage() {
         </h3>
         
         <div className="table">
-          <div className="table-row table-head">
+          <div
+            className="table-row table-head"
+            style={{ gridTemplateColumns: '1.2fr 2fr 2fr 1.2fr 1.6fr' }}
+          >
             <span>ID</span>
-            <span>Letter</span>
+            <span>Nomor Surat</span>
+            <span>Alasan</span>
             <span>Status</span>
-            <span>Aksi</span>
+            <span>{actionHeader}</span>
           </div>
           {requests.length === 0 && (
             <div className="table-row" style={{ gridTemplateColumns: '1fr' }}>
@@ -87,20 +98,47 @@ export default function DeleteRequestsPage() {
             </div>
           )}
           {requests.map((req) => (
-            <div key={req.id} className="table-row">
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }} title={req.id}>
+            <div
+              key={req.id}
+              className="table-row"
+              style={{ gridTemplateColumns: '1.2fr 2fr 2fr 1.2fr 1.6fr' }}
+            >
+              <span
+                style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                title={req.id}
+              >
                 {req.id.slice(0, 8)}...
               </span>
-              <span>{req.letterId}</span>
-              <span>{req.status}</span>
-              <span className="actions">
-                <button type="button" onClick={() => approve(req.id)}>
-                  Approve
-                </button>
-                <button type="button" onClick={() => reject(req.id)}>
-                  Reject
-                </button>
+              <span>{req.letter?.letterNumber || req.letterId}</span>
+              <span className="cell-muted">{req.reason || '-'}</span>
+              <span>
+                <span className={`pill pill-${req.status.toLowerCase()}`}>{req.status}</span>
               </span>
+              {canModerate ? (
+                <span className="actions table-actions">
+                  <button
+                    type="button"
+                    onClick={() => approve(req.id)}
+                    disabled={req.status !== 'PENDING'}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => reject(req.id)}
+                    disabled={req.status !== 'PENDING'}
+                    className="danger"
+                  >
+                    Reject
+                  </button>
+                </span>
+              ) : (
+                <span className="cell-muted">
+                  {req.status === 'PENDING' && 'Menunggu konfirmasi admin'}
+                  {req.status === 'APPROVED' && 'Sudah disetujui admin'}
+                  {req.status === 'REJECTED' && 'Ditolak admin'}
+                </span>
+              )}
             </div>
           ))}
         </div>

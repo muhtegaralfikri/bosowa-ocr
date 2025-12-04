@@ -17,8 +17,11 @@ export class DeleteRequestsController {
   constructor(private readonly deleteRequestsService: DeleteRequestsService) {}
 
   @Post('letters/:id/delete-requests')
-  create(@Param('id') letterId: string, @Body() dto: CreateDeleteRequestDto) {
-    return this.deleteRequestsService.create(letterId, dto);
+  create(
+    @Param('id') letterNumber: string,
+    @Body() dto: CreateDeleteRequestDto,
+  ) {
+    return this.deleteRequestsService.create(letterNumber, dto);
   }
 
   @Get('delete-requests')

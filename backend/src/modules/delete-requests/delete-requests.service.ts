@@ -14,14 +14,14 @@ export class DeleteRequestsService {
     private readonly lettersRepo: Repository<Letter>,
   ) {}
 
-  async create(letterId: string, dto: CreateDeleteRequestDto) {
-    const letter = await this.lettersRepo.findOne({ where: { id: letterId } });
+  async create(letterNumber: string, dto: CreateDeleteRequestDto) {
+    const letter = await this.lettersRepo.findOne({ where: { letterNumber } });
     if (!letter) {
       throw new NotFoundException('Letter not found');
     }
 
     const request = this.deleteRequestsRepo.create({
-      letterId,
+      letterId: letter.id,
       letter,
       reason: dto.reason,
       status: DeleteRequestStatus.PENDING,
