@@ -8,6 +8,8 @@ interface LocationState {
   ocrResult?: {
     letterNumber: string | null;
     tanggalSurat: string | null;
+    namaPengirim: string | null;
+    senderConfidence?: 'high' | 'medium' | 'low';
     perihal: string | null;
     totalNominal: number;
   };
@@ -25,12 +27,13 @@ export default function LettersFormPage() {
     jenisSurat: 'MASUK',
     jenisDokumen: 'SURAT',
     tanggalSurat: state.ocrResult?.tanggalSurat || '',
-    namaPengirim: '',
+    namaPengirim: state.ocrResult?.namaPengirim || '',
     alamatPengirim: '',
     teleponPengirim: '',
     perihal: state.ocrResult?.perihal || '',
     totalNominal: state.ocrResult?.totalNominal || 0,
   });
+  const senderConfidence = state.ocrResult?.senderConfidence;
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<string | null>(null);
 
@@ -121,6 +124,14 @@ export default function LettersFormPage() {
         </label>
         <label>
           Nama Pengirim
+          {senderConfidence && (
+            <span
+              className={`confidence-badge ${senderConfidence}`}
+              title={`Confidence: ${senderConfidence}`}
+            >
+              {senderConfidence === 'high' ? '✓ Yakin' : senderConfidence === 'medium' ? '~ Mungkin' : '? Rendah'}
+            </span>
+          )}
           <input
             value={form.namaPengirim}
             onChange={(e) => setForm({ ...form, namaPengirim: e.target.value })}

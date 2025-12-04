@@ -5,6 +5,7 @@ import { FilesService } from '../files/files.service';
 import { EditLogsService } from '../edit-logs/edit-logs.service';
 import {
   extractLetterNumber,
+  extractNamaPengirim,
   extractNominalList,
   extractPerihal,
   extractTanggal,
@@ -33,12 +34,19 @@ export class LettersService {
     const tanggalSurat = extractTanggal(ocrRawText);
     const perihal = extractPerihal(ocrRawText);
     const { nominalList, totalNominal } = extractNominalList(ocrRawText);
+    const {
+      namaPengirim,
+      confidence: senderConfidence,
+      source: senderSource,
+    } = extractNamaPengirim(ocrRawText);
 
     return {
       letterNumber,
       candidates,
       tanggalSurat,
-      namaPengirim: null,
+      namaPengirim,
+      senderConfidence,
+      senderSource,
       perihal,
       nominalList,
       totalNominal,

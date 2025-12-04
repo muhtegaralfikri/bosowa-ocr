@@ -3,6 +3,8 @@ export interface OcrPreviewResponse {
   candidates: string[];
   tanggalSurat: string | null;
   namaPengirim: string | null;
+  senderConfidence: 'high' | 'medium' | 'low';
+  senderSource: 'header' | 'signature' | null;
   perihal: string | null;
   nominalList: number[];
   totalNominal: number;
