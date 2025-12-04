@@ -30,15 +30,19 @@ export default function DeleteRequestsPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const encodedLetterNumber = encodeURIComponent(letterNumber.trim());
-    await api.post(`/letters/${encodedLetterNumber}/delete-requests`, { reason });
+    await api.post('/delete-requests', {
+      letterNumber: letterNumber.trim(),
+      reason,
+    });
     setLetterNumber('');
     setReason('');
     load();
   };
 
-  const approve = (id: string) => api.patch(`/delete-requests/${id}/approve`).then(load);
-  const reject = (id: string) => api.patch(`/delete-requests/${id}/reject`).then(load);
+  const approve = (id: string) =>
+    api.patch(`/delete-requests/${id}`, { status: 'APPROVED' }).then(load);
+  const reject = (id: string) =>
+    api.patch(`/delete-requests/${id}`, { status: 'REJECTED' }).then(load);
 
   return (
     <section className="panel">

@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CreateDeleteRequestDto } from './dto/create-delete-request.dto';
+import { UpdateDeleteRequestDto } from './dto/update-delete-request.dto';
 import { DeleteRequestsService } from './delete-requests.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -16,12 +17,9 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class DeleteRequestsController {
   constructor(private readonly deleteRequestsService: DeleteRequestsService) {}
 
-  @Post('letters/:id/delete-requests')
-  create(
-    @Param('id') letterNumber: string,
-    @Body() dto: CreateDeleteRequestDto,
-  ) {
-    return this.deleteRequestsService.create(letterNumber, dto);
+  @Post('delete-requests')
+  create(@Body() dto: CreateDeleteRequestDto) {
+    return this.deleteRequestsService.create(dto);
   }
 
   @Get('delete-requests')
@@ -29,13 +27,8 @@ export class DeleteRequestsController {
     return this.deleteRequestsService.findAll();
   }
 
-  @Patch('delete-requests/:id/approve')
-  approve(@Param('id') id: string) {
-    return this.deleteRequestsService.approve(id);
-  }
-
-  @Patch('delete-requests/:id/reject')
-  reject(@Param('id') id: string) {
-    return this.deleteRequestsService.reject(id);
+  @Patch('delete-requests/:id')
+  updateStatus(@Param('id') id: string, @Body() dto: UpdateDeleteRequestDto) {
+    return this.deleteRequestsService.updateStatus(id, dto);
   }
 }

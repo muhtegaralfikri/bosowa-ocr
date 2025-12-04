@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateDeleteRequestDto } from './dto/create-delete-request.dto';
+import { UpdateDeleteRequestDto } from './dto/update-delete-request.dto';
 import { DeleteRequest, DeleteRequestStatus } from './delete-request.entity';
 import { Letter } from '../letters/letter.entity';
 
@@ -14,8 +15,11 @@ export class DeleteRequestsService {
     private readonly lettersRepo: Repository<Letter>,
   ) {}
 
-  async create(letterNumber: string, dto: CreateDeleteRequestDto) {
-    const letter = await this.lettersRepo.findOne({ where: { letterNumber } });
+  async create(dto: CreateDeleteRequestDto) {
+    const letterNumber = dto.letterNumber.trim();
+    const letter = await this.lettersRepo.findOne({
+      where: { letterNumber },
+    });
     if (!letter) {
       throw new NotFoundException('Letter not found');
     }
@@ -36,15 +40,9 @@ export class DeleteRequestsService {
     });
   }
 
-  async approve(id: string) {
+  async updateStatus(id: string, dto: UpdateDeleteRequestDto) {
     const request = await this.findOne(id);
-    request.status = DeleteRequestStatus.APPROVED;
-    return this.deleteRequestsRepo.save(request);
-  }
-
-  async reject(id: string) {
-    const request = await this.findOne(id);
-    request.status = DeleteRequestStatus.REJECTED;
+    request.status = dto.status;
     return this.deleteRequestsRepo.save(request);
   }
 
