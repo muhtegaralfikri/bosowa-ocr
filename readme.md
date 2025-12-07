@@ -24,6 +24,109 @@ Aplikasi web full-stack untuk digitalisasi dan manajemen arsip surat/invoice den
 | **SEKRETARIS** | Upload, lihat daftar surat, ajukan hapus |
 | **COSM** | Upload, lihat daftar surat, ajukan hapus |
 
+#### Detail Tugas Per Role
+
+##### ADMIN
+| Fitur | Akses | Keterangan |
+|-------|:-----:|------------|
+| Upload & OCR | ✅ | Scan/foto dokumen, proses OCR |
+| Lihat daftar surat | ✅ | Melihat semua surat/invoice |
+| Input metadata | ✅ | Isi/koreksi hasil OCR |
+| Edit surat | ✅ | Perbaiki data yang salah |
+| Ajukan hapus | ✅ | Request penghapusan dokumen |
+| **Dashboard statistik** | ✅ | Grafik surat per bulan, statistik koreksi |
+| **Kelola user** | ✅ | Tambah/edit/hapus user |
+| **Approve/reject hapus** | ✅ | Setujui atau tolak permintaan hapus |
+| **Lihat audit log** | ✅ | Riwayat semua perubahan data |
+| **File cleanup** | ✅ | Bersihkan file orphan |
+
+##### SEKRETARIS
+| Fitur | Akses | Keterangan |
+|-------|:-----:|------------|
+| Upload & OCR | ✅ | Scan/foto dokumen, proses OCR |
+| Lihat daftar surat | ✅ | Melihat semua surat/invoice |
+| Input metadata | ✅ | Isi/koreksi hasil OCR |
+| Edit surat | ✅ | Perbaiki data yang salah |
+| Ajukan hapus | ✅ | Request penghapusan (perlu approval admin) |
+| Dashboard statistik | ❌ | - |
+| Kelola user | ❌ | - |
+| Approve/reject hapus | ❌ | - |
+| Lihat audit log | ❌ | - |
+
+##### COSM (Customer/Operations Service Manager)
+| Fitur | Akses | Keterangan |
+|-------|:-----:|------------|
+| Upload & OCR | ✅ | Scan/foto dokumen, proses OCR |
+| Lihat daftar surat | ✅ | Melihat semua surat/invoice |
+| Input metadata | ✅ | Isi/koreksi hasil OCR |
+| Edit surat | ✅ | Perbaiki data yang salah |
+| Ajukan hapus | ✅ | Request penghapusan (perlu approval admin) |
+| Dashboard statistik | ❌ | - |
+| Kelola user | ❌ | - |
+| Approve/reject hapus | ❌ | - |
+| Lihat audit log | ❌ | - |
+
+#### Kemungkinan Pembeda SEKRETARIS vs COSM (Future Enhancement)
+
+Saat ini SEKRETARIS dan COSM memiliki akses yang sama. Berikut opsi pembeda yang dapat diimplementasi sesuai kebutuhan organisasi:
+
+| Opsi | SEKRETARIS | COSM | Keterangan |
+|------|------------|------|------------|
+| **A. Jenis Dokumen** | Hanya SURAT | Hanya INVOICE | Pembagian berdasarkan tipe dokumen |
+| **B. Jenis Surat** | Hanya MASUK | Hanya KELUAR | Pembagian berdasarkan arah surat |
+| **C. Kombinasi** | SURAT (masuk/keluar) | INVOICE (masuk/keluar) | Kombinasi tipe dokumen |
+| **D. Department** | Administrasi umum | Operasional kapal | Pembagian berdasarkan departemen |
+
+##### Contoh Workflow Opsi A (Jenis Dokumen)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    SEKRETARIS                                │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ • Surat masuk dari instansi pemerintah              │    │
+│  │ • Surat keluar ke pelanggan/vendor                  │    │
+│  │ • Surat internal perusahaan                         │    │
+│  │ • Memo dan disposisi                                │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                       COSM                                   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ • Invoice masuk dari vendor/supplier                │    │
+│  │ • Invoice keluar ke pelanggan                       │    │
+│  │ • Dokumen operasional kapal                         │    │
+│  │ • Dokumen penagihan dan pembayaran                  │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+##### Contoh Workflow Opsi B (Jenis Surat)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    SEKRETARIS                                │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ SURAT/INVOICE MASUK:                                │    │
+│  │ • Terima dokumen dari eksternal                     │    │
+│  │ • Scan dan proses OCR                               │    │
+│  │ • Input metadata dan arsipkan                       │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                       COSM                                   │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ SURAT/INVOICE KELUAR:                               │    │
+│  │ • Buat dokumen untuk pelanggan/vendor               │    │
+│  │ • Scan salinan untuk arsip                          │    │
+│  │ • Input metadata dan arsipkan                       │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+> **Catatan:** Untuk mengimplementasi pembeda, konfirmasi terlebih dahulu dengan pihak manajemen mengenai workflow yang sesuai dengan SOP perusahaan.
+
 ### 4. Audit Trail & Statistik
 - **Edit Log** - Riwayat lengkap setiap perubahan data dengan field sebelum/sesudah
 - **Delete Request Workflow** - Mekanisme approval untuk penghapusan dokumen
