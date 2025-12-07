@@ -96,7 +96,18 @@ export class LettersService {
       ? { letterNumber: ILike(`%${letterNumber}%`) }
       : {};
 
+    // Select only columns needed for list view (optimize query)
     const [data, total] = await this.lettersRepo.findAndCount({
+      select: [
+        'id',
+        'letterNumber',
+        'jenisSurat',
+        'jenisDokumen',
+        'tanggalSurat',
+        'namaPengirim',
+        'perihal',
+        'createdAt',
+      ],
       where,
       order: { createdAt: 'DESC' },
       take: safeLimit,

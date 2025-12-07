@@ -57,11 +57,12 @@ import { UsersModule } from './modules/users/users.module';
           database,
           autoLoadEntities: true,
           synchronize: process.env.NODE_ENV !== 'production',
-          // Connection Pool Settings
+          // Connection Pool Settings (optimized for ~50 concurrent users)
           extra: {
-            connectionLimit: 10,
+            connectionLimit: 25,
             waitForConnections: true,
             queueLimit: 0,
+            connectTimeout: 10000,
           },
           // Connection retry settings
           retryAttempts: 3,

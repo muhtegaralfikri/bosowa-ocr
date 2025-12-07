@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -9,6 +10,9 @@ import {
 import { Letter } from '../letters/letter.entity';
 
 @Entity({ name: 'edit_logs' })
+@Index('idx_editlogs_letter', ['letterId'])
+@Index('idx_editlogs_user', ['updatedBy'])
+@Index('idx_editlogs_created', ['createdAt'])
 export class EditLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;

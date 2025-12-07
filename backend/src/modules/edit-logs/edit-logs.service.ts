@@ -26,12 +26,24 @@ export class EditLogsService {
     const safeLimit = Math.min(Math.max(limit, 1), 100);
     const safePage = Math.max(page, 1);
 
-    const [data, total] = await this.editLogsRepo.findAndCount({
-      order: { createdAt: 'DESC' },
-      take: safeLimit,
-      skip: (safePage - 1) * safeLimit,
-      relations: ['letter'],
-    });
+    // Optimized query with specific columns
+    const [data, total] = await this.editLogsRepo
+      .createQueryBuilder('log')
+      .select([
+        'log.id',
+        'log.letterId',
+        'log.field',
+        'log.oldValue',
+        'log.newValue',
+        'log.updatedBy',
+        'log.createdAt',
+        'letter.letterNumber',
+      ])
+      .leftJoin('log.letter', 'letter')
+      .orderBy('log.createdAt', 'DESC')
+      .take(safeLimit)
+      .skip((safePage - 1) * safeLimit)
+      .getManyAndCount();
 
     return {
       data,

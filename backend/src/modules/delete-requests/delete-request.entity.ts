@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -16,6 +17,8 @@ export enum DeleteRequestStatus {
 }
 
 @Entity({ name: 'delete_requests' })
+@Index('idx_delreq_status', ['status'])
+@Index('idx_delreq_created', ['createdAt'])
 export class DeleteRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -48,11 +48,21 @@ export class DeleteRequestsService {
   }
 
   findAll(status?: DeleteRequestStatus) {
-    return this.deleteRequestsRepo.find({
-      where: status ? { status } : {},
-      relations: ['letter'],
-      order: { createdAt: 'DESC' },
-    });
+    // Optimized query with specific columns
+    return this.deleteRequestsRepo
+      .createQueryBuilder('req')
+      .select([
+        'req.id',
+        'req.letterId',
+        'req.status',
+        'req.reason',
+        'req.createdAt',
+        'letter.letterNumber',
+      ])
+      .leftJoin('req.letter', 'letter')
+      .where(status ? { status } : {})
+      .orderBy('req.createdAt', 'DESC')
+      .getMany();
   }
 
   async updateStatus(id: string, dto: UpdateDeleteRequestDto) {
