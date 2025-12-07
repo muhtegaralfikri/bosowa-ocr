@@ -88,7 +88,7 @@ export default function LettersListPage() {
             placeholder="Cari nomor surat"
             className="search-input"
           />
-          <Link to="/surat/baru" className="ghost-btn">
+          <Link to="/surat/baru" className="primary-btn">
             Tambah Surat
           </Link>
         </div>

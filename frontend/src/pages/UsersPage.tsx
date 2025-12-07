@@ -100,7 +100,7 @@ export default function UsersPage() {
           <p className="eyebrow">Manajemen</p>
           <h1>Kelola User</h1>
         </div>
-        <button type="button" className="ghost-btn" onClick={openCreateModal}>
+        <button type="button" className="primary-btn" onClick={openCreateModal}>
           <Plus size={18} />
           Tambah User
         </button>
