@@ -1,15 +1,21 @@
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import helmet from 'helmet';
 import compression from 'compression';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  const logger = new Logger('Bootstrap');
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
+
+  // Use Winston as the default logger
+  const logger = app.get(WINSTON_MODULE_NEST_PROVIDER);
+  app.useLogger(logger);
 
   // Security Headers
   app.use(
@@ -52,7 +58,7 @@ async function bootstrap() {
 
   // API Versioning
   app.setGlobalPrefix('api/v1', {
-    exclude: ['health', 'docs', 'uploads/(.*)'],
+    exclude: ['health', 'docs', 'uploads{/*path}'],
   });
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
@@ -73,6 +79,10 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  logger.log(`Application running on port ${port}`);
+  logger.log(`Application running on http://localhost:${port}`, 'Bootstrap');
+  logger.log(
+    `Swagger docs available at http://localhost:${port}/docs`,
+    'Bootstrap',
+  );
 }
 void bootstrap();

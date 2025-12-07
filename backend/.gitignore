@@ -6,6 +6,12 @@
 # Logs
 logs
 *.log
+
+# Backups
+backups
+
+# Uploads (user uploaded files)
+uploads
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*

@@ -18,8 +18,13 @@ export default function LoginPage() {
     setError('');
     try {
       const res = await api.post('/auth/login', { username, password });
-      const { accessToken, user } = res.data;
-      login({ username: user.username, role: user.role, token: accessToken });
+      const { accessToken, refreshToken, user } = res.data;
+      login({
+        username: user.username,
+        role: user.role,
+        token: accessToken,
+        refreshToken: refreshToken,
+      });
       if (user.role === 'ADMIN') {
         navigate('/statistik');
       } else {

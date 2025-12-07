@@ -7,6 +7,8 @@ import { FilesController } from './files.controller';
 import { FilesService } from './files.service';
 import { UploadedFile } from './file.entity';
 import { ImageProcessorService } from './image-processor.service';
+import { CleanupService } from './cleanup.service';
+import { Letter } from '../letters/letter.entity';
 
 @Module({
   imports: [
@@ -16,17 +18,18 @@ import { ImageProcessorService } from './image-processor.service';
         return { storage: adapter.getMulterStorage() };
       },
     }),
-    TypeOrmModule.forFeature([UploadedFile]),
+    TypeOrmModule.forFeature([UploadedFile, Letter]),
   ],
   controllers: [FilesController],
   providers: [
     FilesService,
     ImageProcessorService,
+    CleanupService,
     {
       provide: FILE_STORAGE_ADAPTER,
       useClass: DiskStorageAdapter,
     },
   ],
-  exports: [FilesService, ImageProcessorService],
+  exports: [FilesService, ImageProcessorService, CleanupService],
 })
 export class FilesModule {}

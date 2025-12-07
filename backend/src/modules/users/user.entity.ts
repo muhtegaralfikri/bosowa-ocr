@@ -21,6 +21,9 @@ export class User {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.SEKRETARIS })
   role: UserRole;
 
+  @Column({ nullable: true, type: 'varchar' })
+  refreshToken: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -258,7 +258,7 @@ npm run lint        # ESLint check
 | Input Validation | ✅ | class-validator |
 | Helmet Security Headers | ✅ | XSS, clickjacking |
 | CORS Strict Mode | ✅ | Whitelist origins |
-| Refresh Token | ⬜ | Belum implementasi |
+| Refresh Token | ✅ | Access 15m + Refresh 7d |
 | HTTPS Enforcement | ⬜ | Server config |
 
 ### PERFORMA
@@ -283,10 +283,10 @@ npm run lint        # ESLint check
 | Global Error Handler | ✅ | Axios interceptor |
 | Toast Notifications | ✅ | Sonner |
 | Graceful Shutdown | ✅ | enableShutdownHooks |
-| Structured Logging | ⬜ | Winston (installed) |
+| Structured Logging | ✅ | Winston + file logging |
 | Error Monitoring | ⬜ | Sentry |
-| Database Backup | ⬜ | Backup script |
-| File Cleanup Cron | ⬜ | Orphaned files |
+| Database Backup | ✅ | npm run backup/restore |
+| File Cleanup Cron | ✅ | npm run cleanup |
 
 ### CODE QUALITY
 
@@ -330,15 +330,15 @@ npm run lint        # ESLint check
 
 | Kategori | ✅ Selesai | ⬜ Belum |
 |----------|-----------|----------|
-| Keamanan | 8 | 2 |
+| Keamanan | 9 | 1 |
 | Performa | 7 | 2 |
-| Reliabilitas | 4 | 4 |
+| Reliabilitas | 7 | 1 |
 | Code Quality | 6 | 2 |
 | UX | 7 | 3 |
 | Scalability | 0 | 5 |
-| **Total** | **32** | **18** |
+| **Total** | **36** | **14** |
 
-**Progress: 64% selesai**
+**Progress: 72% selesai**
 
 ---
 

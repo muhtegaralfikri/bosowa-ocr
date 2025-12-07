@@ -7,6 +7,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.entity';
 
 const SALT_ROUNDS = 10;
+const REFRESH_SALT_ROUNDS = 10;
 
 @Injectable()
 export class UsersService {
@@ -56,5 +57,30 @@ export class UsersService {
 
   async delete(userId: string): Promise<void> {
     await this.usersRepo.delete(userId);
+  }
+
+  findById(userId: string): Promise<User | null> {
+    return this.usersRepo.findOne({ where: { id: userId } });
+  }
+
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string | null,
+  ): Promise<void> {
+    if (refreshToken) {
+      const hashedToken = await bcrypt.hash(refreshToken, REFRESH_SALT_ROUNDS);
+      await this.usersRepo.update(userId, { refreshToken: hashedToken });
+    } else {
+      await this.usersRepo.update(userId, { refreshToken: null });
+    }
+  }
+
+  async validateRefreshToken(
+    userId: string,
+    refreshToken: string,
+  ): Promise<boolean> {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user || !user.refreshToken) return false;
+    return bcrypt.compare(refreshToken, user.refreshToken);
   }
 }

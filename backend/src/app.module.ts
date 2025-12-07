@@ -4,6 +4,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { LoggerModule } from './common/logger';
 import { AuthModule } from './modules/auth/auth.module';
 import { DeleteRequestsModule } from './modules/delete-requests/delete-requests.module';
 import { EditLogsModule } from './modules/edit-logs/edit-logs.module';
@@ -16,6 +17,7 @@ import { UsersModule } from './modules/users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    LoggerModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',
