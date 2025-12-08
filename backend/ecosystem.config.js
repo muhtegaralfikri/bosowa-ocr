@@ -1,8 +1,8 @@
 module.exports = {
   apps: [
     {
-      name: 'bosowa-ocr-backend',
-      script: 'dist/src/main.js',
+      name: 'be-ocr-backend',
+      script: 'dist/main.js',
       cwd: __dirname,
       env_file: '.env',
       instances: 1,
