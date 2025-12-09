@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   FileText,
@@ -6,6 +6,8 @@ import {
   LineChart,
   LogOut,
   Menu,
+  Moon,
+  Sun,
   Trash2,
   Upload,
   Users,
@@ -14,6 +16,8 @@ import {
 import logo from '../assets/bosowa-agensi.png';
 import { useAuth } from '../context/AuthContext';
 import OfflineIndicator from './OfflineIndicator';
+
+const THEME_KEY = 'bosowa-ocr-theme';
 
 const navItems = [
   { path: '/upload', label: 'Unggah', mobileLabel: 'Unggah', icon: Upload },
@@ -28,6 +32,21 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved === 'dark' || saved === 'light') return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem(THEME_KEY, theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -39,7 +58,6 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const mobileMainItems = visibleNavItems.slice(0, 3);
   const mobileMoreItems = visibleNavItems.slice(3);
-  const hasMoreItems = mobileMoreItems.length > 0;
 
   const handleMobileMenuClose = () => setMobileMenuOpen(false);
 
@@ -82,12 +100,28 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <LogOut size={20} />
                 <span>Keluar</span>
               </button>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="theme-toggle"
+                title={theme === 'light' ? 'Mode Gelap' : 'Mode Terang'}
+              >
+                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                <span>{theme === 'light' ? 'Mode Gelap' : 'Mode Terang'}</span>
+              </button>
             </div>
           )}
         </div>
       </aside>
 
-      <main className="main-content">{children}</main>
+      <main className="main-content">
+        <div className="main-content-inner">
+          {children}
+        </div>
+        <footer className="app-footer">
+          <p>&copy; {new Date().getFullYear()} Bosowa Bandar Agency. All rights reserved.</p>
+        </footer>
+      </main>
 
       {/* Mobile Bottom Bar */}
       <nav className="mobile-bottom-bar">
@@ -139,6 +173,16 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </Link>
                 );
               })}
+              <button
+                type="button"
+                className="mobile-menu-link"
+                onClick={() => {
+                  toggleTheme();
+                }}
+              >
+                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                <span>{theme === 'light' ? 'Mode Gelap' : 'Mode Terang'}</span>
+              </button>
               <button
                 type="button"
                 className="mobile-menu-link logout"
