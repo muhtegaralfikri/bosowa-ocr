@@ -92,7 +92,7 @@ export default function UploadPage() {
           type="button"
           className="ghost-btn"
           onClick={() =>
-            navigate('/surat/baru', {
+            navigate('/letters/new', {
               state: { ocrResult, originalMeta, ocrMeta },
             })
           }

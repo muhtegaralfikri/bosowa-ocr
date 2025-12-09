@@ -31,8 +31,8 @@ function ProtectedRoute({
   roles?: string[];
 }) {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/masuk" replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/masuk" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (roles && !roles.includes(user.role)) return <Navigate to="/login" replace />;
   return children;
 }
 
@@ -50,11 +50,11 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path="/masuk" element={<LoginPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route element={<AppShell />}>
-              <Route path="/" element={<Navigate to="/unggah" replace />} />
+              <Route path="/" element={<Navigate to="/upload" replace />} />
               <Route
-                path="/unggah"
+                path="/upload"
                 element={
                   <ProtectedRoute>
                     <UploadPage />
@@ -62,7 +62,7 @@ export default function App() {
                 }
               />
               <Route
-                path="/surat/baru"
+                path="/letters/new"
                 element={
                   <ProtectedRoute>
                     <LettersFormPage />
@@ -70,7 +70,7 @@ export default function App() {
                 }
               />
               <Route
-                path="/surat"
+                path="/letters"
                 element={
                   <ProtectedRoute>
                     <LettersListPage />
@@ -78,7 +78,7 @@ export default function App() {
                 }
               />
               <Route
-                path="/surat/:id"
+                path="/letters/:id"
                 element={
                   <ProtectedRoute>
                     <LetterDetailPage />
@@ -86,7 +86,7 @@ export default function App() {
                 }
               />
               <Route
-                path="/permintaan-hapus"
+                path="/delete-requests"
                 element={
                   <ProtectedRoute>
                     <DeleteRequestsPage />
@@ -94,7 +94,7 @@ export default function App() {
                 }
               />
               <Route
-                path="/statistik"
+                path="/stats"
                 element={
                   <ProtectedRoute roles={['ADMIN']}>
                     <StatsPage />

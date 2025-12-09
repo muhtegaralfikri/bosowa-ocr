@@ -16,10 +16,10 @@ import { useAuth } from '../context/AuthContext';
 import OfflineIndicator from './OfflineIndicator';
 
 const navItems = [
-  { path: '/unggah', label: 'Unggah', mobileLabel: 'Unggah', icon: Upload },
-  { path: '/surat', label: 'Daftar Surat', mobileLabel: 'Surat', icon: FileText },
-  { path: '/permintaan-hapus', label: 'Permintaan Hapus', mobileLabel: 'Hapus', icon: Trash2 },
-  { path: '/statistik', label: 'Statistik', mobileLabel: 'Statistik', icon: LineChart, adminOnly: true },
+  { path: '/upload', label: 'Unggah', mobileLabel: 'Unggah', icon: Upload },
+  { path: '/letters', label: 'Daftar Surat', mobileLabel: 'Surat', icon: FileText },
+  { path: '/delete-requests', label: 'Permintaan Hapus', mobileLabel: 'Hapus', icon: Trash2 },
+  { path: '/stats', label: 'Statistik', mobileLabel: 'Statistik', icon: LineChart, adminOnly: true },
   { path: '/users', label: 'Kelola User', mobileLabel: 'User', icon: Users, adminOnly: true },
   { path: '/audit-log', label: 'Audit Log', mobileLabel: 'Log', icon: History, adminOnly: true },
 ];
@@ -104,16 +104,14 @@ export default function Layout({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
-        {hasMoreItems && (
-          <button
-            type="button"
-            className="mobile-nav-item"
-            onClick={() => setMobileMenuOpen(true)}
-          >
-            <Menu className="mobile-nav-icon" aria-hidden="true" />
-            <span className="mobile-nav-label">Lainnya</span>
-          </button>
-        )}
+        <button
+          type="button"
+          className="mobile-nav-item"
+          onClick={() => setMobileMenuOpen(true)}
+        >
+          <Menu className="mobile-nav-icon" aria-hidden="true" />
+          <span className="mobile-nav-label">Lainnya</span>
+        </button>
       </nav>
 
       {/* Mobile More Menu */}

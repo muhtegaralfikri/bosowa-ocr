@@ -26,9 +26,9 @@ export default function LoginPage() {
         refreshToken: refreshToken,
       });
       if (user.role === 'ADMIN') {
-        navigate('/statistik');
+        navigate('/stats');
       } else {
-        navigate('/unggah');
+        navigate('/upload');
       }
     } catch {
       setError('Login gagal. Cek username/password.');
@@ -42,7 +42,7 @@ export default function LoginPage() {
           <div>
             <p className="eyebrow">Bosowa Bandar Agency</p>
             <h1>Masuk</h1>
-            <p>Admin ke dashboard, Sekretaris/COSM langsung ke halaman upload.</p>
+            <p>Sistem Manajemen Surat Digital</p>
           </div>
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
@@ -51,7 +51,7 @@ export default function LoginPage() {
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin / sekretaris / cosm"
+              placeholder="Masukkan username"
               required
             />
           </label>

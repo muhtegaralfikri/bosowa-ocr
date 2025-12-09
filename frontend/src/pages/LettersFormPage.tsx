@@ -105,7 +105,7 @@ export default function LettersFormPage() {
       setMessage('Surat tersimpan');
       toast.success('Surat tersimpan');
       clearDraft();
-      navigate('/surat');
+      navigate('/letters');
     } catch {
       setMessage('Gagal menyimpan surat');
       toast.error(

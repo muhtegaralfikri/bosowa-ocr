@@ -41,8 +41,8 @@ const updateStoredTokens = (accessToken: string, refreshToken: string) => {
 
 const logoutAndRedirect = () => {
   localStorage.removeItem(AUTH_STORAGE_KEY);
-  if (window.location.pathname !== '/masuk') {
-    window.location.href = '/masuk';
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login';
   }
 };
 

@@ -88,7 +88,7 @@ export default function LettersListPage() {
             placeholder="Cari nomor surat"
             className="search-input"
           />
-          <Link to="/surat/baru" className="primary-btn">
+          <Link to="/letters/new" className="primary-btn">
             Tambah Surat
           </Link>
         </div>
@@ -119,7 +119,7 @@ export default function LettersListPage() {
           {letters.map((letter: Letter) => (
             <Link
               key={letter.id}
-              to={`/surat/${letter.id}`}
+              to={`/letters/${letter.id}`}
               className="table-row table-body-row"
             >
               {columns.map((col) => (

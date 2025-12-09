@@ -125,7 +125,7 @@ export default function AuditLogPage() {
               </div>
               <div className="table-cell">
                 <span className="cell-label">Surat</span>
-                <Link to={`/surat/${log.letterId}`} className="cell-value link">
+                <Link to={`/letters/${log.letterId}`} className="cell-value link">
                   {log.letter?.letterNumber || log.letterId.substring(0, 8)}
                 </Link>
               </div>
