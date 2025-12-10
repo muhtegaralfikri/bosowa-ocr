@@ -13,6 +13,7 @@ const DeleteRequestsPage = lazy(() => import('./pages/DeleteRequestsPage'));
 const StatsPage = lazy(() => import('./pages/StatsPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function PageLoader() {
   return (
@@ -117,6 +118,7 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
         </Suspense>
