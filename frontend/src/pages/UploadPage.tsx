@@ -138,7 +138,13 @@ export default function UploadPage() {
         </div>
 
         <div className="card">
-          {loading && <p>Sedang proses OCR...</p>}
+          {loading && (
+            <div className="ocr-loading">
+              <div className="ocr-loading-spinner"></div>
+              <p className="ocr-loading-text">Memproses OCR...</p>
+              <p className="ocr-loading-hint">Menganalisis dokumen dengan AI</p>
+            </div>
+          )}
           {error && <div className="error-box">{error}</div>}
 
           {originalMeta && (
