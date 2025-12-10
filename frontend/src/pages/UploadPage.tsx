@@ -73,7 +73,7 @@ export default function UploadPage() {
         extractionMethod,
       });
       setOcrResult(preview.data);
-      const methodUsed = preview.data.extractionMethod === 'ai' ? 'AI (Gemini)' : 'Regex';
+      const methodUsed = preview.data.extractionMethod === 'ai' ? 'AI' : 'Regex';
       toast.success(`Berhasil! Metode: ${methodUsed}`);
     } catch {
       setError('Upload atau OCR gagal. Pastikan backend jalan dan login masih aktif.');
@@ -152,7 +152,7 @@ export default function UploadPage() {
                     className={`method-btn ${extractionMethod === 'ai' ? 'active' : ''}`}
                     onClick={() => setExtractionMethod('ai')}
                   >
-                    AI (Gemini)
+                    AI
                   </button>
                   <button
                     type="button"
@@ -173,7 +173,7 @@ export default function UploadPage() {
               <div className="ocr-loading-spinner"></div>
               <p className="ocr-loading-text">Memproses OCR...</p>
               <p className="ocr-loading-hint">
-                {extractionMethod === 'ai' ? 'Menganalisis dengan AI Gemini' : 
+                {extractionMethod === 'ai' ? 'Menganalisis dengan AI' : 
                  extractionMethod === 'regex' ? 'Mengekstrak dengan Regex' : 
                  'Memilih metode terbaik...'}
               </p>
@@ -194,7 +194,7 @@ export default function UploadPage() {
                   Hasil OCR
                   {ocrResult?.extractionMethod && (
                     <span className={`extraction-badge ${ocrResult.extractionMethod}`}>
-                      {ocrResult.extractionMethod === 'ai' ? 'AI Gemini' : 'Regex'}
+                      {ocrResult.extractionMethod === 'ai' ? 'AI' : 'Regex'}
                     </span>
                   )}
                 </h3>

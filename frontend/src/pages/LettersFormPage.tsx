@@ -127,7 +127,7 @@ export default function LettersFormPage() {
           <h1>Input metadata surat</h1>
           {extractionMethod && (
             <p className="small-note">
-              Ekstraksi: {extractionMethod === 'ai' ? 'AI (Gemini)' : 'Regex'} 
+              Ekstraksi: {extractionMethod === 'ai' ? 'AI' : 'Regex'} 
               {extractionMethod === 'ai' && ' ✓'}
             </p>
           )}
