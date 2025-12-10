@@ -38,4 +38,8 @@ export class OcrPreviewDto {
   @ValidateNested()
   @Type(() => CropDto)
   crop?: CropDto;
+
+  @IsOptional()
+  @IsIn(['ai', 'regex', 'auto'])
+  extractionMethod?: 'ai' | 'regex' | 'auto';
 }

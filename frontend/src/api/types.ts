@@ -3,12 +3,16 @@ export interface OcrPreviewResponse {
   candidates: string[];
   tanggalSurat: string | null;
   namaPengirim: string | null;
+  alamatPengirim?: string | null;
+  teleponPengirim?: string | null;
+  namaPenerima?: string | null;
   senderConfidence: 'high' | 'medium' | 'low';
-  senderSource: 'header' | 'signature' | null;
+  senderSource: 'header' | 'signature' | 'ai' | null;
   perihal: string | null;
   nominalList: number[];
   totalNominal: number;
   ocrRawText: string;
+  extractionMethod?: 'ai' | 'regex';
 }
 
 export interface Letter {

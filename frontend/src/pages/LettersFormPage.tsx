@@ -11,9 +11,13 @@ interface LocationState {
     letterNumber: string | null;
     tanggalSurat: string | null;
     namaPengirim: string | null;
+    alamatPengirim?: string | null;
+    teleponPengirim?: string | null;
     senderConfidence?: 'high' | 'medium' | 'low';
+    senderSource?: 'header' | 'signature' | 'ai' | null;
     perihal: string | null;
     totalNominal: number;
+    extractionMethod?: 'ai' | 'regex';
   };
   uploadMeta?: { fileId: string }; // legacy
   originalMeta?: { fileId: string };
@@ -27,8 +31,8 @@ const getInitialForm = (state: LocationState) => {
       jenisDokumen: 'SURAT',
       tanggalSurat: state.ocrResult.tanggalSurat || '',
       namaPengirim: state.ocrResult.namaPengirim || '',
-      alamatPengirim: '',
-      teleponPengirim: '',
+      alamatPengirim: state.ocrResult.alamatPengirim || '',
+      teleponPengirim: state.ocrResult.teleponPengirim || '',
       perihal: state.ocrResult.perihal || '',
       totalNominal: state.ocrResult.totalNominal || 0,
     };
@@ -63,6 +67,7 @@ export default function LettersFormPage() {
 
   const [form, setForm] = useState(() => getInitialForm(state));
   const senderConfidence = state.ocrResult?.senderConfidence;
+  const extractionMethod = state.ocrResult?.extractionMethod;
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<string | null>(null);
   const [hasDraft, setHasDraft] = useState(
@@ -120,6 +125,12 @@ export default function LettersFormPage() {
         <div>
           <p className="eyebrow">Form Surat</p>
           <h1>Input metadata surat</h1>
+          {extractionMethod && (
+            <p className="small-note">
+              Ekstraksi: {extractionMethod === 'ai' ? 'AI (Gemini)' : 'Regex'} 
+              {extractionMethod === 'ai' && ' ✓'}
+            </p>
+          )}
         </div>
         <button type="button" className="ghost-btn" onClick={() => navigate(-1)}>
           Kembali

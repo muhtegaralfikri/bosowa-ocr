@@ -25,6 +25,7 @@ export default function UploadPage() {
   const [ocrResult, setOcrResult] = useState<OcrPreviewResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [extractionMethod, setExtractionMethod] = useState<'auto' | 'ai' | 'regex'>('auto');
 
   const fileLabel = useMemo(() => {
     if (!preparedFile) return '';
@@ -69,9 +70,11 @@ export default function UploadPage() {
 
       const preview = await api.post('/letters/ocr-preview', {
         fileId: ocrFileMeta.fileId,
+        extractionMethod,
       });
       setOcrResult(preview.data);
-      toast.success('Berhasil upload dan memproses OCR.');
+      const methodUsed = preview.data.extractionMethod === 'ai' ? 'AI (Gemini)' : 'Regex';
+      toast.success(`Berhasil! Metode: ${methodUsed}`);
     } catch {
       setError('Upload atau OCR gagal. Pastikan backend jalan dan login masih aktif.');
       toast.error('Upload atau OCR gagal. Pastikan backend jalan dan login masih aktif.');
@@ -133,6 +136,33 @@ export default function UploadPage() {
                 onResetToOriginal={() => setPreparedFile(sourceFile)}
               />
               <p className="small-note">File aktif: {fileLabel || '-'}</p>
+              
+              <div className="extraction-method-selector">
+                <p className="small-note">Metode Ekstraksi:</p>
+                <div className="method-buttons">
+                  <button
+                    type="button"
+                    className={`method-btn ${extractionMethod === 'auto' ? 'active' : ''}`}
+                    onClick={() => setExtractionMethod('auto')}
+                  >
+                    Auto
+                  </button>
+                  <button
+                    type="button"
+                    className={`method-btn ${extractionMethod === 'ai' ? 'active' : ''}`}
+                    onClick={() => setExtractionMethod('ai')}
+                  >
+                    AI (Gemini)
+                  </button>
+                  <button
+                    type="button"
+                    className={`method-btn ${extractionMethod === 'regex' ? 'active' : ''}`}
+                    onClick={() => setExtractionMethod('regex')}
+                  >
+                    Regex
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -142,7 +172,11 @@ export default function UploadPage() {
             <div className="ocr-loading">
               <div className="ocr-loading-spinner"></div>
               <p className="ocr-loading-text">Memproses OCR...</p>
-              <p className="ocr-loading-hint">Menganalisis dokumen dengan AI</p>
+              <p className="ocr-loading-hint">
+                {extractionMethod === 'ai' ? 'Menganalisis dengan AI Gemini' : 
+                 extractionMethod === 'regex' ? 'Mengekstrak dengan Regex' : 
+                 'Memilih metode terbaik...'}
+              </p>
             </div>
           )}
           {error && <div className="error-box">{error}</div>}
@@ -156,7 +190,14 @@ export default function UploadPage() {
                 </a>
               </div>
               <div>
-                <h3>Hasil OCR</h3>
+                <h3>
+                  Hasil OCR
+                  {ocrResult?.extractionMethod && (
+                    <span className={`extraction-badge ${ocrResult.extractionMethod}`}>
+                      {ocrResult.extractionMethod === 'ai' ? 'AI Gemini' : 'Regex'}
+                    </span>
+                  )}
+                </h3>
                 <pre className="code-box">
                   {ocrResult ? JSON.stringify(ocrResult, null, 2) : 'Belum ada hasil'}
                 </pre>
