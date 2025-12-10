@@ -145,8 +145,6 @@ export default function UploadPage() {
             <div className="grid">
               <div>
                 <h3>File Utuh</h3>
-                <p>ID: {originalMeta.fileId}</p>
-                <p>Path: {originalMeta.filePath}</p>
                 <a href={originalMeta.urlFull} target="_blank" rel="noreferrer">
                   Lihat gambar
                 </a>
@@ -160,7 +158,6 @@ export default function UploadPage() {
               {ocrMeta && preparedFile !== sourceFile && (
                 <div>
                   <h3>File OCR (crop)</h3>
-                  <p>ID: {ocrMeta.fileId}</p>
                   <a href={ocrMeta.urlFull} target="_blank" rel="noreferrer">
                     Lihat versi crop
                   </a>
