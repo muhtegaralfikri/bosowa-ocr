@@ -12,10 +12,13 @@ import {
   Upload,
   Users,
   X,
+  PenTool,
+  FileSignature,
 } from 'lucide-react';
 import logo from '../assets/bosowa-agensi.png';
 import { useAuth } from '../context/AuthContext';
 import OfflineIndicator from './OfflineIndicator';
+import NotificationBell from './notification/NotificationBell';
 
 const THEME_KEY = 'bosowa-ocr-theme';
 
@@ -23,6 +26,8 @@ const navItems = [
   { path: '/upload', label: 'Unggah', mobileLabel: 'Unggah', icon: Upload },
   { path: '/letters', label: 'Daftar Surat', mobileLabel: 'Surat', icon: FileText },
   { path: '/delete-requests', label: 'Permintaan Hapus', mobileLabel: 'Hapus', icon: Trash2 },
+  { path: '/pending-signatures', label: 'Menunggu TTD', mobileLabel: 'Inbox TTD', icon: FileSignature, manajemenOnly: true },
+  { path: '/signature-settings', label: 'Pengaturan TTD', mobileLabel: 'TTD Saya', icon: PenTool, manajemenOnly: true },
   { path: '/stats', label: 'Statistik', mobileLabel: 'Statistik', icon: LineChart, adminOnly: true },
   { path: '/users', label: 'Kelola User', mobileLabel: 'User', icon: Users, adminOnly: true },
   { path: '/audit-log', label: 'Audit Log', mobileLabel: 'Log', icon: History, adminOnly: true },
@@ -53,6 +58,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const visibleNavItems = navItems.filter((item) => {
     if (item.adminOnly && user?.role !== 'ADMIN') return false;
+    if ('manajemenOnly' in item && item.manajemenOnly && user?.role !== 'MANAJEMEN') return false;
     return true;
   });
 
@@ -66,6 +72,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <aside className="sidebar">
         <div className="sidebar-header">
           <img src={logo} alt="Bosowa Bandar Agency" className="sidebar-logo" />
+          <NotificationBell />
         </div>
 
         <nav className="sidebar-nav">
@@ -115,6 +122,11 @@ export default function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       <main className="main-content">
+        {/* Mobile Header with Notification */}
+        <div className="mobile-header">
+          <img src={logo} alt="Bosowa" className="mobile-logo" />
+          <NotificationBell />
+        </div>
         <div className="main-content-inner">
           {children}
         </div>

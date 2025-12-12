@@ -1,5 +1,5 @@
 export enum UserRole {
   ADMIN = 'ADMIN',
-  SEKRETARIS = 'SEKRETARIS',
-  COSM = 'COSM',
+  MANAJEMEN = 'MANAJEMEN',
+  USER = 'USER',
 }

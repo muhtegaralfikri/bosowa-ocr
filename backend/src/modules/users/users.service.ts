@@ -16,8 +16,12 @@ export class UsersService {
     private readonly usersRepo: Repository<User>,
   ) {}
 
-  async findAll(): Promise<Omit<User, 'password'>[]> {
-    const users = await this.usersRepo.find({ order: { createdAt: 'DESC' } });
+  async findAll(role?: UserRole): Promise<Omit<User, 'password'>[]> {
+    const where = role ? { role } : {};
+    const users = await this.usersRepo.find({
+      where,
+      order: { createdAt: 'DESC' },
+    });
     return users.map(({ password, ...rest }) => {
       void password;
       return rest;
@@ -33,7 +37,7 @@ export class UsersService {
     const user = this.usersRepo.create({
       username: dto.username,
       password: hashedPassword,
-      role: dto.role || UserRole.SEKRETARIS,
+      role: dto.role || UserRole.USER,
     });
     const saved = await this.usersRepo.save(user);
     const { password, ...rest } = saved;

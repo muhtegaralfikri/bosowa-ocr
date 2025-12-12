@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { createContext, useContext, useMemo, useState, useCallback } from 'react';
 import { AUTH_STORAGE_KEY } from '../api/client';
 
-type Role = 'ADMIN' | 'SEKRETARIS' | 'COSM';
+type Role = 'ADMIN' | 'MANAJEMEN' | 'USER';
 
 interface User {
   username: string;

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 import { FilesService } from '../files/files.service';
@@ -35,45 +40,49 @@ export class LettersService {
 
   async previewOcr(dto: OcrPreviewDto) {
     const file = await this.filesService.getFile(dto.fileId);
-    
+
     // Use Google Vision API if available, otherwise fallback to Tesseract
     let ocrRawText: string;
-    let ocrEngine: 'vision' | 'tesseract';
-    
+
     if (this.visionOcrService.isAvailable()) {
       try {
         this.logger.log('Using Google Vision API for OCR');
-        ocrRawText = await this.visionOcrService.recognizeDocument(file.filePath);
-        ocrEngine = 'vision';
-      } catch (error) {
+        ocrRawText = await this.visionOcrService.recognizeDocument(
+          file.filePath,
+        );
+      } catch {
         this.logger.warn('Vision API failed, falling back to Tesseract');
         ocrRawText = await this.ocrService.recognize(file.filePath);
-        ocrEngine = 'tesseract';
       }
     } else {
       this.logger.log('Using Tesseract for OCR (Vision API not configured)');
       ocrRawText = await this.ocrService.recognize(file.filePath);
-      ocrEngine = 'tesseract';
     }
 
     const method = dto.extractionMethod || 'auto';
-    
+
     // If user explicitly requested AI but it's not available, throw error
     if (method === 'ai' && !this.aiExtractionService.isAvailable()) {
-      throw new BadRequestException('AI extraction tidak tersedia. Pastikan GEMINI_API_KEY sudah diset di .env');
+      throw new BadRequestException(
+        'AI extraction tidak tersedia. Pastikan GEMINI_API_KEY sudah diset di .env',
+      );
     }
 
-    const useAI = method === 'ai' || (method === 'auto' && this.aiExtractionService.isAvailable());
+    const useAI =
+      method === 'ai' ||
+      (method === 'auto' && this.aiExtractionService.isAvailable());
 
     // Try AI extraction if requested or auto with available API
     if (useAI) {
-      const aiResult = await this.aiExtractionService.extractFromOcrText(ocrRawText);
-      
+      const aiResult =
+        await this.aiExtractionService.extractFromOcrText(ocrRawText);
+
       // If user explicitly chose AI, always return AI result
       // If auto mode, only use AI if it found meaningful data
-      const hasData = aiResult.letterNumber || aiResult.namaPengirim || aiResult.perihal;
+      const hasData =
+        aiResult.letterNumber || aiResult.namaPengirim || aiResult.perihal;
       const shouldUseAiResult = method === 'ai' || hasData;
-      
+
       if (shouldUseAiResult) {
         return {
           letterNumber: aiResult.letterNumber,
@@ -90,7 +99,12 @@ export class LettersService {
           totalNominal: aiResult.totalNominal,
           ocrRawText,
           ocrConfidence: {
-            overallScore: aiResult.confidence === 'high' ? 85 : aiResult.confidence === 'medium' ? 60 : 30,
+            overallScore:
+              aiResult.confidence === 'high'
+                ? 85
+                : aiResult.confidence === 'medium'
+                  ? 60
+                  : 30,
             overallConfidence: aiResult.confidence,
             details: {
               letterNumber: aiResult.letterNumber ? 25 : 0,

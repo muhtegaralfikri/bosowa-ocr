@@ -7,7 +7,7 @@ import api from '../api/client';
 interface User {
   id: string;
   username: string;
-  role: 'ADMIN' | 'SEKRETARIS' | 'COSM';
+  role: 'ADMIN' | 'MANAJEMEN' | 'USER';
   createdAt: string;
 }
 
@@ -15,7 +15,7 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [form, setForm] = useState({ username: '', password: '', role: 'SEKRETARIS' });
+  const [form, setForm] = useState({ username: '', password: '', role: 'USER' });
 
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
@@ -58,7 +58,7 @@ export default function UsersPage() {
 
   const openCreateModal = () => {
     setEditingUser(null);
-    setForm({ username: '', password: '', role: 'SEKRETARIS' });
+    setForm({ username: '', password: '', role: 'USER' });
     setShowModal(true);
   };
 
@@ -71,7 +71,7 @@ export default function UsersPage() {
   const closeModal = () => {
     setShowModal(false);
     setEditingUser(null);
-    setForm({ username: '', password: '', role: 'SEKRETARIS' });
+    setForm({ username: '', password: '', role: 'USER' });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -205,8 +205,8 @@ export default function UsersPage() {
                     value={form.role}
                     onChange={(e) => setForm({ ...form, role: e.target.value })}
                   >
-                    <option value="SEKRETARIS">SEKRETARIS</option>
-                    <option value="COSM">COSM</option>
+                    <option value="USER">USER</option>
+                    <option value="MANAJEMEN">MANAJEMEN</option>
                     <option value="ADMIN">ADMIN</option>
                   </select>
                 </label>

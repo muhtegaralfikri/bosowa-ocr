@@ -13,6 +13,9 @@ import { LettersModule } from './modules/letters/letters.module';
 import { OcrModule } from './modules/ocr/ocr.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { UsersModule } from './modules/users/users.module';
+import { SignaturesModule } from './modules/signatures/signatures.module';
+import { SignatureRequestsModule } from './modules/signature-requests/signature-requests.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -57,6 +60,7 @@ import { UsersModule } from './modules/users/users.module';
           database,
           autoLoadEntities: true,
           synchronize: process.env.NODE_ENV !== 'production',
+          timezone: 'Z', // Database stores UTC, don't convert
           // Connection Pool Settings (optimized for ~50 concurrent users)
           extra: {
             connectionLimit: 25,
@@ -78,6 +82,9 @@ import { UsersModule } from './modules/users/users.module';
     DeleteRequestsModule,
     EditLogsModule,
     StatsModule,
+    SignaturesModule,
+    SignatureRequestsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

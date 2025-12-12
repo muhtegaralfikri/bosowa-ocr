@@ -5,7 +5,16 @@ import { Toaster } from 'sonner';
 import './index.css';
 import App from './App.tsx';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // Data fresh selama 2 menit
+      gcTime: 1000 * 60 * 10, // Cache disimpan 10 menit
+      retry: 1, // Retry sekali jika gagal
+      refetchOnWindowFocus: false, // Tidak refetch saat focus window
+    },
+  },
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

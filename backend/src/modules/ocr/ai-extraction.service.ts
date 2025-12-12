@@ -31,7 +31,7 @@ export class AiExtractionService {
       this.provider = 'groq';
       this.logger.log('Groq AI initialized successfully');
     }
-    
+
     // Fallback to Gemini
     const geminiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (geminiKey && !this.provider) {
@@ -39,7 +39,7 @@ export class AiExtractionService {
       this.provider = 'gemini';
       this.logger.log('Gemini AI initialized successfully');
     }
-    
+
     if (!this.provider) {
       this.logger.warn('No AI API key found (GROQ_API_KEY or GEMINI_API_KEY)');
     }
@@ -75,7 +75,9 @@ export class AiExtractionService {
 
       this.logger.log('AI response received, parsing...');
       const parsed = this.parseResponse(response);
-      this.logger.log(`AI extraction complete. Found: letterNumber=${parsed.letterNumber}, perihal=${parsed.perihal}`);
+      this.logger.log(
+        `AI extraction complete. Found: letterNumber=${parsed.letterNumber}, perihal=${parsed.perihal}`,
+      );
       return parsed;
     } catch (error: any) {
       const message = error?.message || JSON.stringify(error);
@@ -143,10 +145,13 @@ Jawab dalam format JSON saja:`;
   private parseResponse(response: string): ExtractedLetterData {
     try {
       let jsonStr = response.trim();
-      
+
       // Remove markdown code blocks if present
       if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/```json?\n?/g, '').replace(/```$/g, '').trim();
+        jsonStr = jsonStr
+          .replace(/```json?\n?/g, '')
+          .replace(/```$/g, '')
+          .trim();
       }
 
       const parsed = JSON.parse(jsonStr);
@@ -170,7 +175,11 @@ Jawab dalam format JSON saja:`;
   }
 
   private sanitizeString(value: unknown): string | null {
-    if (typeof value === 'string' && value.trim() && value.toLowerCase() !== 'null') {
+    if (
+      typeof value === 'string' &&
+      value.trim() &&
+      value.toLowerCase() !== 'null'
+    ) {
       return value.trim();
     }
     return null;
@@ -196,9 +205,7 @@ Jawab dalam format JSON saja:`;
 
   private sanitizeNumberArray(value: unknown): number[] {
     if (Array.isArray(value)) {
-      return value
-        .map((v) => this.sanitizeNumber(v))
-        .filter((n) => n > 0);
+      return value.map((v) => this.sanitizeNumber(v)).filter((n) => n > 0);
     }
     return [];
   }
