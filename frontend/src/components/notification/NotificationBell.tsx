@@ -172,10 +172,18 @@ export default function NotificationBell() {
           z-index: 1000;
           overflow: hidden;
         }
-        @media (max-width: 400px) {
+        @media (max-width: 768px) {
           .notification-dropdown {
-            width: 280px;
-            left: -10px;
+            position: fixed;
+            top: 60px;
+            bottom: auto;
+            left: 1rem;
+            right: 1rem;
+            width: auto;
+            max-height: 60vh;
+          }
+          .dropdown-body {
+            max-height: calc(60vh - 50px);
           }
         }
         .dropdown-header {

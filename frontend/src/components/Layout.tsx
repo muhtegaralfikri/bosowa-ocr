@@ -122,6 +122,11 @@ export default function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       <main className="main-content">
+        {/* Mobile Header with Notification */}
+        <div className="mobile-header">
+          <img src={logo} alt="Bosowa" className="mobile-logo" />
+          <NotificationBell />
+        </div>
         <div className="main-content-inner">
           {children}
         </div>

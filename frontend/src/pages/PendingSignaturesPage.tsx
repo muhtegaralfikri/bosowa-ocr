@@ -476,6 +476,81 @@ export default function PendingSignaturesPage() {
           display: flex;
           gap: 0.5rem;
         }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+          .pending-card {
+            flex-direction: column;
+            padding: 1rem;
+          }
+          .pending-info {
+            width: 100%;
+          }
+          .pending-info h3 {
+            font-size: 1rem;
+          }
+          .pending-actions {
+            width: 100%;
+            justify-content: stretch;
+          }
+          .pending-actions .btn {
+            flex: 1;
+            justify-content: center;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.85rem;
+          }
+          .sign-modal-overlay {
+            padding: 0;
+          }
+          .sign-modal {
+            border-radius: 0;
+            max-height: 100vh;
+            height: 100vh;
+          }
+          .sign-modal-header {
+            padding: 1rem;
+          }
+          .sign-modal-header h2 {
+            font-size: 1.1rem;
+          }
+          .sign-modal-info {
+            padding: 0 1rem;
+            font-size: 0.8rem;
+          }
+          .sign-modal-content {
+            padding: 0.75rem 1rem;
+          }
+          .document-preview img {
+            max-height: 50vh;
+          }
+          .sign-modal-footer {
+            padding: 0.75rem 1rem;
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .position-info {
+            text-align: center;
+            font-size: 0.75rem;
+          }
+          .sign-modal-actions {
+            width: 100%;
+          }
+          .sign-modal-actions .btn {
+            flex: 1;
+            justify-content: center;
+            padding: 0.875rem;
+          }
+          .signature-draggable {
+            min-width: 80px;
+            min-height: 40px;
+          }
+          .resize-handle {
+            width: 20px;
+            height: 20px;
+            right: -10px;
+            bottom: -10px;
+          }
+        }
       `}</style>
     </div>
   );

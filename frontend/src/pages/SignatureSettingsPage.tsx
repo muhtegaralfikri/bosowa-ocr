@@ -225,6 +225,28 @@ export default function SignatureSettingsPage() {
           background: #dcfce7;
           color: #15803d;
         }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+          .signature-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.75rem;
+          }
+          .signature-card {
+            padding: 0.75rem;
+          }
+          .signature-card img {
+            max-height: 80px;
+          }
+          .signature-actions {
+            width: 100%;
+            justify-content: center;
+          }
+          .btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+          }
+        }
       `}</style>
     </div>
   );

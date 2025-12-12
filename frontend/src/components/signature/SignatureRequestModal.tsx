@@ -262,6 +262,40 @@ export default function SignatureRequestModal({
             padding: 1rem 1.5rem;
             border-top: 1px solid #e5e7eb;
           }
+          
+          /* Mobile Responsive */
+          @media (max-width: 768px) {
+            .modal-overlay {
+              padding: 0;
+              align-items: flex-end;
+            }
+            .modal {
+              width: 100%;
+              max-width: 100%;
+              border-radius: 12px 12px 0 0;
+              max-height: 85vh;
+            }
+            .modal-header {
+              padding: 1rem;
+            }
+            .modal-header h2 {
+              font-size: 1.1rem;
+            }
+            .modal-body {
+              padding: 1rem;
+            }
+            .user-chip {
+              padding: 0.625rem 0.875rem;
+            }
+            .modal-footer {
+              padding: 1rem;
+            }
+            .modal-footer .btn {
+              flex: 1;
+              justify-content: center;
+              padding: 0.875rem;
+            }
+          }
         `}</style>
       </div>
     </div>

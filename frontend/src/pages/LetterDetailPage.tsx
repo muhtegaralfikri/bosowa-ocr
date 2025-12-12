@@ -384,6 +384,30 @@ export default function LetterDetailPage() {
         .download-signed-btn:hover {
           background: #d1d5db;
         }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+          .signature-status-section {
+            padding: 1rem;
+            margin-top: 1.5rem;
+          }
+          .signature-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+          }
+          .signature-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .view-signed-btn,
+          .download-signed-btn {
+            flex: 1;
+            justify-content: center;
+            padding: 0.5rem;
+          }
+        }
       `}</style>
     </section>
   );
