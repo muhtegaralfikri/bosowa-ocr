@@ -2,14 +2,12 @@ import { useRef, useState, useEffect } from 'react';
 
 interface SignatureCanvasProps {
   onSave: (dataUrl: string) => void;
-  onCancel?: () => void;
   width?: number;
   height?: number;
 }
 
 export default function SignatureCanvas({
   onSave,
-  onCancel,
   width = 400,
   height = 200,
 }: SignatureCanvasProps) {
@@ -104,11 +102,8 @@ export default function SignatureCanvas({
 
   return (
     <div className="signature-canvas-container">
-      <div className="canvas-wrapper" style={{
-        background: `repeating-conic-gradient(#e5e5e5 0% 25%, #fff 0% 50%) 50% / 20px 20px`,
-        borderRadius: '8px',
-        display: 'inline-block',
-      }}>
+      <p className="canvas-hint">Gambar tanda tangan Anda di area bawah ini</p>
+      <div className="canvas-wrapper">
         <canvas
           ref={canvasRef}
           width={width}
@@ -120,32 +115,66 @@ export default function SignatureCanvas({
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
-          style={{
-            border: '2px solid #ccc',
-            borderRadius: '8px',
-            touchAction: 'none',
-            cursor: 'crosshair',
-            maxWidth: '100%',
-            display: 'block',
-          }}
         />
       </div>
-      <p style={{ color: '#666', fontSize: '0.875rem', margin: '0.5rem 0' }}>
-        Gambar tanda tangan Anda di atas
-      </p>
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+      <div className="canvas-actions">
         <button type="button" onClick={clear} className="btn btn-secondary">
           Hapus
         </button>
         <button type="button" onClick={save} disabled={!hasDrawn} className="btn btn-primary">
-          Simpan
+          Simpan Tanda Tangan
         </button>
-        {onCancel && (
-          <button type="button" onClick={onCancel} className="btn btn-ghost">
-            Batal
-          </button>
-        )}
       </div>
+      
+      <style>{`
+        .signature-canvas-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .canvas-hint {
+          margin: 0 0 0.75rem;
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+        }
+        .canvas-wrapper {
+          background: repeating-conic-gradient(#e5e5e5 0% 25%, #fff 0% 50%) 50% / 20px 20px;
+          border-radius: 12px;
+          display: inline-block;
+          border: 2px dashed var(--border-color);
+          overflow: hidden;
+        }
+        .canvas-wrapper canvas {
+          display: block;
+          touch-action: none;
+          cursor: crosshair;
+          max-width: 100%;
+        }
+        .canvas-actions {
+          display: flex;
+          gap: 0.75rem;
+          margin-top: 1rem;
+          width: 100%;
+          max-width: 400px;
+        }
+        .canvas-actions .btn {
+          flex: 1;
+          justify-content: center;
+        }
+        
+        @media (max-width: 768px) {
+          .canvas-wrapper {
+            width: 100%;
+          }
+          .canvas-wrapper canvas {
+            width: 100%;
+            height: auto;
+          }
+          .canvas-actions {
+            max-width: 100%;
+          }
+        }
+      `}</style>
     </div>
   );
 }

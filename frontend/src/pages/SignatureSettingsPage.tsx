@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Trash2, Star, Upload, Pencil } from 'lucide-react';
+import { Trash2, Star, Upload, Pencil, ImagePlus } from 'lucide-react';
 import {
   getMySignatures,
   uploadSignature,
@@ -16,8 +16,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 export default function SignatureSettingsPage() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showCanvas, setShowCanvas] = useState(false);
+  const [activeTab, setActiveTab] = useState<'upload' | 'draw'>('upload');
   const [isDefaultNew, setIsDefaultNew] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
 
   const { data: signatures = [], isLoading } = useQuery({
     queryKey: ['my-signatures'],
@@ -37,7 +38,6 @@ export default function SignatureSettingsPage() {
     mutationFn: (base64: string) => drawSignature(base64, isDefaultNew),
     onSuccess: () => {
       toast.success('Tanda tangan berhasil disimpan');
-      setShowCanvas(false);
       queryClient.invalidateQueries({ queryKey: ['my-signatures'] });
     },
     onError: () => toast.error('Gagal menyimpan tanda tangan'),
@@ -61,21 +61,37 @@ export default function SignatureSettingsPage() {
     onError: () => toast.error('Gagal menghapus tanda tangan'),
   });
 
+  const processFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('File harus berupa gambar');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Ukuran file maksimal 2MB');
+      return;
+    }
+    uploadMutation.mutate(file);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast.error('File harus berupa gambar');
-        return;
-      }
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error('Ukuran file maksimal 2MB');
-        return;
-      }
-      uploadMutation.mutate(file);
-    }
+    if (file) processFile(file);
     e.target.value = '';
   };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => setIsDragging(false);
 
   const handleSaveDrawing = (dataUrl: string) => {
     drawMutation.mutate(dataUrl);
@@ -84,49 +100,71 @@ export default function SignatureSettingsPage() {
   return (
     <div className="page-container">
       <h1>Pengaturan Tanda Tangan</h1>
-      <p style={{ color: '#666', marginBottom: '2rem' }}>
+      <p className="page-subtitle">
         Kelola tanda tangan digital Anda. Anda dapat upload gambar atau menggambar langsung.
       </p>
 
-      <div className="card" style={{ marginBottom: '2rem' }}>
+      <div className="card add-signature-card">
         <h2>Tambah Tanda Tangan Baru</h2>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div className="default-checkbox">
+          <label>
             <input
               type="checkbox"
               checked={isDefaultNew}
               onChange={(e) => setIsDefaultNew(e.target.checked)}
             />
-            Jadikan sebagai tanda tangan default
+            <span>Jadikan sebagai tanda tangan default</span>
           </label>
         </div>
 
-        {!showCanvas ? (
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              style={{ display: 'none' }}
-            />
-            <button
-              className="btn btn-primary"
+        <div className="tab-buttons">
+          <button
+            className={`tab-btn ${activeTab === 'upload' ? 'active' : ''}`}
+            onClick={() => setActiveTab('upload')}
+          >
+            <Upload size={18} />
+            Upload Gambar
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'draw' ? 'active' : ''}`}
+            onClick={() => setActiveTab('draw')}
+          >
+            <Pencil size={18} />
+            Gambar di Layar
+          </button>
+        </div>
+
+        <div className="tab-content">
+          {activeTab === 'upload' ? (
+            <div
+              className={`upload-zone ${isDragging ? 'dragging' : ''}`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
-              disabled={uploadMutation.isPending}
             >
-              <Upload size={18} />
-              Upload Gambar
-            </button>
-            <button className="btn btn-secondary" onClick={() => setShowCanvas(true)}>
-              <Pencil size={18} />
-              Gambar di Layar
-            </button>
-          </div>
-        ) : (
-          <SignatureCanvas onSave={handleSaveDrawing} onCancel={() => setShowCanvas(false)} />
-        )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+              />
+              <div className="upload-icon">
+                <ImagePlus size={48} strokeWidth={1.5} />
+              </div>
+              <p className="upload-text">
+                {uploadMutation.isPending ? 'Mengupload...' : 'Klik atau seret gambar ke sini'}
+              </p>
+              <p className="upload-hint">PNG, JPG, atau GIF (Maks 2MB)</p>
+            </div>
+          ) : (
+            <div className="draw-zone">
+              <SignatureCanvas onSave={handleSaveDrawing} />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="card">
@@ -188,6 +226,104 @@ export default function SignatureSettingsPage() {
       </div>
 
       <style>{`
+        .page-subtitle {
+          color: var(--text-secondary);
+          margin-bottom: 2rem;
+        }
+        .add-signature-card {
+          margin-bottom: 2rem;
+        }
+        .default-checkbox {
+          margin-bottom: 1.5rem;
+        }
+        .default-checkbox label {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          cursor: pointer;
+          color: var(--text-primary);
+        }
+        .default-checkbox input[type="checkbox"] {
+          width: 18px;
+          height: 18px;
+          accent-color: var(--accent-primary);
+        }
+        
+        /* Tab Buttons */
+        .tab-buttons {
+          display: flex;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+          border-bottom: 2px solid var(--border-color);
+          padding-bottom: 0;
+        }
+        .tab-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.25rem;
+          background: transparent;
+          border: none;
+          border-bottom: 2px solid transparent;
+          margin-bottom: -2px;
+          color: var(--text-secondary);
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .tab-btn:hover {
+          color: var(--text-primary);
+        }
+        .tab-btn.active {
+          color: var(--accent-primary);
+          border-bottom-color: var(--accent-primary);
+        }
+        
+        /* Tab Content */
+        .tab-content {
+          min-height: 220px;
+        }
+        
+        /* Upload Zone */
+        .upload-zone {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 2.5rem 2rem;
+          border: 2px dashed var(--border-color);
+          border-radius: 12px;
+          background: var(--bg-primary);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .upload-zone:hover,
+        .upload-zone.dragging {
+          border-color: var(--accent-primary);
+          background: var(--accent-light);
+        }
+        .upload-icon {
+          color: var(--accent-primary);
+          margin-bottom: 1rem;
+        }
+        .upload-text {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 500;
+          color: var(--text-primary);
+        }
+        .upload-hint {
+          margin: 0.5rem 0 0;
+          font-size: 0.85rem;
+          color: var(--text-muted);
+        }
+        
+        /* Draw Zone */
+        .draw-zone {
+          padding: 1rem 0;
+        }
+        
+        /* Signature Grid */
         .signature-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -195,7 +331,7 @@ export default function SignatureSettingsPage() {
         }
         .signature-card {
           border: 2px solid var(--border-color);
-          border-radius: 8px;
+          border-radius: 12px;
           padding: 1rem;
           display: flex;
           flex-direction: column;
@@ -203,6 +339,10 @@ export default function SignatureSettingsPage() {
           gap: 0.5rem;
           position: relative;
           background: var(--bg-secondary);
+          transition: border-color 0.2s;
+        }
+        .signature-card:hover {
+          border-color: var(--accent-primary);
         }
         .signature-card.is-default {
           border-color: #22c55e;
@@ -210,6 +350,7 @@ export default function SignatureSettingsPage() {
         }
         .signature-card img {
           background: #fff;
+          border-radius: 8px;
         }
         .signature-actions {
           display: flex;
@@ -232,6 +373,24 @@ export default function SignatureSettingsPage() {
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
+          .tab-buttons {
+            flex-direction: column;
+            border-bottom: none;
+            gap: 0.5rem;
+          }
+          .tab-btn {
+            justify-content: center;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 0;
+          }
+          .tab-btn.active {
+            background: var(--accent-light);
+            border-color: var(--accent-primary);
+          }
+          .upload-zone {
+            padding: 2rem 1rem;
+          }
           .signature-grid {
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 0.75rem;
@@ -245,10 +404,6 @@ export default function SignatureSettingsPage() {
           .signature-actions {
             width: 100%;
             justify-content: center;
-          }
-          .btn {
-            padding: 0.75rem 1rem;
-            font-size: 0.9rem;
           }
         }
       `}</style>
