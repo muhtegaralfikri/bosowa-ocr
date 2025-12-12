@@ -227,8 +227,8 @@ export default function PendingSignaturesPage() {
           <div className="sign-modal" onClick={(e) => e.stopPropagation()}>
             <div className="sign-modal-header">
               <h2>Pilih Posisi Tanda Tangan</h2>
-              <button className="btn btn-ghost" onClick={() => setSelectedRequest(null)}>
-                <X size={20} />
+              <button className="modal-close-btn" onClick={() => setSelectedRequest(null)}>
+                <X size={22} />
               </button>
             </div>
             <p className="sign-modal-info">
@@ -281,16 +281,17 @@ export default function PendingSignaturesPage() {
                 Geser TTD untuk posisi, tarik sudut kanan bawah untuk resize
               </p>
               <div className="sign-modal-actions">
-                <button className="btn btn-ghost" onClick={() => setSelectedRequest(null)}>
-                  Batal
+                <button className="modal-btn modal-btn-secondary" onClick={() => setSelectedRequest(null)}>
+                  <X size={18} />
+                  <span>Batal</span>
                 </button>
                 <button
-                  className="btn btn-success"
+                  className="modal-btn modal-btn-primary"
                   onClick={handleConfirmSign}
                   disabled={signMutation.isPending || !defaultSignature}
                 >
-                  <Check size={16} />
-                  {signMutation.isPending ? 'Memproses...' : 'Tandatangani'}
+                  <Check size={18} />
+                  <span>{signMutation.isPending ? 'Memproses...' : 'Tandatangani'}</span>
                 </button>
               </div>
             </div>
@@ -428,6 +429,23 @@ export default function PendingSignaturesPage() {
           font-size: 1.25rem;
           color: var(--text-primary);
         }
+        .modal-close-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border: none;
+          border-radius: 10px;
+          background: var(--bg-hover);
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .modal-close-btn:hover {
+          background: var(--border-color);
+          color: var(--text-primary);
+        }
         .sign-modal-info {
           padding: 0 1.5rem;
           margin: 1rem 0 0;
@@ -504,7 +522,39 @@ export default function PendingSignaturesPage() {
         }
         .sign-modal-actions {
           display: flex;
+          gap: 0.75rem;
+        }
+        .modal-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
           gap: 0.5rem;
+          padding: 0.75rem 1.5rem;
+          border-radius: 10px;
+          font-size: 0.95rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+        }
+        .modal-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .modal-btn-secondary {
+          background: var(--bg-hover);
+          color: var(--text-primary);
+          border: 1px solid var(--border-color);
+        }
+        .modal-btn-secondary:hover:not(:disabled) {
+          background: var(--border-color);
+        }
+        .modal-btn-primary {
+          background: #22c55e;
+          color: white;
+        }
+        .modal-btn-primary:hover:not(:disabled) {
+          background: #16a34a;
         }
         
         /* Mobile Responsive */
@@ -582,10 +632,10 @@ export default function PendingSignaturesPage() {
           .sign-modal-actions {
             width: 100%;
           }
-          .sign-modal-actions .btn {
+          .modal-btn {
             flex: 1;
-            justify-content: center;
-            padding: 0.875rem;
+            padding: 0.875rem 1rem;
+            font-size: 0.9rem;
           }
           .signature-draggable {
             min-width: 80px;
