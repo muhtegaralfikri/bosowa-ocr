@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import { Trash2, Save } from 'lucide-react';
 
 interface SignatureCanvasProps {
   onSave: (dataUrl: string) => void;
@@ -118,11 +119,13 @@ export default function SignatureCanvas({
         />
       </div>
       <div className="canvas-actions">
-        <button type="button" onClick={clear} className="btn btn-secondary">
-          Hapus
+        <button type="button" onClick={clear} className="canvas-btn canvas-btn-secondary">
+          <Trash2 size={18} />
+          <span>Hapus</span>
         </button>
-        <button type="button" onClick={save} disabled={!hasDrawn} className="btn btn-primary">
-          Simpan Tanda Tangan
+        <button type="button" onClick={save} disabled={!hasDrawn} className="canvas-btn canvas-btn-primary">
+          <Save size={18} />
+          <span>Simpan Tanda Tangan</span>
         </button>
       </div>
       
@@ -153,13 +156,42 @@ export default function SignatureCanvas({
         .canvas-actions {
           display: flex;
           gap: 0.75rem;
-          margin-top: 1rem;
+          margin-top: 1.25rem;
           width: 100%;
           max-width: 400px;
         }
-        .canvas-actions .btn {
+        .canvas-btn {
           flex: 1;
+          display: flex;
+          align-items: center;
           justify-content: center;
+          gap: 0.5rem;
+          padding: 0.875rem 1.25rem;
+          border-radius: 10px;
+          font-size: 0.95rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+        }
+        .canvas-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .canvas-btn-secondary {
+          background: var(--bg-hover);
+          color: var(--text-primary);
+          border: 1px solid var(--border-color);
+        }
+        .canvas-btn-secondary:hover:not(:disabled) {
+          background: var(--border-color);
+        }
+        .canvas-btn-primary {
+          background: var(--accent-primary);
+          color: white;
+        }
+        .canvas-btn-primary:hover:not(:disabled) {
+          background: var(--accent-secondary);
         }
         
         @media (max-width: 768px) {
@@ -172,6 +204,9 @@ export default function SignatureCanvas({
           }
           .canvas-actions {
             max-width: 100%;
+          }
+          .canvas-btn {
+            padding: 1rem;
           }
         }
       `}</style>

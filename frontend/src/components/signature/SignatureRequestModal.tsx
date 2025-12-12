@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { X, UserPlus, Trash2 } from 'lucide-react';
+import { X, UserPlus, Trash2, Send } from 'lucide-react';
 import { createSignatureRequest, getManajemenUsers, type SignatureAssignment } from '../../api/signatures';
 import type { User } from '../../api/types';
 
@@ -130,16 +130,18 @@ export default function SignatureRequestModal({
         </div>
 
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
-            Batal
+          <button type="button" className="modal-btn modal-btn-secondary" onClick={onClose}>
+            <X size={18} />
+            <span>Batal</span>
           </button>
           <button
             type="button"
-            className="btn btn-primary"
+            className="modal-btn modal-btn-primary"
             onClick={handleSubmit}
             disabled={createMutation.isPending || assignments.length === 0}
           >
-            {createMutation.isPending ? 'Mengirim...' : 'Kirim Permintaan'}
+            <Send size={18} />
+            <span>{createMutation.isPending ? 'Mengirim...' : 'Kirim Permintaan'}</span>
           </button>
         </div>
 
@@ -264,10 +266,43 @@ export default function SignatureRequestModal({
           }
           .modal-footer {
             display: flex;
-            justify-content: flex-end;
             gap: 0.75rem;
             padding: 1rem 1.5rem;
             border-top: 1px solid var(--border-color);
+            background: var(--bg-primary);
+          }
+          .modal-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.25rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+          }
+          .modal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+          .modal-btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+          }
+          .modal-btn-secondary:hover:not(:disabled) {
+            background: var(--border-color);
+          }
+          .modal-btn-primary {
+            background: var(--accent-primary);
+            color: white;
+          }
+          .modal-btn-primary:hover:not(:disabled) {
+            background: var(--accent-secondary);
           }
           
           /* Mobile Responsive */
@@ -297,10 +332,8 @@ export default function SignatureRequestModal({
             .modal-footer {
               padding: 1rem;
             }
-            .modal-footer .btn {
-              flex: 1;
-              justify-content: center;
-              padding: 0.875rem;
+            .modal-btn {
+              padding: 1rem;
             }
           }
         `}</style>
