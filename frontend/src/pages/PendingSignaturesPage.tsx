@@ -304,7 +304,7 @@ export default function PendingSignaturesPage() {
           align-items: center;
           justify-content: center;
           padding: 3rem;
-          color: #666;
+          color: var(--text-secondary);
           gap: 1rem;
         }
         .pending-list {
@@ -313,8 +313,8 @@ export default function PendingSignaturesPage() {
           gap: 1rem;
         }
         .pending-card {
-          background: white;
-          border: 1px solid #e5e7eb;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
           border-radius: 8px;
           padding: 1.5rem;
           display: flex;
@@ -329,18 +329,19 @@ export default function PendingSignaturesPage() {
           gap: 0.5rem;
           margin: 0 0 0.5rem;
           font-size: 1.1rem;
+          color: var(--text-primary);
         }
         .pending-meta {
           display: flex;
           align-items: center;
           gap: 0.25rem;
-          color: #666;
+          color: var(--text-secondary);
           font-size: 0.875rem;
           margin: 0;
         }
         .pending-perihal,
         .pending-notes {
-          color: #444;
+          color: var(--text-secondary);
           font-size: 0.875rem;
           margin: 0.5rem 0 0;
         }
@@ -379,7 +380,7 @@ export default function PendingSignaturesPage() {
           padding: 1rem;
         }
         .sign-modal {
-          background: white;
+          background: var(--bg-secondary);
           border-radius: 12px;
           width: 100%;
           max-width: 800px;
@@ -393,16 +394,17 @@ export default function PendingSignaturesPage() {
           justify-content: space-between;
           align-items: center;
           padding: 1rem 1.5rem;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid var(--border-color);
         }
         .sign-modal-header h2 {
           margin: 0;
           font-size: 1.25rem;
+          color: var(--text-primary);
         }
         .sign-modal-info {
           padding: 0 1.5rem;
           margin: 1rem 0 0;
-          color: #666;
+          color: var(--text-secondary);
           font-size: 0.875rem;
         }
         .sign-modal-content {
@@ -413,9 +415,10 @@ export default function PendingSignaturesPage() {
         .document-preview {
           position: relative;
           display: inline-block;
-          border: 2px dashed #ccc;
+          border: 2px dashed var(--border-color);
           border-radius: 8px;
           overflow: hidden;
+          background: var(--bg-primary);
         }
         .document-preview img {
           max-width: 100%;
@@ -425,7 +428,7 @@ export default function PendingSignaturesPage() {
         .signature-draggable {
           position: absolute;
           transform: translate(-50%, -50%);
-          border: 2px dashed #3b82f6;
+          border: 2px dashed var(--accent-primary);
           border-radius: 4px;
           background: rgba(255, 255, 255, 0.1);
           user-select: none;
@@ -443,24 +446,24 @@ export default function PendingSignaturesPage() {
           bottom: -6px;
           width: 12px;
           height: 12px;
-          background: #3b82f6;
+          background: var(--accent-primary);
           border-radius: 2px;
           cursor: nwse-resize;
         }
         .resize-handle:hover {
-          background: #2563eb;
+          background: var(--accent-secondary);
         }
         .no-signature-warning {
           text-align: center;
           padding: 2rem;
-          color: #666;
+          color: var(--text-secondary);
         }
         .no-signature-warning p {
           margin-bottom: 1rem;
         }
         .sign-modal-footer {
           padding: 1rem 1.5rem;
-          border-top: 1px solid #e5e7eb;
+          border-top: 1px solid var(--border-color);
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -469,7 +472,7 @@ export default function PendingSignaturesPage() {
         }
         .position-info {
           margin: 0;
-          color: #666;
+          color: var(--text-secondary);
           font-size: 0.875rem;
         }
         .sign-modal-actions {

@@ -304,7 +304,7 @@ export default function LetterDetailPage() {
         .signature-status-section {
           margin-top: 2rem;
           padding: 1.5rem;
-          background: #f9fafb;
+          background: var(--bg-hover);
           border-radius: 8px;
         }
         .signature-status-section h3 {
@@ -313,6 +313,7 @@ export default function LetterDetailPage() {
           gap: 0.5rem;
           margin: 0 0 1rem;
           font-size: 1rem;
+          color: var(--text-primary);
         }
         .signature-list {
           display: flex;
@@ -324,14 +325,15 @@ export default function LetterDetailPage() {
           justify-content: space-between;
           align-items: center;
           padding: 0.75rem 1rem;
-          background: white;
+          background: var(--bg-secondary);
           border-radius: 6px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid var(--border-color);
         }
         .signature-user {
           display: flex;
           align-items: center;
           gap: 0.5rem;
+          color: var(--text-primary);
         }
         .status-icon.pending { color: #f59e0b; }
         .status-icon.signed { color: #22c55e; }
@@ -371,18 +373,18 @@ export default function LetterDetailPage() {
           transition: background 0.2s;
         }
         .view-signed-btn {
-          background: #dbeafe;
-          color: #1e40af;
+          background: var(--accent-light);
+          color: var(--accent-primary);
         }
         .view-signed-btn:hover {
-          background: #bfdbfe;
+          background: var(--bg-hover);
         }
         .download-signed-btn {
-          background: #e5e7eb;
-          color: #374151;
+          background: var(--bg-hover);
+          color: var(--text-secondary);
         }
         .download-signed-btn:hover {
-          background: #d1d5db;
+          background: var(--border-color);
         }
         
         /* Mobile Responsive */

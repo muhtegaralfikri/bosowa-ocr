@@ -194,7 +194,7 @@ export default function SignatureSettingsPage() {
           gap: 1rem;
         }
         .signature-card {
-          border: 2px solid #e5e7eb;
+          border: 2px solid var(--border-color);
           border-radius: 8px;
           padding: 1rem;
           display: flex;
@@ -202,10 +202,14 @@ export default function SignatureSettingsPage() {
           align-items: center;
           gap: 0.5rem;
           position: relative;
+          background: var(--bg-secondary);
         }
         .signature-card.is-default {
           border-color: #22c55e;
-          background: #f0fdf4;
+          background: var(--bg-hover);
+        }
+        .signature-card img {
+          background: #fff;
         }
         .signature-actions {
           display: flex;

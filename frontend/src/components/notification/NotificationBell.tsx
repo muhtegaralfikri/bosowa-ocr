@@ -165,10 +165,10 @@ export default function NotificationBell() {
           left: 0;
           width: 320px;
           max-height: 400px;
-          background: white;
-          border: 1px solid #e5e7eb;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
           border-radius: 8px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+          box-shadow: var(--shadow-panel);
           z-index: 1000;
           overflow: hidden;
         }
@@ -191,13 +191,14 @@ export default function NotificationBell() {
           justify-content: space-between;
           align-items: center;
           padding: 0.75rem 1rem;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid var(--border-color);
           font-weight: 600;
+          color: var(--text-primary);
         }
         .mark-all-btn {
           background: transparent;
           border: none;
-          color: #3b82f6;
+          color: var(--accent-primary);
           cursor: pointer;
           font-size: 0.75rem;
         }
@@ -208,27 +209,27 @@ export default function NotificationBell() {
         .empty-notif {
           padding: 2rem;
           text-align: center;
-          color: #666;
+          color: var(--text-secondary);
         }
         .notif-item {
           display: flex;
           gap: 0.75rem;
           padding: 0.75rem 1rem;
-          border-bottom: 1px solid #f3f4f6;
+          border-bottom: 1px solid var(--border-light);
           cursor: pointer;
           transition: background 0.2s;
         }
         .notif-item:hover {
-          background: #f9fafb;
+          background: var(--bg-hover);
         }
         .notif-item.unread {
-          background: #eff6ff;
+          background: var(--accent-light);
         }
         .notif-icon {
           flex-shrink: 0;
           margin-top: 0.2rem;
         }
-        .notif-icon.request { color: #3b82f6; }
+        .notif-icon.request { color: var(--accent-primary); }
         .notif-icon.success { color: #22c55e; }
         .notif-icon.danger { color: #ef4444; }
         .notif-content {
@@ -239,10 +240,11 @@ export default function NotificationBell() {
           font-weight: 600;
           font-size: 0.875rem;
           margin: 0;
+          color: var(--text-primary);
         }
         .notif-message {
           font-size: 0.8rem;
-          color: #666;
+          color: var(--text-secondary);
           margin: 0.25rem 0;
           white-space: nowrap;
           overflow: hidden;
@@ -250,7 +252,7 @@ export default function NotificationBell() {
         }
         .notif-time {
           font-size: 0.7rem;
-          color: #999;
+          color: var(--text-muted);
         }
       `}</style>
     </div>

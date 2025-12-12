@@ -157,7 +157,7 @@ export default function SignatureRequestModal({
             z-index: 1000;
           }
           .modal {
-            background: white;
+            background: var(--bg-secondary);
             border-radius: 12px;
             width: 90%;
             max-width: 500px;
@@ -171,11 +171,12 @@ export default function SignatureRequestModal({
             justify-content: space-between;
             align-items: center;
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--border-color);
           }
           .modal-header h2 {
             margin: 0;
             font-size: 1.25rem;
+            color: var(--text-primary);
           }
           .close-btn {
             background: none;
@@ -183,16 +184,17 @@ export default function SignatureRequestModal({
             cursor: pointer;
             padding: 0.25rem;
             border-radius: 4px;
+            color: var(--text-secondary);
           }
           .close-btn:hover {
-            background: #f3f4f6;
+            background: var(--bg-hover);
           }
           .modal-body {
             padding: 1.5rem;
             overflow-y: auto;
           }
           .modal-subtitle {
-            color: #666;
+            color: var(--text-secondary);
             margin: 0 0 1.5rem;
           }
           .form-group {
@@ -202,13 +204,16 @@ export default function SignatureRequestModal({
             display: block;
             font-weight: 500;
             margin-bottom: 0.5rem;
+            color: var(--text-primary);
           }
           .form-group textarea {
             width: 100%;
             padding: 0.75rem;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             resize: vertical;
+            background: var(--bg-input);
+            color: var(--text-primary);
           }
           .user-select-grid {
             display: flex;
@@ -220,19 +225,20 @@ export default function SignatureRequestModal({
             align-items: center;
             gap: 0.25rem;
             padding: 0.5rem 0.75rem;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--border-color);
             border-radius: 20px;
-            background: white;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             cursor: pointer;
             font-size: 0.875rem;
             transition: all 0.2s;
           }
           .user-chip:hover {
-            border-color: #3b82f6;
+            border-color: var(--accent-primary);
           }
           .user-chip.selected {
-            background: #3b82f6;
-            border-color: #3b82f6;
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
             color: white;
           }
           .selected-users {
@@ -245,8 +251,9 @@ export default function SignatureRequestModal({
             justify-content: space-between;
             align-items: center;
             padding: 0.5rem 0.75rem;
-            background: #f3f4f6;
+            background: var(--bg-hover);
             border-radius: 6px;
+            color: var(--text-primary);
           }
           .selected-user-item button {
             background: none;
@@ -260,7 +267,7 @@ export default function SignatureRequestModal({
             justify-content: flex-end;
             gap: 0.75rem;
             padding: 1rem 1.5rem;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid var(--border-color);
           }
           
           /* Mobile Responsive */
