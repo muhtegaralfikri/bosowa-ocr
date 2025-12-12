@@ -62,7 +62,10 @@ export class SignaturesService {
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
-      const base64Data = dto.base64Image.replace(/^data:image\/\w+;base64,/, '');
+      const base64Data = dto.base64Image.replace(
+        /^data:image\/\w+;base64,/,
+        '',
+      );
       const buffer = Buffer.from(base64Data, 'base64');
       const filename = `${userId}-${Date.now()}-drawn.png`;
       const filePath = path.join(uploadDir, filename);
@@ -76,15 +79,13 @@ export class SignaturesService {
       await this.signatureRepo.update({ userId }, { isDefault: false });
     }
 
-    // Use raw SQL to bypass TypeORM relation issues
-    const id = require('crypto').randomUUID();
-    const isDefaultVal = dto.isDefault ? 1 : 0;
-    await this.signatureRepo.query(
-      `INSERT INTO signatures (id, userId, imagePath, isDefault, createdAt, updatedAt) VALUES ('${id}', '${userId}', '${imagePath}', ${isDefaultVal}, NOW(), NOW())`
-    );
-    const saved = await this.signatureRepo.findOne({ where: { id } });
-    if (!saved) throw new Error('Failed to save signature');
-    return saved;
+    // Use TypeORM create/save (safe from SQL injection)
+    const signature = this.signatureRepo.create({
+      userId,
+      imagePath,
+      isDefault: dto.isDefault ?? false,
+    });
+    return this.signatureRepo.save(signature);
   }
 
   async setDefault(id: string, userId: string): Promise<Signature> {

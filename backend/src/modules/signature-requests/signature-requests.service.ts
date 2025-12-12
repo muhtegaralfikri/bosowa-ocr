@@ -19,7 +19,6 @@ import { Letter } from '../letters/letter.entity';
 import { User } from '../users/user.entity';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
 import sharp from 'sharp';
 
 @Injectable()
@@ -35,7 +34,10 @@ export class SignatureRequestsService {
     private readonly signaturesService: SignaturesService,
   ) {}
 
-  async findAll(userId: string, status?: SignatureRequestStatus): Promise<SignatureRequest[]> {
+  async findAll(
+    userId: string,
+    status?: SignatureRequestStatus,
+  ): Promise<SignatureRequest[]> {
     try {
       const where: any = { requestedBy: userId };
       if (status) {
@@ -88,26 +90,36 @@ export class SignatureRequestsService {
     requestedBy: string,
     dto: CreateSignatureRequestDto,
   ): Promise<SignatureRequest[]> {
-    const letter = await this.letterRepo.findOne({ where: { id: dto.letterId } });
+    const letter = await this.letterRepo.findOne({
+      where: { id: dto.letterId },
+    });
     if (!letter) throw new NotFoundException('Letter not found');
 
     const results: SignatureRequest[] = [];
 
     for (const assignment of dto.assignments) {
-      const id = crypto.randomUUID();
-      const posX = assignment.positionX ?? 'NULL';
-      const posY = assignment.positionY ?? 'NULL';
-      const posPage = assignment.positionPage ?? 'NULL';
-      const notes = dto.notes ? `'${dto.notes}'` : 'NULL';
-      const sql = `INSERT INTO signature_requests (id, letterId, requestedBy, assignedTo, status, positionX, positionY, positionPage, notes, createdAt, updatedAt) VALUES ('${id}', '${dto.letterId}', '${requestedBy}', '${assignment.assignedTo}', 'PENDING', ${posX}, ${posY}, ${posPage}, ${notes}, NOW(), NOW())`;
-      await this.requestRepo.query(sql);
-      const saved = await this.requestRepo.findOne({ 
-        where: { id },
+      // Use TypeORM create/save (safe from SQL injection)
+      const request = this.requestRepo.create({
+        letterId: dto.letterId,
+        requestedBy,
+        assignedTo: assignment.assignedTo,
+        status: SignatureRequestStatus.PENDING,
+        positionX: assignment.positionX ?? null,
+        positionY: assignment.positionY ?? null,
+        positionPage: assignment.positionPage ?? null,
+        notes: dto.notes ?? null,
+      });
+      const saved = await this.requestRepo.save(request);
+
+      // Reload with relations
+      const withRelations = await this.requestRepo.findOne({
+        where: { id: saved.id },
         relations: ['letter'],
       });
-      if (saved) {
-        results.push(saved);
-        
+
+      if (withRelations) {
+        results.push(withRelations);
+
         // Create notification for assignee
         try {
           await this.notificationsService.create(
@@ -118,7 +130,7 @@ export class SignatureRequestsService {
             saved.id,
           );
         } catch (err) {
-          console.error('Failed to create notification:', err.message);
+          console.error('Failed to create notification:', err);
         }
       }
     }
@@ -134,19 +146,23 @@ export class SignatureRequestsService {
     const request = await this.findOne(id);
 
     if (request.assignedTo !== userId) {
-      throw new ForbiddenException('You are not assigned to sign this document');
+      throw new ForbiddenException(
+        'You are not assigned to sign this document',
+      );
     }
 
     if (request.status !== SignatureRequestStatus.PENDING) {
       throw new BadRequestException('This request is already processed');
     }
 
-    let signature = dto.signatureId
+    const signature = dto.signatureId
       ? await this.signaturesService.findOne(dto.signatureId, userId)
       : await this.signaturesService.findDefaultByUser(userId);
 
     if (!signature) {
-      throw new BadRequestException('No signature found. Please upload or draw a signature first.');
+      throw new BadRequestException(
+        'No signature found. Please upload or draw a signature first.',
+      );
     }
 
     const posX = dto.positionX ?? request.positionX ?? 50;
@@ -191,7 +207,11 @@ export class SignatureRequestsService {
     return saved;
   }
 
-  async reject(id: string, userId: string, notes?: string): Promise<SignatureRequest> {
+  async reject(
+    id: string,
+    userId: string,
+    notes?: string,
+  ): Promise<SignatureRequest> {
     const request = await this.findOne(id);
 
     if (request.assignedTo !== userId) {
@@ -255,8 +275,12 @@ export class SignatureRequestsService {
       .toBuffer();
 
     // Offset by half signature size to match frontend's translate(-50%, -50%) centering
-    const x = Math.round((posX / 100) * (docMetadata.width || 800) - sigWidth / 2);
-    const y = Math.round((posY / 100) * (docMetadata.height || 600) - sigHeight / 2);
+    const x = Math.round(
+      (posX / 100) * (docMetadata.width || 800) - sigWidth / 2,
+    );
+    const y = Math.round(
+      (posY / 100) * (docMetadata.height || 600) - sigHeight / 2,
+    );
 
     await docImage
       .composite([

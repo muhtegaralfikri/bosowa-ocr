@@ -10,12 +10,14 @@ export class VisionOcrService {
   private isConfigured = false;
 
   constructor(private readonly configService: ConfigService) {
-    const credentialsPath = this.configService.get<string>('GOOGLE_APPLICATION_CREDENTIALS');
+    const credentialsPath = this.configService.get<string>(
+      'GOOGLE_APPLICATION_CREDENTIALS',
+    );
     const apiKey = this.configService.get<string>('GOOGLE_VISION_API_KEY');
-    
+
     this.logger.log(`Credentials path: ${credentialsPath || 'not set'}`);
     this.logger.log(`API key: ${apiKey ? 'set' : 'not set'}`);
-    
+
     try {
       if (credentialsPath) {
         // Using service account credentials file
@@ -32,7 +34,9 @@ export class VisionOcrService {
         this.isConfigured = true;
         this.logger.log('Google Vision API initialized with API key');
       } else {
-        this.logger.warn('Google Vision API not configured (no credentials found)');
+        this.logger.warn(
+          'Google Vision API not configured (no credentials found)',
+        );
       }
     } catch (error) {
       this.logger.error('Failed to initialize Google Vision API', error);
@@ -50,7 +54,7 @@ export class VisionOcrService {
 
     try {
       this.logger.log(`Processing image with Google Vision: ${filePath}`);
-      
+
       // Read the image file
       const imageBuffer = await fs.readFile(filePath);
       const imageBase64 = imageBuffer.toString('base64');
@@ -61,7 +65,7 @@ export class VisionOcrService {
       });
 
       const detections = result.textAnnotations;
-      
+
       if (!detections || detections.length === 0) {
         this.logger.warn('No text detected in image');
         return '';
@@ -69,7 +73,7 @@ export class VisionOcrService {
 
       // First annotation contains the full text
       const fullText = detections[0].description || '';
-      
+
       this.logger.log(`Vision API extracted ${fullText.length} characters`);
       return fullText;
     } catch (error: any) {
@@ -85,7 +89,7 @@ export class VisionOcrService {
 
     try {
       this.logger.log(`Processing document with Google Vision: ${filePath}`);
-      
+
       const imageBuffer = await fs.readFile(filePath);
       const imageBase64 = imageBuffer.toString('base64');
 
@@ -95,18 +99,23 @@ export class VisionOcrService {
       });
 
       const fullTextAnnotation = result.fullTextAnnotation;
-      
+
       if (!fullTextAnnotation) {
         this.logger.warn('No text detected in document');
         return '';
       }
 
       const fullText = fullTextAnnotation.text || '';
-      
-      this.logger.log(`Vision API (document mode) extracted ${fullText.length} characters`);
+
+      this.logger.log(
+        `Vision API (document mode) extracted ${fullText.length} characters`,
+      );
       return fullText;
     } catch (error: any) {
-      this.logger.error('Vision API document OCR failed', error?.message || error);
+      this.logger.error(
+        'Vision API document OCR failed',
+        error?.message || error,
+      );
       throw error;
     }
   }

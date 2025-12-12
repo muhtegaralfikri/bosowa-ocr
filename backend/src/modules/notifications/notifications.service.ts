@@ -31,19 +31,16 @@ export class NotificationsService {
     message: string,
     referenceId?: string,
   ): Promise<Notification> {
-    const id = require('crypto').randomUUID();
-    const refId = referenceId ? `'${referenceId}'` : 'NULL';
-    const escapedTitle = title.replace(/'/g, "''");
-    const escapedMessage = message.replace(/'/g, "''");
-    
-    await this.notificationRepo.query(
-      `INSERT INTO notifications (id, userId, type, title, message, referenceId, isRead, createdAt) 
-       VALUES ('${id}', '${userId}', '${type}', '${escapedTitle}', '${escapedMessage}', ${refId}, 0, NOW())`
-    );
-    
-    const saved = await this.notificationRepo.findOne({ where: { id } });
-    if (!saved) throw new Error('Failed to create notification');
-    return saved;
+    // Use TypeORM create/save (safe from SQL injection)
+    const notification = this.notificationRepo.create({
+      userId,
+      type,
+      title,
+      message,
+      referenceId: referenceId ?? null,
+      isRead: false,
+    });
+    return this.notificationRepo.save(notification);
   }
 
   async markAsRead(id: string, userId: string): Promise<Notification> {
@@ -58,6 +55,9 @@ export class NotificationsService {
   }
 
   async markAllAsRead(userId: string): Promise<void> {
-    await this.notificationRepo.update({ userId, isRead: false }, { isRead: true });
+    await this.notificationRepo.update(
+      { userId, isRead: false },
+      { isRead: true },
+    );
   }
 }

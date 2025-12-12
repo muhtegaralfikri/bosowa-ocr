@@ -29,9 +29,19 @@ async function bootstrap() {
   app.use(compression());
 
   // CORS Configuration
+  const isProduction = process.env.NODE_ENV === 'production';
   const allowedOrigins = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
-    : ['http://localhost:5173', 'http://localhost:4173'];
+    : isProduction
+      ? [] // No fallback in production - FRONTEND_URL must be set
+      : ['http://localhost:5173', 'http://localhost:4173'];
+
+  if (isProduction && allowedOrigins.length === 0) {
+    logger.warn(
+      'FRONTEND_URL is not set in production! CORS will block all origins.',
+      'Bootstrap',
+    );
+  }
 
   app.enableCors({
     origin: (origin, callback) => {
@@ -65,14 +75,17 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Bosowa OCR API')
-    .setDescription('OCR letters/invoice management APIs')
-    .setVersion('1.0')
-    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, document);
+  // Swagger - disabled in production for security
+  if (!isProduction) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Bosowa OCR API')
+      .setDescription('OCR letters/invoice management APIs')
+      .setVersion('1.0')
+      .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, document);
+  }
 
   // Graceful Shutdown
   app.enableShutdownHooks();
@@ -80,9 +93,11 @@ async function bootstrap() {
   const port = process.env.PORT || 3000;
   await app.listen(port);
   logger.log(`Application running on http://localhost:${port}`, 'Bootstrap');
-  logger.log(
-    `Swagger docs available at http://localhost:${port}/docs`,
-    'Bootstrap',
-  );
+  if (!isProduction) {
+    logger.log(
+      `Swagger docs available at http://localhost:${port}/docs`,
+      'Bootstrap',
+    );
+  }
 }
 void bootstrap();

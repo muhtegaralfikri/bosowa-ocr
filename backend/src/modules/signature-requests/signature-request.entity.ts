@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -17,6 +18,10 @@ export enum SignatureRequestStatus {
 }
 
 @Entity({ name: 'signature_requests' })
+@Index('idx_sigreq_assigned_status', ['assignedTo', 'status'])
+@Index('idx_sigreq_requested_by', ['requestedBy'])
+@Index('idx_sigreq_letter', ['letterId'])
+@Index('idx_sigreq_created', ['createdAt'])
 export class SignatureRequest {
   @PrimaryGeneratedColumn('uuid')
   id: string;

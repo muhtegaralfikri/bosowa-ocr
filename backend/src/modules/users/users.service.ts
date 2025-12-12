@@ -18,7 +18,10 @@ export class UsersService {
 
   async findAll(role?: UserRole): Promise<Omit<User, 'password'>[]> {
     const where = role ? { role } : {};
-    const users = await this.usersRepo.find({ where, order: { createdAt: 'DESC' } });
+    const users = await this.usersRepo.find({
+      where,
+      order: { createdAt: 'DESC' },
+    });
     return users.map(({ password, ...rest }) => {
       void password;
       return rest;

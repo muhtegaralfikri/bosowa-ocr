@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -15,6 +16,8 @@ export enum NotificationType {
 }
 
 @Entity({ name: 'notifications' })
+@Index('idx_notif_user_read', ['userId', 'isRead'])
+@Index('idx_notif_user_created', ['userId', 'createdAt'])
 export class Notification {
   @PrimaryGeneratedColumn('uuid')
   id: string;
