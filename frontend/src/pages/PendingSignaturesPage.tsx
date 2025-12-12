@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { FileText, Check, X, Clock, MousePointer } from 'lucide-react';
+import { FileText, Check, X, Clock, Eye, PenTool } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getPendingSignatures, signDocument, rejectSignatureRequest, getMySignatures } from '../api/signatures';
 import type { SignatureRequest, Signature } from '../api/types';
@@ -193,26 +193,27 @@ export default function PendingSignaturesPage() {
               </div>
               <div className="pending-actions">
                 <button
-                  className="btn btn-ghost"
+                  className="action-btn action-btn-secondary"
                   onClick={() => navigate(`/letters/${req.letterId}`)}
                 >
-                  Lihat Detail
+                  <Eye size={18} />
+                  <span>Lihat Detail</span>
                 </button>
                 <button
-                  className="btn btn-success"
+                  className="action-btn action-btn-primary"
                   onClick={() => handleOpenSignModal(req)}
                   disabled={signMutation.isPending}
                 >
-                  <MousePointer size={16} />
-                  Pilih Posisi & TTD
+                  <PenTool size={18} />
+                  <span>Tanda Tangani</span>
                 </button>
                 <button
-                  className="btn btn-danger"
+                  className="action-btn action-btn-danger"
                   onClick={() => handleReject(req.id)}
                   disabled={rejectMutation.isPending}
                 >
-                  <X size={16} />
-                  Tolak
+                  <X size={18} />
+                  <span>Tolak</span>
                 </button>
               </div>
             </div>
@@ -347,22 +348,48 @@ export default function PendingSignaturesPage() {
         }
         .pending-actions {
           display: flex;
-          gap: 0.5rem;
+          gap: 0.75rem;
           flex-wrap: wrap;
         }
-        .btn-success {
-          background: #22c55e;
+        .action-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.25rem;
+          border-radius: 10px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+        }
+        .action-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .action-btn-secondary {
+          background: var(--bg-hover);
+          color: var(--text-primary);
+          border: 1px solid var(--border-color);
+        }
+        .action-btn-secondary:hover:not(:disabled) {
+          background: var(--border-color);
+        }
+        .action-btn-primary {
+          background: var(--accent-primary);
           color: white;
         }
-        .btn-success:hover {
-          background: #16a34a;
+        .action-btn-primary:hover:not(:disabled) {
+          background: var(--accent-secondary);
         }
-        .btn-danger {
-          background: #ef4444;
-          color: white;
+        .action-btn-danger {
+          background: #fee2e2;
+          color: #dc2626;
+          border: 1px solid #fecaca;
         }
-        .btn-danger:hover {
-          background: #dc2626;
+        .action-btn-danger:hover:not(:disabled) {
+          background: #fecaca;
         }
         
         /* Modal styles */
@@ -494,12 +521,10 @@ export default function PendingSignaturesPage() {
           }
           .pending-actions {
             width: 100%;
-            justify-content: stretch;
           }
-          .pending-actions .btn {
+          .action-btn {
             flex: 1;
-            justify-content: center;
-            padding: 0.75rem 0.5rem;
+            padding: 0.875rem 0.75rem;
             font-size: 0.85rem;
           }
           .sign-modal-overlay {
