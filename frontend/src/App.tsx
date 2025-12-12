@@ -123,7 +123,7 @@ export default function App() {
               <Route
                 path="/signature-settings"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute roles={['MANAJEMEN']}>
                     <SignatureSettingsPage />
                   </ProtectedRoute>
                 }
