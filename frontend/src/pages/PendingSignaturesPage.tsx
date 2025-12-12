@@ -521,11 +521,16 @@ export default function PendingSignaturesPage() {
           }
           .pending-actions {
             width: 100%;
+            justify-content: flex-end;
           }
           .action-btn {
-            flex: 1;
-            padding: 0.875rem 0.75rem;
-            font-size: 0.85rem;
+            flex: none;
+            padding: 0.75rem;
+            min-width: 44px;
+            min-height: 44px;
+          }
+          .action-btn span {
+            display: none;
           }
           .sign-modal-overlay {
             padding: 0;
