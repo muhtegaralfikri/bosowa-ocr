@@ -512,25 +512,39 @@ export default function PendingSignaturesPage() {
           .pending-card {
             flex-direction: column;
             padding: 1rem;
+            gap: 0.75rem;
           }
           .pending-info {
             width: 100%;
           }
           .pending-info h3 {
-            font-size: 1rem;
+            font-size: 0.95rem;
+          }
+          .pending-meta {
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            line-height: 1.4;
+          }
+          .pending-perihal,
+          .pending-notes {
+            font-size: 0.8rem;
           }
           .pending-actions {
             width: 100%;
-            justify-content: flex-end;
+            overflow-x: auto;
+            justify-content: flex-start;
+            gap: 0.5rem;
+            padding-bottom: 0.25rem;
           }
           .action-btn {
-            flex: none;
-            padding: 0.75rem;
-            min-width: 44px;
-            min-height: 44px;
+            flex-shrink: 0;
+            padding: 0.625rem 0.875rem;
+            min-width: auto;
+            min-height: auto;
+            font-size: 0.8rem;
           }
           .action-btn span {
-            display: none;
+            display: inline;
           }
           .sign-modal-overlay {
             padding: 0;
