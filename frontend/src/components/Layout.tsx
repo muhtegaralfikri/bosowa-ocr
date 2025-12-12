@@ -25,9 +25,9 @@ const THEME_KEY = 'bosowa-ocr-theme';
 const navItems = [
   { path: '/upload', label: 'Unggah', mobileLabel: 'Unggah', icon: Upload },
   { path: '/letters', label: 'Daftar Surat', mobileLabel: 'Surat', icon: FileText },
+  { path: '/signature-settings', label: 'Tanda Tangan', mobileLabel: 'TTD', icon: PenTool },
+  { path: '/pending-signatures', label: 'Menunggu TTD', mobileLabel: 'Inbox TTD', icon: FileSignature, manajemenOnly: true },
   { path: '/delete-requests', label: 'Permintaan Hapus', mobileLabel: 'Hapus', icon: Trash2 },
-  { path: '/pending-signatures', label: 'Menunggu TTD', mobileLabel: 'TTD', icon: FileSignature, manajemenOnly: true },
-  { path: '/signature-settings', label: 'Tanda Tangan', mobileLabel: 'TTD Saya', icon: PenTool },
   { path: '/stats', label: 'Statistik', mobileLabel: 'Statistik', icon: LineChart, adminOnly: true },
   { path: '/users', label: 'Kelola User', mobileLabel: 'User', icon: Users, adminOnly: true },
   { path: '/audit-log', label: 'Audit Log', mobileLabel: 'Log', icon: History, adminOnly: true },
