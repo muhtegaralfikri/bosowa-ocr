@@ -11,6 +11,23 @@ import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+const downloadFile = async (url: string, filename: string) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Download failed:', error);
+  }
+};
+
 export default function LetterDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -275,14 +292,17 @@ export default function LetterDetailPage() {
                       >
                         <Eye size={14} /> Lihat
                       </a>
-                      <a
-                        href={getImageUrl(req.signedImagePath)}
-                        download
+                      <button
+                        type="button"
                         className="download-signed-btn"
                         title="Download dokumen ber-TTD"
+                        onClick={() => downloadFile(
+                          getImageUrl(req.signedImagePath!),
+                          `signed-${letter?.letterNumber || 'document'}.jpg`
+                        )}
                       >
                         <Download size={14} />
-                      </a>
+                      </button>
                     </>
                   )}
                 </div>
@@ -371,6 +391,8 @@ export default function LetterDetailPage() {
           font-size: 0.75rem;
           text-decoration: none;
           transition: background 0.2s;
+          border: none;
+          cursor: pointer;
         }
         .view-signed-btn {
           background: var(--accent-light);
