@@ -1,19 +1,31 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Pencil, X, Save } from 'lucide-react';
+import { Pencil, X, Save, FileSignature, Check, Clock, XCircle, Eye, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 import api from '../api/client';
-import type { Letter } from '../api/types';
+import type { Letter, SignatureRequest } from '../api/types';
+import { getSignatureRequestsByLetter } from '../api/signatures';
+import SignatureRequestModal from '../components/signature/SignatureRequestModal';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function LetterDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [letter, setLetter] = useState<Letter | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<Partial<Letter>>({});
   const [saving, setSaving] = useState(false);
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+
+  const { data: signatureRequests = [] } = useQuery({
+    queryKey: ['signature-requests', id],
+    queryFn: () => getSignatureRequestsByLetter(id!),
+    enabled: !!id,
+  });
 
   useEffect(() => {
     if (id) {
@@ -82,6 +94,15 @@ export default function LetterDetailPage() {
         <div className="actions">
           {!isEditing ? (
             <>
+              {(user?.role === 'ADMIN' || user?.role === 'USER') && (
+                <button
+                  type="button"
+                  className="primary-btn"
+                  onClick={() => setShowSignatureModal(true)}
+                >
+                  <FileSignature size={16} /> Minta TTD
+                </button>
+              )}
               <button type="button" className="ghost-btn" onClick={handleEdit}>
                 <Pencil size={16} /> Edit
               </button>
@@ -224,6 +245,146 @@ export default function LetterDetailPage() {
           )}
         </div>
       </div>
+
+      {signatureRequests.length > 0 && (
+        <div className="signature-status-section">
+          <h3><FileSignature size={18} /> Status Tanda Tangan</h3>
+          <div className="signature-list">
+            {signatureRequests.map((req: SignatureRequest) => (
+              <div key={req.id} className={`signature-item status-${req.status.toLowerCase()}`}>
+                <div className="signature-user">
+                  {req.status === 'PENDING' && <Clock size={16} className="status-icon pending" />}
+                  {req.status === 'SIGNED' && <Check size={16} className="status-icon signed" />}
+                  {req.status === 'REJECTED' && <XCircle size={16} className="status-icon rejected" />}
+                  <span>{req.assignee?.username || 'Unknown'}</span>
+                </div>
+                <div className="signature-actions">
+                  <span className={`status-badge ${req.status.toLowerCase()}`}>
+                    {req.status === 'PENDING' && 'Menunggu'}
+                    {req.status === 'SIGNED' && 'Sudah TTD'}
+                    {req.status === 'REJECTED' && 'Ditolak'}
+                  </span>
+                  {req.status === 'SIGNED' && req.signedImagePath && (
+                    <>
+                      <a
+                        href={getImageUrl(req.signedImagePath)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="view-signed-btn"
+                        title="Lihat dokumen ber-TTD"
+                      >
+                        <Eye size={14} /> Lihat
+                      </a>
+                      <a
+                        href={getImageUrl(req.signedImagePath)}
+                        download
+                        className="download-signed-btn"
+                        title="Download dokumen ber-TTD"
+                      >
+                        <Download size={14} />
+                      </a>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showSignatureModal && (
+        <SignatureRequestModal
+          letterId={id!}
+          letterNumber={letter.letterNumber}
+          onClose={() => setShowSignatureModal(false)}
+        />
+      )}
+
+      <style>{`
+        .signature-status-section {
+          margin-top: 2rem;
+          padding: 1.5rem;
+          background: #f9fafb;
+          border-radius: 8px;
+        }
+        .signature-status-section h3 {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin: 0 0 1rem;
+          font-size: 1rem;
+        }
+        .signature-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .signature-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.75rem 1rem;
+          background: white;
+          border-radius: 6px;
+          border: 1px solid #e5e7eb;
+        }
+        .signature-user {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .status-icon.pending { color: #f59e0b; }
+        .status-icon.signed { color: #22c55e; }
+        .status-icon.rejected { color: #ef4444; }
+        .status-badge {
+          padding: 0.25rem 0.75rem;
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+        .status-badge.pending {
+          background: #fef3c7;
+          color: #92400e;
+        }
+        .status-badge.signed {
+          background: #dcfce7;
+          color: #166534;
+        }
+        .status-badge.rejected {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+        .signature-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .view-signed-btn,
+        .download-signed-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          padding: 0.25rem 0.5rem;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          text-decoration: none;
+          transition: background 0.2s;
+        }
+        .view-signed-btn {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+        .view-signed-btn:hover {
+          background: #bfdbfe;
+        }
+        .download-signed-btn {
+          background: #e5e7eb;
+          color: #374151;
+        }
+        .download-signed-btn:hover {
+          background: #d1d5db;
+        }
+      `}</style>
     </section>
   );
 }

@@ -40,3 +40,48 @@ export interface PaginatedResponse<T> {
   data: T[];
   meta: PaginationMeta;
 }
+
+export interface Signature {
+  id: string;
+  userId: string;
+  imagePath: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SignatureRequest {
+  id: string;
+  letterId: string;
+  letter?: Letter;
+  requestedBy: string;
+  requester?: { id: string; username: string };
+  assignedTo: string;
+  assignee?: { id: string; username: string };
+  status: 'PENDING' | 'SIGNED' | 'REJECTED';
+  positionX: number | null;
+  positionY: number | null;
+  positionPage: number | null;
+  signedAt: string | null;
+  signedImagePath: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: 'SIGNATURE_REQUEST' | 'SIGNATURE_COMPLETED' | 'SIGNATURE_REJECTED';
+  title: string;
+  message: string;
+  referenceId: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  role: 'ADMIN' | 'MANAJEMEN' | 'USER';
+}

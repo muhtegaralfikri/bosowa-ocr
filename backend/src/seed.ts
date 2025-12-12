@@ -19,10 +19,33 @@ async function seed() {
   await dataSource.initialize();
   console.log('Connected to database');
 
+  // Create users table if not exists
+  await dataSource.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(36) PRIMARY KEY,
+      username VARCHAR(255) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      role ENUM('ADMIN', 'MANAJEMEN', 'USER') DEFAULT 'USER',
+      refreshToken VARCHAR(255) NULL,
+      createdAt DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+      updatedAt DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
+    )
+  `);
+  console.log('Users table ready');
+
   const users = [
+    // Admin
     { username: 'admin', password: 'admin123', role: 'ADMIN' },
-    { username: 'sekretaris', password: 'sekretaris123', role: 'SEKRETARIS' },
-    { username: 'cosm', password: 'cosm123', role: 'COSM' },
+    // Manajemen (7 orang yang bisa TTD)
+    { username: 'hamza', password: 'hamza123', role: 'MANAJEMEN' },
+    { username: 'firdaus', password: 'firdaus123', role: 'MANAJEMEN' },
+    { username: 'idris', password: 'idris123', role: 'MANAJEMEN' },
+    { username: 'salahuddin', password: 'salahuddin123', role: 'MANAJEMEN' },
+    { username: 'syamsul', password: 'syamsul123', role: 'MANAJEMEN' },
+    { username: 'syamsuddin', password: 'syamsuddin123', role: 'MANAJEMEN' },
+    { username: 'herman', password: 'herman123', role: 'MANAJEMEN' },
+    // User biasa
+    { username: 'user', password: 'user123', role: 'USER' },
   ];
 
   for (const user of users) {

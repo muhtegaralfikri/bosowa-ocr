@@ -14,6 +14,8 @@ const StatsPage = lazy(() => import('./pages/StatsPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const SignatureSettingsPage = lazy(() => import('./pages/SignatureSettingsPage'));
+const PendingSignaturesPage = lazy(() => import('./pages/PendingSignaturesPage'));
 
 function PageLoader() {
   return (
@@ -115,6 +117,22 @@ export default function App() {
                 element={
                   <ProtectedRoute roles={['ADMIN']}>
                     <AuditLogPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/signature-settings"
+                element={
+                  <ProtectedRoute>
+                    <SignatureSettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pending-signatures"
+                element={
+                  <ProtectedRoute roles={['MANAJEMEN']}>
+                    <PendingSignaturesPage />
                   </ProtectedRoute>
                 }
               />
