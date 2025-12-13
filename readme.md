@@ -21,8 +21,8 @@ Aplikasi web full-stack untuk digitalisasi dan manajemen arsip surat/invoice den
 | Role | Akses |
 |------|-------|
 | **ADMIN** | Full access: statistik, kelola user, audit log, approve/reject hapus |
-| **SEKRETARIS** | Upload, lihat daftar surat, ajukan hapus |
-| **COSM** | Upload, lihat daftar surat, ajukan hapus |
+| **MANAJEMEN** | Upload, lihat daftar surat, tanda tangan digital, ajukan hapus |
+| **USER** | Upload, lihat daftar surat, ajukan hapus |
 
 #### Detail Tugas Per Role
 
@@ -40,7 +40,7 @@ Aplikasi web full-stack untuk digitalisasi dan manajemen arsip surat/invoice den
 | **Lihat audit log** | ✅ | Riwayat semua perubahan data |
 | **File cleanup** | ✅ | Bersihkan file orphan |
 
-##### SEKRETARIS
+##### MANAJEMEN
 | Fitur | Akses | Keterangan |
 |-------|:-----:|------------|
 | Upload & OCR | ✅ | Scan/foto dokumen, proses OCR |
@@ -48,12 +48,15 @@ Aplikasi web full-stack untuk digitalisasi dan manajemen arsip surat/invoice den
 | Input metadata | ✅ | Isi/koreksi hasil OCR |
 | Edit surat | ✅ | Perbaiki data yang salah |
 | Ajukan hapus | ✅ | Request penghapusan (perlu approval admin) |
+| **Tanda Tangan Digital** | ✅ | Request dan approve tanda tangan dokumen |
+| **Dashboard TTD** | ✅ | Monitoring pending signatures |
+| **Manajemen TTD** | ✅ | Upload/gambar tanda tangan |
 | Dashboard statistik | ❌ | - |
 | Kelola user | ❌ | - |
 | Approve/reject hapus | ❌ | - |
 | Lihat audit log | ❌ | - |
 
-##### COSM (Customer/Operations Service Manager)
+##### USER
 | Fitur | Akses | Keterangan |
 |-------|:-----:|------------|
 | Upload & OCR | ✅ | Scan/foto dokumen, proses OCR |
@@ -61,73 +64,27 @@ Aplikasi web full-stack untuk digitalisasi dan manajemen arsip surat/invoice den
 | Input metadata | ✅ | Isi/koreksi hasil OCR |
 | Edit surat | ✅ | Perbaiki data yang salah |
 | Ajukan hapus | ✅ | Request penghapusan (perlu approval admin) |
+| Request TTD | ✅ | Ajukan permintaan tanda tangan ke manajemen |
 | Dashboard statistik | ❌ | - |
 | Kelola user | ❌ | - |
 | Approve/reject hapus | ❌ | - |
 | Lihat audit log | ❌ | - |
+| Tanda Tangan Digital | ❌ | Hanya manajemen yang bisa ttd |
 
-#### Kemungkinan Pembeda SEKRETARIS vs COSM (Future Enhancement)
+### 4. Tanda Tangan Digital
+- **Request Signature** - User bisa minta tanda tangan ke manajemen
+- **Digital Signature Pad** - Upload gambar ttd atau gambar langsung
+- **Signature Positioning** - Drag & drop posisi tanda tangan di dokumen
+- **Multi-signer Support** - Bisa minta tanda tangan ke beberapa manajemen
+- **Approval Workflow** - Manajemen approve/reject dengan catatan
+- **Embedding System** - Tanda tangan otomatis ditempel di dokumen PDF
+- **Notification System** - Notifikasi email/real-time ke signer
+- **Audit Trail** - Log lengkap proses tanda tangan (waktu, IP, device)
+- **Locked Documents** - Dokumen yang dittd tidak bisa diedit lagi
 
-Saat ini SEKRETARIS dan COSM memiliki akses yang sama. Berikut opsi pembeda yang dapat diimplementasi sesuai kebutuhan organisasi:
+### 5. Audit Trail & Statistik
 
-| Opsi | SEKRETARIS | COSM | Keterangan |
-|------|------------|------|------------|
-| **A. Jenis Dokumen** | Hanya SURAT | Hanya INVOICE | Pembagian berdasarkan tipe dokumen |
-| **B. Jenis Surat** | Hanya MASUK | Hanya KELUAR | Pembagian berdasarkan arah surat |
-| **C. Kombinasi** | SURAT (masuk/keluar) | INVOICE (masuk/keluar) | Kombinasi tipe dokumen |
-| **D. Department** | Administrasi umum | Operasional kapal | Pembagian berdasarkan departemen |
-
-##### Contoh Workflow Opsi A (Jenis Dokumen)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    SEKRETARIS                                │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ • Surat masuk dari instansi pemerintah              │    │
-│  │ • Surat keluar ke pelanggan/vendor                  │    │
-│  │ • Surat internal perusahaan                         │    │
-│  │ • Memo dan disposisi                                │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│                       COSM                                   │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ • Invoice masuk dari vendor/supplier                │    │
-│  │ • Invoice keluar ke pelanggan                       │    │
-│  │ • Dokumen operasional kapal                         │    │
-│  │ • Dokumen penagihan dan pembayaran                  │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-```
-
-##### Contoh Workflow Opsi B (Jenis Surat)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    SEKRETARIS                                │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ SURAT/INVOICE MASUK:                                │    │
-│  │ • Terima dokumen dari eksternal                     │    │
-│  │ • Scan dan proses OCR                               │    │
-│  │ • Input metadata dan arsipkan                       │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│                       COSM                                   │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ SURAT/INVOICE KELUAR:                               │    │
-│  │ • Buat dokumen untuk pelanggan/vendor               │    │
-│  │ • Scan salinan untuk arsip                          │    │
-│  │ • Input metadata dan arsipkan                       │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-```
-
-> **Catatan:** Untuk mengimplementasi pembeda, konfirmasi terlebih dahulu dengan pihak manajemen mengenai workflow yang sesuai dengan SOP perusahaan.
-
-### 4. Audit Trail & Statistik
+### 5. Audit Trail & Statistik
 - **Edit Log** - Riwayat lengkap setiap perubahan data dengan field sebelum/sesudah
 - **Delete Request Workflow** - Mekanisme approval untuk penghapusan dokumen
 - **Dashboard Statistik** - Grafik surat masuk/keluar per bulan, statistik koreksi per user
@@ -201,11 +158,14 @@ Saat ini SEKRETARIS dan COSM memiliki akses yang sama. Berikut opsi pembeda yang
 
 ```sql
 -- Core Tables
-letters          -- Dokumen surat/invoice
-users            -- User dengan role
-files            -- Metadata file upload
-edit_logs        -- Audit trail perubahan
-delete_requests  -- Workflow penghapusan
+letters              -- Dokumen surat/invoice
+users                -- User dengan role (ADMIN/MANAJEMEN/USER)
+files                -- Metadata file upload
+edit_logs            -- Audit trail perubahan
+delete_requests      -- Workflow penghapusan
+signature_requests   -- Permintaan tanda tangan
+signatures           -- Data tanda tangan user
+notifications        -- Notifikasi sistem
 ```
 
 ### Entity: Letter
@@ -280,17 +240,38 @@ VITE_API_URL=http://localhost:3000
 
 ## API Endpoints
 
+### Auth & Users
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | POST | /auth/login | - | Login user |
+| GET | /users | Admin | List users |
+| POST | /users | Admin | Buat user |
+
+### Letters & OCR
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
 | GET | /letters | JWT | List surat (paginated) |
 | POST | /letters | JWT | Buat surat baru |
 | GET | /letters/:id | JWT | Detail surat |
 | PATCH | /letters/:id | JWT | Update surat |
 | POST | /letters/ocr-preview | JWT | OCR preview |
 | POST | /files/upload | JWT | Upload file |
-| GET | /users | Admin | List users |
-| POST | /users | Admin | Buat user |
+
+### Tanda Tangan Digital
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | /signature-requests | JWT | List permintaan ttd |
+| POST | /signature-requests | JWT | Buat permintaan ttd |
+| GET | /signature-requests/pending | JWT | Pending signatures |
+| PUT | /signature-requests/:id/sign | JWT | Sign dokumen |
+| PUT | /signature-requests/:id/reject | JWT | Reject permintaan |
+| GET | /signatures | JWT | List ttd user |
+| POST | /signatures | JWT | Upload ttd |
+| DELETE | /signatures/:id | JWT | Hapus ttd |
+
+### Admin & Audit
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
 | GET | /stats/overview | Admin | Dashboard statistik |
 | GET | /edit-logs | Admin | Audit log |
 | POST | /delete-requests | JWT | Ajukan hapus |
@@ -399,6 +380,7 @@ npm run lint        # ESLint check
 | ESLint + Prettier | ✅ | Configured |
 | Swagger Docs | ✅ | /docs endpoint |
 | Unit Tests OCR Parser | ✅ | spec.ts |
+| Unit Tests Signature | ✅ | signature-requests.spec.ts |
 | API Versioning | ✅ | /api/v1/ prefix |
 | DTO Custom Messages | ✅ | Bahasa Indonesia |
 | E2E Tests | ⬜ | Integration tests |
@@ -415,6 +397,8 @@ npm run lint        # ESLint check
 | Skeleton Loaders | ✅ | Shimmer effect |
 | Offline Indicator | ✅ | Banner offline |
 | Form Autosave | ✅ | localStorage draft |
+| **Signature Drag-Drop** | ✅ | Positioning tanda tangan |
+| **Real-time Notifications** | ✅ | Pending signature alerts |
 | Keyboard Shortcuts | ⬜ | Power user |
 | Dark Mode | ⬜ | Theme toggle |
 | PWA Support | ⬜ | Installable app |
@@ -436,12 +420,18 @@ npm run lint        # ESLint check
 | Keamanan | 9 | 1 |
 | Performa | 7 | 2 |
 | Reliabilitas | 7 | 1 |
-| Code Quality | 6 | 2 |
-| UX | 7 | 3 |
+| Code Quality | 7 | 1 |
+| UX | 9 | 1 |
 | Scalability | 0 | 5 |
-| **Total** | **36** | **14** |
+| **Total** | **39** | **11** |
 
-**Progress: 72% selesai**
+**Progress: 78% selesai**
+
+### Update Terakhir
+- ✅ **Tanda Tangan Digital** - Full implementation dengan drag-drop positioning
+- ✅ **Role Management Update** - Standardisasi ke ADMIN/MANAJEMEN/USER
+- ✅ **Signature API** - Complete endpoints untuk workflow tanda tangan
+- ✅ **Notification System** - Real-time alerts untuk pending signatures
 
 ---
 

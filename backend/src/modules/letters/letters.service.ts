@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -182,40 +183,182 @@ export class LettersService {
     return this.lettersRepo.save(letter);
   }
 
-  async findAll(letterNumber?: string, page = 1, limit = 10) {
+  async findAll(
+    keyword?: string,
+    letterNumber?: string,
+    namaPengirim?: string,
+    perihal?: string,
+    jenisDokumen?: 'SURAT' | 'INVOICE',
+    jenisSurat?: 'MASUK' | 'KELUAR',
+    tanggalMulai?: string,
+    tanggalSelesai?: string,
+    nominalMin?: number,
+    nominalMax?: number,
+    page = 1,
+    limit = 10
+  ) {
     const safeLimit = Math.min(Math.max(limit ?? 10, 1), 100);
     const safePage = Math.max(page ?? 1, 1);
-    const where = letterNumber
-      ? { letterNumber: ILike(`%${letterNumber}%`) }
-      : {};
+    
+    // Build WHERE clause more carefully
+    const where: any = {};
+    
+    // Specific field filters (these don't conflict with OR)
+    if (letterNumber) {
+      where.letterNumber = ILike(`%${letterNumber}%`);
+    }
+    
+    if (namaPengirim) {
+      where.namaPengirim = ILike(`%${namaPengirim}%`);
+    }
+    
+    if (perihal) {
+      where.perihal = ILike(`%${perihal}%`);
+    }
+    
+    if (jenisDokumen) {
+      where.jenisDokumen = jenisDokumen;
+    }
+    
+    if (jenisSurat) {
+      where.jenisSurat = jenisSurat;
+    }
+    
+    // Date range filter
+    if (tanggalMulai || tanggalSelesai) {
+      const dateFilter: any = {};
+      if (tanggalMulai) {
+        dateFilter.$gte = tanggalMulai;
+      }
+      if (tanggalSelesai) {
+        dateFilter.$lte = tanggalSelesai;
+      }
+      where.tanggalSurat = dateFilter;
+    }
+    
+    // Nominal range filter
+    if (nominalMin || nominalMax) {
+      const nominalFilter: any = {};
+      if (nominalMin) {
+        nominalFilter.$gte = nominalMin;
+      }
+      if (nominalMax) {
+        nominalFilter.$lte = nominalMax;
+      }
+      where.totalNominal = nominalFilter;
+    }
+    
+    // Keyword search across multiple fields (simplify logic)
+    if (keyword) {
+      // Simple case: just keyword search
+      where.OR = [
+        { letterNumber: ILike(`%${keyword}%`) },
+        { namaPengirim: ILike(`%${keyword}%`) },
+        { perihal: ILike(`%${keyword}%`) },
+      ];
+    }
 
-    // Select only columns needed for list view (optimize query)
-    const [data, total] = await this.lettersRepo.findAndCount({
-      select: [
-        'id',
-        'letterNumber',
-        'jenisSurat',
-        'jenisDokumen',
-        'tanggalSurat',
-        'namaPengirim',
-        'perihal',
-        'createdAt',
-      ],
-      where,
-      order: { createdAt: 'DESC' },
-      take: safeLimit,
-      skip: (safePage - 1) * safeLimit,
-    });
+    // Use QueryBuilder for better OR condition support
+    try {
+      const queryBuilder = this.lettersRepo
+        .createQueryBuilder('letter')
+        .select([
+          'letter.id',
+          'letter.letterNumber',
+          'letter.jenisSurat',
+          'letter.jenisDokumen',
+          'letter.tanggalSurat',
+          'letter.namaPengirim',
+          'letter.perihal',
+          'letter.createdAt',
+        ]);
 
-    return {
-      data,
-      meta: {
-        total,
-        page: safePage,
-        limit: safeLimit,
-        pageCount: Math.ceil(total / safeLimit),
-      },
-    };
+      // Apply specific filters first (use LIKE for MariaDB)
+      if (letterNumber) {
+        queryBuilder.andWhere('letter.letterNumber LIKE :letterNumber', { 
+          letterNumber: `%${letterNumber}%` 
+        });
+      }
+
+      if (namaPengirim) {
+        queryBuilder.andWhere('letter.namaPengirim LIKE :namaPengirim', { 
+          namaPengirim: `%${namaPengirim}%` 
+        });
+      }
+
+      if (perihal) {
+        queryBuilder.andWhere('letter.perihal LIKE :perihal', { 
+          perihal: `%${perihal}%` 
+        });
+      }
+
+      if (jenisDokumen) {
+        queryBuilder.andWhere('letter.jenisDokumen = :jenisDokumen', { jenisDokumen });
+      }
+
+      if (jenisSurat) {
+        queryBuilder.andWhere('letter.jenisSurat = :jenisSurat', { jenisSurat });
+      }
+
+      // Date range filter
+      if (tanggalMulai || tanggalSelesai) {
+        if (tanggalMulai && tanggalSelesai) {
+          queryBuilder.andWhere('letter.tanggalSurat BETWEEN :tanggalMulai AND :tanggalSelesai', {
+            tanggalMulai,
+            tanggalSelesai
+          });
+        } else if (tanggalMulai) {
+          queryBuilder.andWhere('letter.tanggalSurat >= :tanggalMulai', { tanggalMulai });
+        } else if (tanggalSelesai) {
+          queryBuilder.andWhere('letter.tanggalSurat <= :tanggalSelesai', { tanggalSelesai });
+        }
+      }
+
+      // Nominal range filter
+      if (nominalMin || nominalMax) {
+        if (nominalMin && nominalMax) {
+          queryBuilder.andWhere('letter.totalNominal BETWEEN :nominalMin AND :nominalMax', {
+            nominalMin,
+            nominalMax
+          });
+        } else if (nominalMin) {
+          queryBuilder.andWhere('letter.totalNominal >= :nominalMin', { nominalMin });
+        } else if (nominalMax) {
+          queryBuilder.andWhere('letter.totalNominal <= :nominalMax', { nominalMax });
+        }
+      }
+
+      // Keyword search across multiple fields (use LIKE for MariaDB)
+      if (keyword) {
+        queryBuilder.andWhere(
+          '(letter.letterNumber LIKE :keyword OR letter.namaPengirim LIKE :keyword OR letter.perihal LIKE :keyword OR letter.jenisSurat LIKE :keyword OR letter.jenisDokumen LIKE :keyword)',
+          { keyword: `%${keyword}%` }
+        );
+        this.logger.log(`Keyword search: "${keyword}" - searching in letterNumber, namaPengirim, perihal, jenisSurat, jenisDokumen`);
+      }
+
+      // Order and pagination
+      const [data, total] = await queryBuilder
+        .orderBy('letter.createdAt', 'DESC')
+        .take(safeLimit)
+        .skip((safePage - 1) * safeLimit)
+        .getManyAndCount();
+
+      this.logger.log(`Query successful: found ${total} results`);
+
+      return {
+        data,
+        meta: {
+          total,
+          page: safePage,
+          limit: safeLimit,
+          pageCount: Math.ceil(total / safeLimit),
+        },
+      };
+    } catch (error: any) {
+      this.logger.error(`Database query failed: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('Search query failed');
+    }
   }
 
   async findOne(id: string) {

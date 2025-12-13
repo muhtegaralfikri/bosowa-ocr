@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ILike } from 'typeorm';
 import { Request as ExpressRequest } from 'express';
 import { CreateLetterDto } from './dto/create-letter.dto';
 import { OcrPreviewDto } from './dto/ocr-preview.dto';
@@ -35,7 +36,16 @@ export class LettersController {
   @Get()
   findAll(@Query() query: ListLettersQueryDto) {
     return this.lettersService.findAll(
+      query.keyword,
       query.letterNumber,
+      query.namaPengirim,
+      query.perihal,
+      query.jenisDokumen,
+      query.jenisSurat,
+      query.tanggalMulai,
+      query.tanggalSelesai,
+      query.nominalMin,
+      query.nominalMax,
       query.page,
       query.limit,
     );
@@ -54,5 +64,27 @@ export class LettersController {
   ) {
     const updatedBy = req.user?.username;
     return this.lettersService.update(id, dto, updatedBy);
+  }
+
+  @Get('debug-query')
+  async debugQuery(@Query() query: ListLettersQueryDto) {
+    return {
+      query,
+      receivedParams: {
+        keyword: query.keyword,
+        letterNumber: query.letterNumber,
+        namaPengirim: query.namaPengirim,
+        perihal: query.perihal,
+        jenisDokumen: query.jenisDokumen,
+        jenisSurat: query.jenisSurat,
+        tanggalMulai: query.tanggalMulai,
+        tanggalSelesai: query.tanggalSelesai,
+        nominalMin: query.nominalMin,
+        nominalMax: query.nominalMax,
+        page: query.page,
+        limit: query.limit,
+      },
+      message: 'Debug endpoint - all parameters received successfully'
+    };
   }
 }
