@@ -19,6 +19,17 @@ const columns = [
 export default function LettersListPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [filters, setFilters] = useState({
+    namaPengirim: '',
+    perihal: '',
+    jenisDokumen: '',
+    jenisSurat: '',
+    tanggalMulai: '',
+    tanggalSelesai: '',
+    nominalMin: '',
+    nominalMax: ''
+  });
 
   const getCellValue = (
     letter: Letter,
@@ -44,16 +55,26 @@ export default function LettersListPage() {
 
   const { data, isLoading, isFetching } = useQuery<PaginatedResponse<Letter>>(
     {
-      queryKey: ['letters', { search, page }],
+      queryKey: ['letters', { search, page, ...filters }],
       queryFn: async (): Promise<PaginatedResponse<Letter>> => {
         try {
-          const res = await api.get('/letters', {
-            params: {
-              letterNumber: search || undefined,
-              page,
-              limit: PAGE_SIZE,
-            },
-          });
+          const params: any = {
+            page,
+            limit: PAGE_SIZE,
+          };
+          
+          // Add search parameters
+          if (search) params.keyword = search;
+          if (filters.namaPengirim) params.namaPengirim = filters.namaPengirim;
+          if (filters.perihal) params.perihal = filters.perihal;
+          if (filters.jenisDokumen) params.jenisDokumen = filters.jenisDokumen;
+          if (filters.jenisSurat) params.jenisSurat = filters.jenisSurat;
+          if (filters.tanggalMulai) params.tanggalMulai = filters.tanggalMulai;
+          if (filters.tanggalSelesai) params.tanggalSelesai = filters.tanggalSelesai;
+          if (filters.nominalMin) params.nominalMin = filters.nominalMin;
+          if (filters.nominalMax) params.nominalMax = filters.nominalMax;
+
+          const res = await api.get('/letters', { params });
           return res.data as PaginatedResponse<Letter>;
         } catch (err) {
           toast.error('Gagal memuat daftar surat');
@@ -66,6 +87,34 @@ export default function LettersListPage() {
 
   const letters = data?.data ?? [];
   const totalPages = Math.max(data?.meta.pageCount ?? 1, 1);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      namaPengirim: '',
+      perihal: '',
+      jenisDokumen: '',
+      jenisSurat: '',
+      tanggalMulai: '',
+      tanggalSelesai: '',
+      nominalMin: '',
+      nominalMax: ''
+    });
+    setSearch('');
+    setPage(1);
+  };
 
   const goToPrev = () => setPage((prev) => Math.max(prev - 1, 1));
   const goToNext = () =>
@@ -81,18 +130,124 @@ export default function LettersListPage() {
         <div className="actions">
           <input
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Cari nomor surat"
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Cari semua field"
             className="search-input"
           />
+          <button
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="ghost-btn"
+          >
+            {showAdvanced ? 'Sembunyikan Filter' : 'Filter Lanjutan'}
+          </button>
           <Link to="/letters/new" className="primary-btn">
             Tambah Surat
           </Link>
         </div>
       </div>
+      
+      {/* Advanced Filters */}
+      {showAdvanced && (
+        <section className="panel">
+          <div className="panel-head">
+            <div>
+              <p className="eyebrow">Filter</p>
+              <h1>Filter Lanjutan</h1>
+              <p className="small-note">Cari berdasarkan kriteria spesifik</p>
+            </div>
+            <button 
+              type="button" 
+              className="ghost-btn" 
+              onClick={handleResetFilters}
+            >
+              Reset Filter
+            </button>
+          </div>
+          
+          <div className="form-grid two-col">
+            <label>
+              Nama Pengirim
+              <input
+                value={filters.namaPengirim}
+                onChange={(e) => handleFilterChange('namaPengirim', e.target.value)}
+                placeholder="PT Contoh Abadi"
+              />
+            </label>
+            
+            <label>
+              Perihal
+              <input
+                value={filters.perihal}
+                onChange={(e) => handleFilterChange('perihal', e.target.value)}
+                placeholder="Pembayaran invoice"
+              />
+            </label>
+            
+            <label>
+              Jenis Dokumen
+              <select
+                value={filters.jenisDokumen}
+                onChange={(e) => handleFilterChange('jenisDokumen', e.target.value)}
+              >
+                <option value="">Semua</option>
+                <option value="SURAT">SURAT</option>
+                <option value="INVOICE">INVOICE</option>
+              </select>
+            </label>
+            
+            <label>
+              Jenis Surat
+              <select
+                value={filters.jenisSurat}
+                onChange={(e) => handleFilterChange('jenisSurat', e.target.value)}
+              >
+                <option value="">Semua</option>
+                <option value="MASUK">MASUK</option>
+                <option value="KELUAR">KELUAR</option>
+              </select>
+            </label>
+            
+            <label>
+              Tanggal Mulai
+              <input
+                type="date"
+                value={filters.tanggalMulai}
+                onChange={(e) => handleFilterChange('tanggalMulai', e.target.value)}
+              />
+            </label>
+            
+            <label>
+              Tanggal Selesai
+              <input
+                type="date"
+                value={filters.tanggalSelesai}
+                onChange={(e) => handleFilterChange('tanggalSelesai', e.target.value)}
+              />
+            </label>
+            
+            <label>
+              Nominal Minimum
+              <input
+                type="number"
+                value={filters.nominalMin}
+                onChange={(e) => handleFilterChange('nominalMin', e.target.value)}
+                placeholder="0"
+              />
+            </label>
+            
+            <label>
+              Nominal Maksimum
+              <input
+                type="number"
+                value={filters.nominalMax}
+                onChange={(e) => handleFilterChange('nominalMax', e.target.value)}
+                placeholder="999999999"
+              />
+            </label>
+          </div>
+        </section>
+      )}
+      
       <div className="table-container">
         <div className="table">
           <div className="table-row table-head">
