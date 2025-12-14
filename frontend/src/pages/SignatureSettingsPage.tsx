@@ -200,15 +200,15 @@ export default function SignatureSettingsPage() {
                 <div className="signature-actions">
                   {!sig.isDefault && (
                     <button
-                      className="btn btn-sm btn-ghost"
+                      className="signature-action-btn"
                       onClick={() => setDefaultMutation.mutate(sig.id)}
                       title="Jadikan default"
                     >
-                      <Star size={16} />
+                      <Star size={14} />
                     </button>
                   )}
                   <button
-                    className="btn btn-sm btn-danger"
+                    className="signature-action-btn danger"
                     onClick={() => {
                       if (confirm('Hapus tanda tangan ini?')) {
                         deleteMutation.mutate(sig.id);
@@ -216,7 +216,7 @@ export default function SignatureSettingsPage() {
                     }}
                     title="Hapus"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
@@ -354,8 +354,9 @@ export default function SignatureSettingsPage() {
         }
         .signature-actions {
           display: flex;
-          gap: 0.5rem;
+          gap: 0.25rem;
           margin-top: 0.5rem;
+          width: 100%;
         }
         .badge {
           display: inline-flex;
@@ -369,6 +370,33 @@ export default function SignatureSettingsPage() {
         .badge-success {
           background: #dcfce7;
           color: #15803d;
+        }
+        
+        /* Signature Action Buttons */
+        .signature-action-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border: none;
+          border-radius: 8px;
+          background: var(--bg-primary);
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s;
+          flex: 1;
+        }
+        .signature-action-btn:hover {
+          background: var(--bg-hover);
+          color: var(--text-primary);
+        }
+        .signature-action-btn.danger {
+          color: #ef4444;
+        }
+        .signature-action-btn.danger:hover {
+          background: #fef2f2;
+          color: #dc2626;
         }
         
         /* Mobile Responsive */
@@ -404,6 +432,11 @@ export default function SignatureSettingsPage() {
           .signature-actions {
             width: 100%;
             justify-content: center;
+            gap: 0.5rem;
+          }
+          .signature-action-btn {
+            width: 36px;
+            height: 36px;
           }
         }
       `}</style>

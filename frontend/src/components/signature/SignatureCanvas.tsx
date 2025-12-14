@@ -137,7 +137,7 @@ export default function SignatureCanvas({
         </button>
         <button type="button" onClick={save} disabled={!hasDrawn} className="canvas-btn canvas-btn-primary">
           <Save size={18} />
-          <span>Simpan Tanda Tangan</span>
+          <span>Simpan</span>
         </button>
       </div>
       

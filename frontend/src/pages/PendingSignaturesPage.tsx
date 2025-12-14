@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { FileText, Check, X, Clock, Eye, PenTool } from 'lucide-react';
+import { FileText, Check, X, Clock, Eye, PenTool, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getPendingSignatures, signDocument, rejectSignatureRequest, getMySignatures } from '../api/signatures';
 import type { SignatureRequest, Signature } from '../api/types';
@@ -238,8 +238,9 @@ export default function PendingSignaturesPage() {
               {!defaultSignature ? (
                 <div className="no-signature-warning">
                   <p>Anda belum memiliki tanda tangan. Silakan buat tanda tangan terlebih dahulu.</p>
-                  <button className="btn btn-primary" onClick={() => navigate('/signature-settings')}>
-                    Buat Tanda Tangan
+                  <button className="signature-action-btn" onClick={() => navigate('/signature-settings')} style={{ background: 'var(--accent-primary)', color: 'white', flex: 'none', padding: '0.75rem 1.25rem', width: 'auto', margin: '0 auto' }}>
+                    <Plus size={14} />
+                    <span>Buat Tanda Tangan</span>
                   </button>
                 </div>
               ) : (
@@ -505,6 +506,43 @@ export default function PendingSignaturesPage() {
         }
         .no-signature-warning p {
           margin-bottom: 1rem;
+        }
+        
+        /* Custom signature action button with text */
+        .signature-action-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          width: 32px;
+          height: 32px;
+          border: none;
+          border-radius: 8px;
+          background: var(--bg-primary);
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .signature-action-btn span {
+          display: none;
+        }
+        .signature-action-btn:hover {
+          background: var(--bg-hover);
+          color: var(--text-primary);
+        }
+        .signature-action-btn.danger {
+          color: #ef4444;
+        }
+        .signature-action-btn.danger:hover {
+          background: #fef2f2;
+          color: #dc2626;
+        }
+        .signature-action-btn[style*="width: auto"] {
+          width: auto;
+          padding: 0.75rem 1.25rem !important;
+        }
+        .signature-action-btn[style*="width: auto"] span {
+          display: inline;
         }
         .sign-modal-footer {
           padding: 1rem 1.5rem;

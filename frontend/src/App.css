@@ -631,11 +631,12 @@ textarea::placeholder {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.5rem;
-  padding: 0.9rem 1rem;
+  padding: 0.65rem 0.75rem;
   background: var(--table-row-even);
   color: var(--text-primary);
   text-decoration: none;
   font-weight: 500;
+  font-size: 0.9rem;
   transition: background 0.3s ease;
 }
 
@@ -662,6 +663,12 @@ textarea::placeholder {
   font-weight: 600;
   color: var(--text-primary);
   word-break: break-word;
+}
+
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cell-muted {
@@ -1225,19 +1232,36 @@ button.mobile-menu-link.logout {
   letter-spacing: 0.03em;
 }
 
+
+
 .role-badge.admin {
   background: rgba(139, 92, 246, 0.15);
   color: #7c3aed;
 }
 
-.role-badge.sekretaris {
-  background: rgba(59, 130, 246, 0.15);
-  color: #2563eb;
-}
-
-.role-badge.cosm {
+.role-badge.manajemen {
   background: rgba(16, 185, 129, 0.15);
   color: #059669;
+}
+
+.role-badge.user {
+  background: rgba(100, 116, 139, 0.15);
+  color: #475569;
+}
+
+[data-theme="dark"] .role-badge.admin {
+  background: rgba(139, 92, 246, 0.25);
+  color: #a78bfa;
+}
+
+[data-theme="dark"] .role-badge.manajemen {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+
+[data-theme="dark"] .role-badge.user {
+  background: rgba(148, 163, 184, 0.25);
+  color: #cbd5e1; /* Lighter gray for dark mode */
 }
 
 /* Audit log styles */

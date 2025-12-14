@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Pencil, X, Save, FileSignature, Check, Clock, XCircle, Eye, Download } from 'lucide-react';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import type { Letter, SignatureRequest } from '../api/types';
 import { getSignatureRequestsByLetter } from '../api/signatures';
@@ -32,6 +32,7 @@ export default function LetterDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [letter, setLetter] = useState<Letter | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<Partial<Letter>>({});
@@ -81,6 +82,8 @@ export default function LetterDetailPage() {
       setLetter(res.data);
       setIsEditing(false);
       toast.success('Surat berhasil diperbarui');
+      // Invalidate letters cache so list updates automatically
+      queryClient.invalidateQueries({ queryKey: ['letters'] });
     } catch {
       toast.error('Gagal menyimpan perubahan');
     } finally {
