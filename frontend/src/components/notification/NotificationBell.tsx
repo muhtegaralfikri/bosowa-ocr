@@ -44,9 +44,22 @@ export default function NotificationBell() {
         setIsOpen(false);
       }
     };
+
+    // Close dropdown on scroll (fix mobile issue)
+    const handleScroll = () => {
+      if (isOpen) {
+        setIsOpen(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('scroll', handleScroll);
+    };
+  }, [isOpen]);
 
   const handleNotificationClick = (notif: (typeof notifications)[0]) => {
     if (!notif.isRead) {
@@ -94,7 +107,13 @@ export default function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="notification-dropdown">
+        <div 
+          className="notification-dropdown"
+          style={{
+            opacity: 1,
+            transform: 'translateY(0)',
+          }}
+        >
           <div className="dropdown-header">
             <span>Notifikasi</span>
             {notifications.some((n) => !n.isRead) && (
@@ -181,9 +200,15 @@ export default function NotificationBell() {
             right: 1rem;
             width: auto;
             max-height: 60vh;
+            z-index: 1000;
+            /* Add smooth transition for better UX */
+            transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
           }
           .dropdown-body {
             max-height: calc(60vh - 50px);
+            /* Improve mobile scroll */
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
           }
         }
         .dropdown-header {
