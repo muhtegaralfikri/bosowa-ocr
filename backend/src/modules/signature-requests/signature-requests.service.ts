@@ -263,9 +263,14 @@ export class SignatureRequestsService {
     const docImage = sharp(docFullPath);
     const docMetadata = await docImage.metadata();
 
-    // Calculate signature size based on scale (100% = 150x75)
-    const baseWidth = 150;
-    const baseHeight = 75;
+    // Calculate signature size as percentage of document width
+    // Base size (scale 100%) = 20% of document width to maintain proportion
+    const BASE_RATIO = 0.2; // 20% of document width
+    const aspectRatio = 2 / 1; // Width to height ratio for signature
+    
+    const docWidth = docMetadata.width || 800;
+    const baseWidth = Math.round(docWidth * BASE_RATIO);
+    const baseHeight = Math.round(baseWidth / aspectRatio);
     const sigWidth = Math.round(baseWidth * (scale / 100));
     const sigHeight = Math.round(baseHeight * (scale / 100));
 
