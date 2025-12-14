@@ -52,7 +52,12 @@ export default function SignatureCanvas({
   };
 
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
+    // Only preventDefault for mouse events, not touch events
+    if ('touches' in e) {
+      // For touch events, don't call preventDefault to avoid passive listener warnings
+    } else {
+      e.preventDefault();
+    }
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -67,7 +72,13 @@ export default function SignatureCanvas({
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing) return;
-    e.preventDefault();
+    
+    // Only preventDefault for mouse events, not touch events
+    if ('touches' in e) {
+      // For touch events, don't call preventDefault to avoid passive listener warnings
+    } else {
+      e.preventDefault();
+    }
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -116,6 +127,7 @@ export default function SignatureCanvas({
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
+          style={{ touchAction: 'none' }}
         />
       </div>
       <div className="canvas-actions">
