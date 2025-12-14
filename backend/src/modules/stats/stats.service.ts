@@ -33,7 +33,7 @@ export class StatsService {
     type MonthlyRow = { month: string; masuk: string; keluar: string };
     const raw = await this.lettersRepo
       .createQueryBuilder('letter')
-      .select("DATE_FORMAT(letter.createdAt, '%Y-%m')", 'month')
+      .select("LEFT(letter.tanggalSurat, 7)", 'month')
       .addSelect(
         "SUM(CASE WHEN letter.jenisSurat = 'MASUK' THEN 1 ELSE 0 END)",
         'masuk',
@@ -42,8 +42,11 @@ export class StatsService {
         "SUM(CASE WHEN letter.jenisSurat = 'KELUAR' THEN 1 ELSE 0 END)",
         'keluar',
       )
+      .where("letter.tanggalSurat IS NOT NULL")
+      .andWhere("letter.tanggalSurat != ''")
       .groupBy('month')
       .orderBy('month', 'DESC')
+      .limit(12) // Limit to last 12 active months found
       .getRawMany<MonthlyRow>();
 
     return raw.map((row) => ({
