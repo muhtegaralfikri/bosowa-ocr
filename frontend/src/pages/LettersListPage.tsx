@@ -250,7 +250,10 @@ export default function LettersListPage() {
       
       <div className="table-container">
         <div className="table">
-          <div className="table-row table-head">
+          <div 
+            className="table-row table-head"
+            style={{ gridTemplateColumns: '2fr 1fr 1fr 1.2fr 2fr 2.5fr' }}
+          >
             {columns.map((col) => (
               <span key={col.key}>{col.label}</span>
             ))}
@@ -276,11 +279,14 @@ export default function LettersListPage() {
               key={letter.id}
               to={`/letters/${letter.id}`}
               className="table-row table-body-row"
+              style={{ gridTemplateColumns: '2fr 1fr 1fr 1.2fr 2fr 2.5fr' }}
             >
               {columns.map((col) => (
-                <div key={col.key} className="table-cell">
+                <div key={col.key} className="table-cell" style={{ minWidth: 0 }}>
                   <span className="cell-label">{col.label}</span>
-                  <span className="cell-value">{getCellValue(letter, col.key)}</span>
+                  <span className={`cell-value ${(col.key === 'perihal' || col.key === 'namaPengirim' || col.key === 'letterNumber') ? 'truncate' : ''}`}>
+                    {getCellValue(letter, col.key)}
+                  </span>
                 </div>
               ))}
             </Link>

@@ -97,10 +97,18 @@ export class SignaturesService {
 
   async remove(id: string, userId: string): Promise<void> {
     const signature = await this.findOne(id, userId);
+    const wasDefault = signature.isDefault;
     const filePath = path.join(process.cwd(), signature.imagePath);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
     await this.signatureRepo.remove(signature);
+
+    // Auto-set default if only one signature remains
+    const remaining = await this.signatureRepo.find({ where: { userId } });
+    if (remaining.length === 1 && (wasDefault || !remaining[0].isDefault)) {
+      remaining[0].isDefault = true;
+      await this.signatureRepo.save(remaining[0]);
+    }
   }
 }

@@ -4,6 +4,7 @@ import { Check, X } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 
 interface DeleteRequest {
@@ -17,6 +18,7 @@ interface DeleteRequest {
 
 export default function DeleteRequestsPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [letterNumber, setLetterNumber] = useState('');
   const [reason, setReason] = useState('');
   const [requests, setRequests] = useState<DeleteRequest[]>([]);
@@ -63,6 +65,7 @@ export default function DeleteRequestsPage() {
       .patch(`/delete-requests/${id}`, { status: 'APPROVED' })
       .then(() => {
         toast.success('Request disetujui, surat dihapus');
+        queryClient.invalidateQueries({ queryKey: ['letters'] });
         load();
       })
       .catch((err: unknown) => {

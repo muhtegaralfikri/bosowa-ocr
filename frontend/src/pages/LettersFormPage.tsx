@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import api from '../api/client';
 
@@ -63,6 +64,7 @@ const getInitialForm = (state: LocationState) => {
 export default function LettersFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const state = (location.state || {}) as LocationState;
 
   const [form, setForm] = useState(() => getInitialForm(state));
@@ -110,6 +112,8 @@ export default function LettersFormPage() {
       setMessage('Surat tersimpan');
       toast.success('Surat tersimpan');
       clearDraft();
+      // Invalidate letters cache so list updates automatically
+      queryClient.invalidateQueries({ queryKey: ['letters'] });
       navigate('/letters');
     } catch {
       setMessage('Gagal menyimpan surat');
