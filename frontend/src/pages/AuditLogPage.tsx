@@ -58,7 +58,8 @@ export default function AuditLogPage() {
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    // Hack: Parse as local time by stripping 'Z' if backend sends UTC string but means local
+    const date = new Date(dateStr.endsWith('Z') ? dateStr.slice(0, -1) : dateStr);
     return date.toLocaleString('id-ID', {
       day: '2-digit',
       month: 'short',
