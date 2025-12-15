@@ -71,7 +71,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <img src={logo} alt="Bosowa Bandar Agency" className="sidebar-logo" />
+          <img src={logo} alt="Bosowa Bandar Agensi" className="sidebar-logo" />
           <NotificationBell />
         </div>
 
@@ -131,7 +131,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           {children}
         </div>
         <footer className="app-footer">
-          <p>&copy; {new Date().getFullYear()} Bosowa Bandar Agency. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Bosowa Bandar Agensi. All rights reserved.</p>
         </footer>
       </main>
 
