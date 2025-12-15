@@ -1817,16 +1817,7 @@ button.mobile-menu-link.logout {
   font-weight: 500;
 }
 
-.form-grid input,
-.form-grid select {
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--input);
-  color: var(--text);
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-}
+
 
 .form-grid input:focus,
 .form-grid select:focus {
