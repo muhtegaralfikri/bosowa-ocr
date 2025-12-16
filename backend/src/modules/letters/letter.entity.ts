@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { JenisDokumenEnum, JenisSuratEnum } from './letter.types';
+import { UnitBisnis } from '../../common/enums/unit-bisnis.enum';
 import { DeleteRequest } from '../delete-requests/delete-request.entity';
 import { EditLog } from '../edit-logs/edit-log.entity';
 
@@ -15,6 +16,7 @@ import { EditLog } from '../edit-logs/edit-log.entity';
 @Index('idx_letters_number', ['letterNumber'])
 @Index('idx_letters_created', ['createdAt'])
 @Index('idx_letters_jenis', ['jenisSurat', 'jenisDokumen'])
+@Index('idx_letters_unit_bisnis', ['unitBisnis'])
 export class Letter {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -27,6 +29,9 @@ export class Letter {
 
   @Column({ type: 'enum', enum: JenisDokumenEnum })
   jenisDokumen: JenisDokumenEnum;
+
+  @Column({ type: 'enum', enum: UnitBisnis })
+  unitBisnis: UnitBisnis;
 
   @Column({ type: 'varchar', nullable: true })
   tanggalSurat: string;

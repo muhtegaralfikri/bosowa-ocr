@@ -208,6 +208,11 @@ export class LettersService {
   }
 
   async create(dto: CreateLetterDto) {
+    // Validate unit bisnis is provided
+    if (!dto.unitBisnis) {
+      throw new Error('Unit bisnis harus disediakan');
+    }
+    
     const meta = dto.fileId
       ? await this.filesService.getFile(dto.fileId)
       : null;
@@ -216,6 +221,7 @@ export class LettersService {
       letterNumber: dto.letterNumber,
       jenisSurat: dto.jenisSurat,
       jenisDokumen: dto.jenisDokumen,
+      unitBisnis: dto.unitBisnis,
       tanggalSurat: dto.tanggalSurat,
       namaPengirim: dto.namaPengirim || null,
       alamatPengirim: dto.alamatPengirim || null,
@@ -237,6 +243,7 @@ export class LettersService {
     perihal?: string,
     jenisDokumen?: 'SURAT' | 'INVOICE',
     jenisSurat?: 'MASUK' | 'KELUAR',
+    unitBisnis?: string,
     tanggalMulai?: string,
     tanggalSelesai?: string,
     nominalMin?: number,
@@ -269,6 +276,10 @@ export class LettersService {
     
     if (jenisSurat) {
       where.jenisSurat = jenisSurat;
+    }
+    
+    if (unitBisnis) {
+      where.unitBisnis = unitBisnis;
     }
     
     // Date range filter
@@ -314,6 +325,7 @@ export class LettersService {
           'letter.letterNumber',
           'letter.jenisSurat',
           'letter.jenisDokumen',
+          'letter.unitBisnis',
           'letter.tanggalSurat',
           'letter.namaPengirim',
           'letter.perihal',
@@ -345,6 +357,10 @@ export class LettersService {
 
       if (jenisSurat) {
         queryBuilder.andWhere('letter.jenisSurat = :jenisSurat', { jenisSurat });
+      }
+      
+      if (unitBisnis) {
+        queryBuilder.andWhere('letter.unitBisnis = :unitBisnis', { unitBisnis });
       }
 
       // Date range filter

@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 const DRAFT_KEY = 'bosowa-letter-draft';
 
@@ -30,6 +31,7 @@ const getInitialForm = (state: LocationState) => {
       letterNumber: state.ocrResult.letterNumber || '',
       jenisSurat: 'MASUK',
       jenisDokumen: 'SURAT',
+      unitBisnis: '', // Will be set automatically for regular users
       tanggalSurat: state.ocrResult.tanggalSurat || '',
       namaPengirim: state.ocrResult.namaPengirim || '',
       alamatPengirim: state.ocrResult.alamatPengirim || '',
@@ -52,6 +54,7 @@ const getInitialForm = (state: LocationState) => {
     letterNumber: '',
     jenisSurat: 'MASUK',
     jenisDokumen: 'SURAT',
+    unitBisnis: '', // Will be set automatically for regular users
     tanggalSurat: '',
     namaPengirim: '',
     alamatPengirim: '',
@@ -65,6 +68,7 @@ export default function LettersFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const state = (location.state || {}) as LocationState;
 
   const [form, setForm] = useState(() => getInitialForm(state));
@@ -88,10 +92,23 @@ export default function LettersFormPage() {
     setHasDraft(false);
   };
 
-  const disabled = useMemo(
-    () => !form.letterNumber || !form.tanggalSurat,
-    [form],
-  );
+  // Auto-set unit bisnis for regular users
+  useEffect(() => {
+    if (user && user.role !== 'ADMIN' && user.role !== 'MANAJEMEN' && user.unitBisnis) {
+      setForm((prev: any) => ({ ...prev, unitBisnis: user.unitBisnis }));
+    }
+  }, [user]);
+
+  const isAdminOrManajemen = user && (user.role === 'ADMIN' || user.role === 'MANAJEMEN');
+
+  const disabled = useMemo(() => {
+    // For admin/manajemen, require all fields including unitBisnis
+    if (isAdminOrManajemen) {
+      return !form.letterNumber || !form.tanggalSurat || !form.unitBisnis;
+    }
+    // For regular users, unitBisnis is auto-filled
+    return !form.letterNumber || !form.tanggalSurat;
+  }, [form, isAdminOrManajemen]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -178,6 +195,37 @@ export default function LettersFormPage() {
             <option value="INVOICE">INVOICE</option>
           </select>
         </label>
+        {/* Only show unit bisnis field for admin/manajemen */}
+        {isAdminOrManajemen && (
+          <label>
+            Unit Bisnis
+            <select
+              value={form.unitBisnis}
+              onChange={(e) =>
+                setForm({ ...form, unitBisnis: e.target.value })
+              }
+              required
+            >
+              <option value="">Pilih Unit Bisnis</option>
+              <option value="BOSOWA_TAXI">Bosowa Taxi</option>
+              <option value="OTORENTAL_NUSANTARA">Otorental Nusantara</option>
+              <option value="OTO_GARAGE_INDONESIA">Oto Garage Indonesia</option>
+              <option value="MALLOMO">Mallomo</option>
+              <option value="LAGALIGO_LOGISTIK">Lagaligo Logistik</option>
+              <option value="PORT_MANAGEMENT">Port Management</option>
+            </select>
+          </label>
+        )}
+        
+        {/* Show current unit bisnis info for regular users */}
+        {!isAdminOrManajemen && user?.unitBisnis && (
+          <div style={{ padding: '0.75rem', backgroundColor: '#f8f9fa', borderRadius: '8px', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Unit Bisnis</div>
+            <div style={{ fontWeight: '600' }}>
+              {(user.unitBisnis as any).replace('_', ' ')}
+            </div>
+          </div>
+        )}
         <label>
           Tanggal Surat
           <input

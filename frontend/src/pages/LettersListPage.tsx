@@ -1,13 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import api from '../api/client';
 import type { Letter, PaginatedResponse } from '../api/types';
+import { useAuth } from '../context/AuthContext';
 
 const PAGE_SIZE = 10;
-const columns = [
+
+// Define base columns
+const allColumns = [
+  { key: 'unitBisnis', label: 'Unit Bisnis' },
   { key: 'letterNumber', label: 'Nomor Surat' },
   { key: 'jenisSurat', label: 'Jenis Surat' },
   { key: 'jenisDokumen', label: 'Jenis Dokumen' },
@@ -16,7 +20,30 @@ const columns = [
   { key: 'perihal', label: 'Perihal' },
 ] as const;
 
+type Column = typeof allColumns[number];
+
 export default function LettersListPage() {
+  const { user } = useAuth();
+  
+  // Filter columns based on user role
+  const columns = useMemo(() => {
+    if (user?.role === 'ADMIN' || user?.role === 'MANAJEMEN') {
+      return allColumns; // Show all columns including unit bisnis
+    } else {
+      // Remove unit bisnis column for regular users
+      return allColumns.filter(col => col.key !== 'unitBisnis');
+    }
+  }, [user]);
+
+  // Dynamic grid template based on column count
+  const gridTemplateColumns = useMemo(() => {
+    if (user?.role === 'ADMIN' || user?.role === 'MANAJEMEN') {
+      return '1.5fr 2fr 1fr 1fr 1.2fr 2fr 2.5fr'; // 7 columns with unit bisnis
+    } else {
+      return '2fr 1fr 1fr 1.2fr 2fr 2.5fr'; // 6 columns without unit bisnis
+    }
+  }, [user]);
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -25,6 +52,7 @@ export default function LettersListPage() {
     perihal: '',
     jenisDokumen: '',
     jenisSurat: '',
+    unitBisnis: '',
     tanggalMulai: '',
     tanggalSelesai: '',
     nominalMin: '',
@@ -33,9 +61,11 @@ export default function LettersListPage() {
 
   const getCellValue = (
     letter: Letter,
-    key: (typeof columns)[number]['key'],
+    key: Column['key'],
   ) => {
     switch (key) {
+      case 'unitBisnis':
+        return letter.unitBisnis?.replace('_', ' ') || '-';
       case 'letterNumber':
         return letter.letterNumber;
       case 'jenisSurat':
@@ -69,6 +99,7 @@ export default function LettersListPage() {
           if (filters.perihal) params.perihal = filters.perihal;
           if (filters.jenisDokumen) params.jenisDokumen = filters.jenisDokumen;
           if (filters.jenisSurat) params.jenisSurat = filters.jenisSurat;
+          if (filters.unitBisnis) params.unitBisnis = filters.unitBisnis;
           if (filters.tanggalMulai) params.tanggalMulai = filters.tanggalMulai;
           if (filters.tanggalSelesai) params.tanggalSelesai = filters.tanggalSelesai;
           if (filters.nominalMin) params.nominalMin = filters.nominalMin;
@@ -107,6 +138,7 @@ export default function LettersListPage() {
       perihal: '',
       jenisDokumen: '',
       jenisSurat: '',
+      unitBisnis: '',
       tanggalMulai: '',
       tanggalSelesai: '',
       nominalMin: '',
@@ -208,6 +240,22 @@ export default function LettersListPage() {
             </label>
             
             <label>
+              Unit Bisnis
+              <select
+                value={filters.unitBisnis}
+                onChange={(e) => handleFilterChange('unitBisnis', e.target.value)}
+              >
+                <option value="">Semua</option>
+                <option value="BOSOWA_TAXI">Bosowa Taxi</option>
+                <option value="OTORENTAL_NUSANTARA">Otorental Nusantara</option>
+                <option value="OTO_GARAGE_INDONESIA">Oto Garage Indonesia</option>
+                <option value="MALLOMO">Mallomo</option>
+                <option value="LAGALIGO_LOGISTIK">Lagaligo Logistik</option>
+                <option value="PORT_MANAGEMENT">Port Management</option>
+              </select>
+            </label>
+            
+            <label>
               Tanggal Mulai
               <input
                 type="date"
@@ -252,7 +300,7 @@ export default function LettersListPage() {
         <div className="table">
           <div 
             className="table-row table-head"
-            style={{ gridTemplateColumns: '2fr 1fr 1fr 1.2fr 2fr 2.5fr' }}
+            style={{ gridTemplateColumns }}
           >
             {columns.map((col) => (
               <span key={col.key}>{col.label}</span>
@@ -279,7 +327,7 @@ export default function LettersListPage() {
               key={letter.id}
               to={`/letters/${letter.id}`}
               className="table-row table-body-row"
-              style={{ gridTemplateColumns: '2fr 1fr 1fr 1.2fr 2fr 2.5fr' }}
+              style={{ gridTemplateColumns }}
             >
               {columns.map((col) => (
                 <div key={col.key} className="table-cell" style={{ minWidth: 0 }}>

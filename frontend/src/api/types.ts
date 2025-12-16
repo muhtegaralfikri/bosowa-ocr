@@ -20,6 +20,7 @@ export interface Letter {
   letterNumber: string;
   jenisSurat: 'MASUK' | 'KELUAR';
   jenisDokumen: 'SURAT' | 'INVOICE';
+  unitBisnis: 'BOSOWA_TAXI' | 'OTORENTAL_NUSANTARA' | 'OTO_GARAGE_INDONESIA' | 'MALLOMO' | 'LAGALIGO_LOGISTIK' | 'PORT_MANAGEMENT';
   tanggalSurat: string;
   namaPengirim?: string | null;
   alamatPengirim?: string | null;
@@ -84,4 +85,5 @@ export interface User {
   id: string;
   username: string;
   role: 'ADMIN' | 'MANAJEMEN' | 'USER';
+  unitBisnis?: 'BOSOWA_TAXI' | 'OTORENTAL_NUSANTARA' | 'OTO_GARAGE_INDONESIA' | 'MALLOMO' | 'LAGALIGO_LOGISTIK' | 'PORT_MANAGEMENT' | null;
 }

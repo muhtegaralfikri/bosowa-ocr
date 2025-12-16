@@ -22,6 +22,7 @@ export default function LoginPage() {
       login({
         username: user.username,
         role: user.role,
+        unitBisnis: user.unitBisnis,
         token: accessToken,
         refreshToken: refreshToken,
       });

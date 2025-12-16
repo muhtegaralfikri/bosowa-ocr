@@ -239,6 +239,9 @@ export default function LetterDetailPage() {
                 <strong>Jenis Dokumen</strong> {letter.jenisDokumen}
               </li>
               <li>
+                <strong>Unit Bisnis</strong> {letter.unitBisnis?.replace('_', ' ') || '-'}
+              </li>
+              <li>
                 <strong>Tanggal</strong> {letter.tanggalSurat}
               </li>
               <li>
@@ -284,6 +287,21 @@ export default function LetterDetailPage() {
                 >
                   <option value="SURAT">SURAT</option>
                   <option value="INVOICE">INVOICE</option>
+                </select>
+              </label>
+              <label>
+                Unit Bisnis
+                <select
+                  value={form.unitBisnis || ''}
+                  onChange={(e) => setForm({ ...form, unitBisnis: e.target.value as any })}
+                  disabled
+                >
+                  <option value="BOSOWA_TAXI">Bosowa Taxi</option>
+                  <option value="OTORENTAL_NUSANTARA">Otorental Nusantara</option>
+                  <option value="OTO_GARAGE_INDONESIA">Oto Garage Indonesia</option>
+                  <option value="MALLOMO">Mallomo</option>
+                  <option value="LAGALIGO_LOGISTIK">Lagaligo Logistik</option>
+                  <option value="PORT_MANAGEMENT">Port Management</option>
                 </select>
               </label>
               <label>

@@ -26,6 +26,10 @@ export class ListLettersQueryDto {
   @IsOptional()
   jenisSurat?: 'MASUK' | 'KELUAR';
 
+  @IsIn(['BOSOWA_TAXI', 'OTORENTAL_NUSANTARA', 'OTO_GARAGE_INDONESIA', 'MALLOMO', 'LAGALIGO_LOGISTIK', 'PORT_MANAGEMENT'])
+  @IsOptional()
+  unitBisnis?: 'BOSOWA_TAXI' | 'OTORENTAL_NUSANTARA' | 'OTO_GARAGE_INDONESIA' | 'MALLOMO' | 'LAGALIGO_LOGISTIK' | 'PORT_MANAGEMENT';
+
   @IsDateString()
   @IsOptional()
   tanggalMulai?: string; // YYYY-MM-DD format

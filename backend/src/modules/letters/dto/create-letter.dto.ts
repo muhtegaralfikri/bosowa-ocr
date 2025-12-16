@@ -1,4 +1,5 @@
 import {
+  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -6,6 +7,7 @@ import {
   IsString,
 } from 'class-validator';
 import { JenisDokumenEnum, JenisSuratEnum } from '../letter.types';
+import { UnitBisnis } from '../../../common/enums/unit-bisnis.enum';
 
 export class CreateLetterDto {
   @IsString({ message: 'Nomor surat harus berupa teks' })
@@ -20,7 +22,11 @@ export class CreateLetterDto {
   })
   jenisDokumen: JenisDokumenEnum;
 
-  @IsString({ message: 'Tanggal surat harus berupa teks' })
+  @IsEnum(UnitBisnis, { message: 'Unit bisnis harus dipilih' })
+  @IsOptional()
+  unitBisnis?: UnitBisnis;
+
+  @IsDateString()
   @IsNotEmpty({ message: 'Tanggal surat tidak boleh kosong' })
   tanggalSurat: string;
 

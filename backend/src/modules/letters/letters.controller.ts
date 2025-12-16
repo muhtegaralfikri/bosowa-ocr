@@ -173,13 +173,34 @@ export class LettersController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() dto: CreateLetterDto) {
+  create(@Body() dto: CreateLetterDto, @Request() req: ExpressRequest & { user?: { username?: string; role?: string; unitBisnis?: string } }) {
+    console.log('=== CREATE LETTER REQUEST ===');
+    console.log('Request headers:', req.headers);
+    console.log('User from token:', req.user);
+    console.log('Raw DTO:', dto);
+    
+    // Auto-fill unit bisnis for regular users
+    if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MANAJEMEN' && req.user?.unitBisnis) {
+      dto.unitBisnis = req.user.unitBisnis as any;
+      console.log('Auto-filled unit bisnis:', req.user.unitBisnis);
+    }
+    
+    console.log('Final DTO:', dto);
+    console.log('=== END DEBUG ===');
     return this.lettersService.create(dto);
   }
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll(@Query() query: ListLettersQueryDto) {
+  findAll(@Query() query: ListLettersQueryDto, @Request() req: ExpressRequest & { user?: { username?: string; role?: string; unitBisnis?: string } }) {
+    // Determine unit bisnis filter based on user role
+    let unitBisnisFilter = query.unitBisnis;
+    
+    // If user is not admin or manajemen, filter by their unit bisnis
+    if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MANAJEMEN' && req.user?.unitBisnis) {
+      unitBisnisFilter = req.user.unitBisnis as any;
+    }
+    
     return this.lettersService.findAll(
       query.keyword,
       query.letterNumber,
@@ -187,6 +208,7 @@ export class LettersController {
       query.perihal,
       query.jenisDokumen,
       query.jenisSurat,
+      unitBisnisFilter,
       query.tanggalMulai,
       query.tanggalSelesai,
       query.nominalMin,
