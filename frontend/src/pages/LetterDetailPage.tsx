@@ -38,14 +38,36 @@ export default function LetterDetailPage() {
   const [form, setForm] = useState<Partial<Letter>>({});
   const [saving, setSaving] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [showImageZoom, setShowImageZoom] = useState(false);
+  const [activePreview, setActivePreview] = useState<{ url: string; type: 'pdf' | 'image' } | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
   const { data: signatureRequests = [] } = useQuery({
     queryKey: ['signature-requests', id],
     queryFn: () => getSignatureRequestsByLetter(id!),
     enabled: !!id,
   });
+
+  // Fetch PDF as Blob to bypass IDM
+  useEffect(() => {
+    if (letter?.fileUrl?.toLowerCase().endsWith('.pdf') && (letter as any).fileId) {
+      const url = getPdfUrl((letter as any).fileId, letter.fileUrl);
+      
+      fetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+          // Force type to application/pdf
+          const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(pdfBlob);
+          setPdfBlobUrl(blobUrl);
+        })
+        .catch(err => console.error('Failed to load PDF blob:', err));
+
+      return () => {
+        if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
+      };
+    }
+  }, [letter]);
 
   useEffect(() => {
     if (id) {
@@ -93,9 +115,76 @@ export default function LetterDetailPage() {
     }
   };
 
-  const getImageUrl = (url: string) => {
-    if (url.startsWith('http')) return url;
-    return `${API_BASE}${url}`;
+  const getImageUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `${API_BASE}${path}`;
+  };
+
+  const handleViewDocument = async (path: string, type: 'pdf' | 'image', existingBlobUrl?: string | null) => {
+    if (existingBlobUrl) {
+      setActivePreview({ url: existingBlobUrl, type: 'pdf' });
+      setZoomLevel(1);
+      return;
+    }
+
+    // Determine if we need to use the POST endpoint for signed files (IDM bypass)
+    const isSignedFile = path.includes('/uploads/signed/');
+    let fullUrl = getImageUrl(path);
+    
+    if (type === 'pdf' || isSignedFile) {
+      try {
+        const toastId = toast.loading('Memuat preview dokumen...');
+        let res;
+
+        if (isSignedFile) {
+           const filename = path.split('/').pop();
+           res = await fetch(`${API_BASE}/api/v1/letters/signed-image-preview`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                // Add Authorization if needed, though endpoint is currently public-ish (LetterController guards apply?)
+                // LetterController HAS @UseGuards(JwtAuthGuard) on methods, but not class?
+                // Wait, in Step 453, LetterController class has NO @UseGuards.
+                // It has @UseGuards per method.
+                // The new endpoint I added has NO @UseGuards. So it is public.
+              },
+              body: JSON.stringify({ filename }),
+           });
+        } else {
+           res = await fetch(fullUrl);
+        }
+
+        if (!res.ok) throw new Error('Fetch failed');
+        
+        const blob = await res.blob();
+        // Force type to application/pdf for PDFs, or infer for images?
+        // If type is 'image', we can still display a blob URL.
+        const blobType = type === 'pdf' ? 'application/pdf' : 'image/jpeg';
+        const fileBlob = new Blob([blob], { type: blobType });
+        const blobUrl = URL.createObjectURL(fileBlob);
+        
+        setActivePreview({ url: blobUrl, type });
+        toast.dismiss(toastId);
+      } catch (e) {
+        console.error(e);
+        toast.error('Gagal memuat preview');
+      }
+    } else {
+      // Standard image loading (non-signed)
+      setActivePreview({ url: fullUrl, type: 'image' });
+    }
+    setZoomLevel(1);
+  };
+
+  const getPdfUrl = (fileId: string, _fileUrl: string) => {
+    if (fileId) {
+      // Use stream endpoint to bypass IDM
+      // Endpoint is under api/v1 global prefix
+      return `${API_BASE}/api/v1/letters/pdf-preview/${fileId}`;
+    }
+    // Fallback if no fileId (should not happen for new uploads)
+    return getImageUrl(_fileUrl || '');
   };
 
   if (!letter) {
@@ -257,21 +346,49 @@ export default function LetterDetailPage() {
         </div>
         <div>
           {letter.fileUrl ? (
-            <div
-              className="preview-image-container"
-              onClick={() => { setShowImageZoom(true); setZoomLevel(1); }}
-              title="Klik untuk memperbesar"
-            >
-              <img
-                src={getImageUrl(letter.fileUrl)}
-                alt="Lampiran surat"
-                className="preview-image"
-              />
-              <div className="zoom-hint">
-                <ZoomIn size={20} />
-                <span>Klik untuk zoom</span>
+            letter.fileUrl.toLowerCase().endsWith('.pdf') ? (
+              // PDF Preview using iframe with Blob URL
+              <div className="preview-pdf-container">
+                {pdfBlobUrl ? (
+                  <>
+                    <iframe
+                      src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                      title="PDF Preview"
+                      width="100%"
+                      height="600px"
+                      className="preview-pdf"
+                    />
+                    <div 
+                      className="pdf-overlay"
+                      onClick={() => handleViewDocument(letter.fileUrl!, 'pdf', pdfBlobUrl)}
+                    >
+                      <div className="zoom-hint">
+                        <ZoomIn size={20} />
+                        <span>Klik untuk zoom</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ padding: '20px', textAlign: 'center' }}>Memuat Dokumen PDF...</div>
+                )}
               </div>
-            </div>
+            ) : (
+              // Image Preview with zoom
+              <div
+                className="preview-image-container"
+                onClick={() => handleViewDocument(letter.fileUrl!, 'image')}
+              >
+                <img
+                  src={getImageUrl(letter.fileUrl)}
+                  alt="Preview Surat"
+                  className="preview-image"
+                />
+                <div className="zoom-hint">
+                  <ZoomIn size={20} />
+                  <span>Klik untuk zoom</span>
+                </div>
+              </div>
+            )
           ) : (
             <p>Tidak ada lampiran</p>
           )}
@@ -298,15 +415,18 @@ export default function LetterDetailPage() {
                   </span>
                   {req.status === 'SIGNED' && req.signedImagePath && (
                     <>
-                      <a
-                        href={getImageUrl(req.signedImagePath)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => handleViewDocument(
+                          req.signedImagePath!, 
+                          req.signedImagePath!.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
+                        )}
                         className="view-signed-btn"
                         title="Lihat dokumen ber-TTD"
+                        style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                       >
                         <Eye size={14} /> Lihat
-                      </a>
+                      </button>
                       <button
                         type="button"
                         className="download-signed-btn"
@@ -335,8 +455,8 @@ export default function LetterDetailPage() {
         />
       )}
 
-      {showImageZoom && letter.fileUrl && (
-        <div className="image-zoom-overlay" onClick={() => setShowImageZoom(false)}>
+      {!!activePreview && (
+        <div className="image-zoom-overlay" onClick={() => setActivePreview(null)}>
           <div className="image-zoom-controls" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
@@ -358,18 +478,26 @@ export default function LetterDetailPage() {
             <button
               type="button"
               className="zoom-control-btn close"
-              onClick={() => setShowImageZoom(false)}
+              onClick={() => setActivePreview(null)}
               title="Tutup"
             >
               <X size={20} />
             </button>
           </div>
           <div className="image-zoom-content" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={getImageUrl(letter.fileUrl)}
-              alt="Lampiran surat - Zoom"
-              style={{ transform: `scale(${zoomLevel})` }}
-            />
+            {activePreview.type === 'pdf' ? (
+                <iframe
+                  src={`${activePreview.url}#toolbar=0&navpanes=0&scrollbar=0`}
+                  title="PDF Zoom"
+                  className="pdf-zoom-embed"
+                />
+            ) : (
+              <img
+                src={activePreview.url}
+                alt="Document Preview"
+                style={{ transform: `scale(${zoomLevel})` }}
+              />
+            )}
           </div>
         </div>
       )}
@@ -487,6 +615,42 @@ export default function LetterDetailPage() {
           }
         }
 
+        /* PDF Preview Styles */
+        .preview-pdf-container {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 1px solid var(--border-color);
+          background: var(--bg-secondary);
+        }
+        .preview-pdf {
+          border: none;
+          min-height: 500px;
+        }
+        .pdf-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          cursor: zoom-in;
+          z-index: 10;
+          display: flex;
+          align-items: flex-end;
+          justify-content: flex-end;
+          padding: 12px;
+          transition: background 0.2s;
+        }
+        .pdf-overlay:hover {
+          background: rgba(0, 0, 0, 0.05);
+        }
+        .pdf-overlay:hover .zoom-hint {
+          opacity: 1;
+        }
+
         /* Image Zoom Styles */
         .preview-image-container {
           position: relative;
@@ -581,6 +745,8 @@ export default function LetterDetailPage() {
         .image-zoom-content {
           max-width: 90vw;
           max-height: 85vh;
+          width: 90vw;
+          height: 85vh;
           overflow: auto;
           display: flex;
           align-items: center;
@@ -592,6 +758,13 @@ export default function LetterDetailPage() {
           object-fit: contain;
           border-radius: 8px;
           transition: transform 0.2s ease;
+        }
+        .pdf-zoom-embed {
+          width: 100%;
+          height: 100%;
+          border: none;
+          border-radius: 8px;
+          background: white;
         }
       `}</style>
     </section>

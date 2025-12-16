@@ -260,6 +260,50 @@ export class SignatureRequestsService {
     const outputFilename = `signed-${Date.now()}-${path.basename(documentPath)}`;
     const outputPath = path.join(outputDir, outputFilename);
 
+    // Handle PDF files
+    if (documentPath.toLowerCase().endsWith('.pdf')) {
+      const { PDFDocument } = await import('pdf-lib');
+      const pdfBuffer = fs.readFileSync(docFullPath);
+      const pdfDoc = await PDFDocument.load(pdfBuffer);
+      const pages = pdfDoc.getPages();
+      
+      // Default to first page (page 0)
+      // Frontend currently shows first page preview
+      const page = pages[0];
+      const { width, height } = page.getSize();
+
+      // Convert signature to PNG buffer using sharp to ensure compatibility
+      const sigPngBuffer = await sharp(sigFullPath).png().toBuffer();
+      const sigImage = await pdfDoc.embedPng(sigPngBuffer);
+
+      // Sizing calculation (match existing logic: 20% of width base)
+      const BASE_RATIO = 0.2;
+      const targetWidth = width * BASE_RATIO * (scale / 100);
+      const scaleFactor = targetWidth / sigImage.width;
+      const sigDims = sigImage.scale(scaleFactor);
+
+      // Coordinate calculation
+      // Frontend sends % from Top-Left. PDF uses Bottom-Left.
+      // x = (posX% * width) - (sigWidth/2)
+      // y = height - (posY% * height) - (sigHeight/2)
+      
+      const x = (posX / 100) * width - sigDims.width / 2;
+      const y = height - ((posY / 100) * height) - sigDims.height / 2;
+
+      page.drawImage(sigImage, {
+        x,
+        y,
+        width: sigDims.width,
+        height: sigDims.height,
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      fs.writeFileSync(outputPath, pdfBytes);
+      
+      return `/uploads/signed/${outputFilename}`;
+    }
+
+    // Handle Image files (Existing logic)
     const docImage = sharp(docFullPath);
     const docMetadata = await docImage.metadata();
 
