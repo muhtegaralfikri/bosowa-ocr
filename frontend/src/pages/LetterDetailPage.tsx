@@ -399,29 +399,7 @@ export default function LetterDetailPage() {
           ) : (
             <p>Tidak ada lampiran</p>
           )}
-          {letter.fileUrl && (
-            <button
-               type="button"
-                onClick={() => handleDirectDownload(`${API_BASE}/api/v1/letters/${letter.id}/download-pdf`)}
-               style={{ 
-                 marginTop: '1rem', 
-                 padding: '0.75rem', 
-                 width: '100%', 
-                 display: 'flex', 
-                 alignItems: 'center', 
-                 justifyContent: 'center', 
-                 gap: '0.5rem',
-                 background: 'var(--primary)', 
-                 color: 'white', 
-                 border: 'none', 
-                 borderRadius: '6px', 
-                 cursor: 'pointer',
-                 fontWeight: 500
-               }}
-            >
-               <Download size={16} /> Download PDF
-            </button>
-          )}
+          
         </div>
       </div>
 

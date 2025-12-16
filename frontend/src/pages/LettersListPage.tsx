@@ -239,21 +239,24 @@ export default function LettersListPage() {
               </select>
             </label>
             
-            <label>
-              Unit Bisnis
-              <select
-                value={filters.unitBisnis}
-                onChange={(e) => handleFilterChange('unitBisnis', e.target.value)}
-              >
-                <option value="">Semua</option>
-                <option value="BOSOWA_TAXI">Bosowa Taxi</option>
-                <option value="OTORENTAL_NUSANTARA">Otorental Nusantara</option>
-                <option value="OTO_GARAGE_INDONESIA">Oto Garage Indonesia</option>
-                <option value="MALLOMO">Mallomo</option>
-                <option value="LAGALIGO_LOGISTIK">Lagaligo Logistik</option>
-                <option value="PORT_MANAGEMENT">Port Management</option>
-              </select>
-            </label>
+            {/* Unit Bisnis Filter - Only for Admin and Manajemen */}
+            {(user?.role === 'ADMIN' || user?.role === 'MANAJEMEN') && (
+              <label>
+                Unit Bisnis
+                <select
+                  value={filters.unitBisnis}
+                  onChange={(e) => handleFilterChange('unitBisnis', e.target.value)}
+                >
+                  <option value="">Semua</option>
+                  <option value="BOSOWA_TAXI">Bosowa Taxi</option>
+                  <option value="OTORENTAL_NUSANTARA">Otorental Nusantara</option>
+                  <option value="OTO_GARAGE_INDONESIA">Oto Garage Indonesia</option>
+                  <option value="MALLOMO">Mallomo</option>
+                  <option value="LAGALIGO_LOGISTIK">Lagaligo Logistik</option>
+                  <option value="PORT_MANAGEMENT">Port Management</option>
+                </select>
+              </label>
+            )}
             
             <label>
               Tanggal Mulai
