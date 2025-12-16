@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Pencil, X, Save, FileSignature, Check, Clock, XCircle, Eye, Download } from 'lucide-react';
+import { Pencil, X, Save, FileSignature, Check, Clock, XCircle, Eye, Download, ZoomIn, ZoomOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
@@ -38,6 +38,8 @@ export default function LetterDetailPage() {
   const [form, setForm] = useState<Partial<Letter>>({});
   const [saving, setSaving] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [showImageZoom, setShowImageZoom] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   const { data: signatureRequests = [] } = useQuery({
     queryKey: ['signature-requests', id],
@@ -255,11 +257,21 @@ export default function LetterDetailPage() {
         </div>
         <div>
           {letter.fileUrl ? (
-            <img
-              src={getImageUrl(letter.fileUrl)}
-              alt="Lampiran surat"
-              className="preview-image"
-            />
+            <div
+              className="preview-image-container"
+              onClick={() => { setShowImageZoom(true); setZoomLevel(1); }}
+              title="Klik untuk memperbesar"
+            >
+              <img
+                src={getImageUrl(letter.fileUrl)}
+                alt="Lampiran surat"
+                className="preview-image"
+              />
+              <div className="zoom-hint">
+                <ZoomIn size={20} />
+                <span>Klik untuk zoom</span>
+              </div>
+            </div>
           ) : (
             <p>Tidak ada lampiran</p>
           )}
@@ -321,6 +333,45 @@ export default function LetterDetailPage() {
           letterNumber={letter.letterNumber}
           onClose={() => setShowSignatureModal(false)}
         />
+      )}
+
+      {showImageZoom && letter.fileUrl && (
+        <div className="image-zoom-overlay" onClick={() => setShowImageZoom(false)}>
+          <div className="image-zoom-controls" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="zoom-control-btn"
+              onClick={() => setZoomLevel((prev) => Math.min(prev + 0.25, 3))}
+              title="Perbesar"
+            >
+              <ZoomIn size={20} />
+            </button>
+            <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
+            <button
+              type="button"
+              className="zoom-control-btn"
+              onClick={() => setZoomLevel((prev) => Math.max(prev - 0.25, 0.5))}
+              title="Perkecil"
+            >
+              <ZoomOut size={20} />
+            </button>
+            <button
+              type="button"
+              className="zoom-control-btn close"
+              onClick={() => setShowImageZoom(false)}
+              title="Tutup"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <div className="image-zoom-content" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={getImageUrl(letter.fileUrl)}
+              alt="Lampiran surat - Zoom"
+              style={{ transform: `scale(${zoomLevel})` }}
+            />
+          </div>
+        </div>
       )}
 
       <style>{`
@@ -434,6 +485,113 @@ export default function LetterDetailPage() {
             justify-content: center;
             padding: 0.5rem;
           }
+        }
+
+        /* Image Zoom Styles */
+        .preview-image-container {
+          position: relative;
+          cursor: zoom-in;
+          border-radius: 8px;
+          overflow: hidden;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .preview-image-container:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        .preview-image-container:hover .zoom-hint {
+          opacity: 1;
+        }
+        .zoom-hint {
+          position: absolute;
+          bottom: 12px;
+          right: 12px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 12px;
+          background: rgba(0, 0, 0, 0.75);
+          color: white;
+          border-radius: 6px;
+          font-size: 0.75rem;
+          opacity: 0;
+          transition: opacity 0.2s;
+          pointer-events: none;
+        }
+        .image-zoom-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.9);
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .image-zoom-controls {
+          position: absolute;
+          top: 20px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 16px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 12px;
+          z-index: 1001;
+        }
+        .zoom-control-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border: none;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+          cursor: pointer;
+          transition: background 0.2s, transform 0.1s;
+        }
+        .zoom-control-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+          transform: scale(1.05);
+        }
+        .zoom-control-btn.close {
+          background: rgba(239, 68, 68, 0.3);
+        }
+        .zoom-control-btn.close:hover {
+          background: rgba(239, 68, 68, 0.5);
+        }
+        .zoom-level {
+          color: white;
+          font-size: 0.875rem;
+          font-weight: 500;
+          min-width: 50px;
+          text-align: center;
+        }
+        .image-zoom-content {
+          max-width: 90vw;
+          max-height: 85vh;
+          overflow: auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .image-zoom-content img {
+          max-width: 100%;
+          max-height: 85vh;
+          object-fit: contain;
+          border-radius: 8px;
+          transition: transform 0.2s ease;
         }
       `}</style>
     </section>
