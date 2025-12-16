@@ -8,7 +8,12 @@ import {
   Request,
   Query,
   UseGuards,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
+import { createReadStream } from 'fs';
+import * as fs from 'fs';
+import { join } from 'path';
 import { ILike } from 'typeorm';
 import { Request as ExpressRequest } from 'express';
 import { CreateLetterDto } from './dto/create-letter.dto';
@@ -19,21 +24,161 @@ import { LettersService } from './letters.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('letters')
-@UseGuards(JwtAuthGuard)
 export class LettersController {
   constructor(private readonly lettersService: LettersService) {}
 
+  @Get(':id/download-pdf')
+  async downloadAsPdf(@Param('id') id: string, @Res() res: Response) {
+    const letter = await this.lettersService.findOne(id);
+    if (!letter || !letter.fileId) {
+       res.status(404).send('Not found');
+       return;
+    }
+    const filePath = await this.lettersService.getFilePath(letter.fileId);
+    
+    // Set headers for download
+    const cleanLetterNumber = (letter.letterNumber || 'document').replace(/[^a-zA-Z0-9-_]/g, '_');
+    const filename = `${cleanLetterNumber}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    if (filePath.toLowerCase().endsWith('.pdf')) {
+       createReadStream(filePath).pipe(res);
+       return;
+    }
+
+    // Convert Image to PDF on the fly
+    try {
+        const { PDFDocument } = await import('pdf-lib');
+        const sharp = require('sharp');
+        
+        const docImage = sharp(filePath);
+        const metadata = await docImage.metadata();
+        const buffer = await docImage.png().toBuffer();
+
+        const pdfDoc = await PDFDocument.create();
+        const imageEmbed = await pdfDoc.embedPng(buffer);
+        const page = pdfDoc.addPage([imageEmbed.width, imageEmbed.height]);
+        page.drawImage(imageEmbed, {
+            x: 0,
+            y: 0,
+            width: imageEmbed.width,
+            height: imageEmbed.height,
+        });
+
+        const pdfBytes = await pdfDoc.save();
+        res.send(Buffer.from(pdfBytes));
+    } catch (e) {
+        console.error('PDF Conversion failed:', e);
+        res.status(500).send('Conversion failed');
+    }
+  }
+
+  @Post('signed-image-preview')
+  async previewSignedImage(@Body('filename') filename: string, @Res() res: Response) {
+    if (!filename) {
+      res.status(400).send('Filename is required');
+      return;
+    }
+
+    const filePath = join(process.cwd(), 'uploads', 'signed', filename);
+    
+    // Security check
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+       res.status(400).send('Invalid filename');
+       return;
+    }
+
+    if (!fs.existsSync(filePath)) {
+      res.status(404).send('Not found');
+      return;
+    }
+
+    // Obfuscate Content-Type to bypass IDM interception for PREVIEW
+    // For preview we prefer octet-stream so browser doesn't hijack, but frontend handles blob.
+    // Actually frontend POST handles it.
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    
+    const stream = createReadStream(filePath);
+    stream.pipe(res);
+  }
+
+  @Get('signed-image-download/:filename')
+  async downloadSignedImage(
+    @Param('filename') filename: string, 
+    @Query('downloadName') downloadName: string,
+    @Res() res: Response
+  ) {
+    const filePath = join(process.cwd(), 'uploads', 'signed', filename);
+    
+    // Security check
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+       res.status(400).send('Invalid filename');
+       return;
+    }
+
+    if (!fs.existsSync(filePath)) {
+      res.status(404).send('Not found');
+      return;
+    }
+
+    // Set headers for proper download
+    const finalName = downloadName || filename;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${finalName}"`);
+    
+    const stream = createReadStream(filePath);
+    stream.pipe(res);
+  }
+
+  @Get('pdf-preview/:fileId')
+  async streamPdf(@Param('fileId') fileId: string, @Res() res: Response) {
+    const filePath = await this.lettersService.getFilePath(fileId);
+    
+    // Obfuscate Content-Type to bypass IDM interception
+    // IDM monitors application/pdf, so we send as generic binary
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    
+    // Stream file
+    const stream = createReadStream(filePath);
+    stream.pipe(res);
+  }
+
+  @Get(':id/preview-image')
+  async previewImage(@Param('id') id: string, @Res() res: Response) {
+    const letter = await this.lettersService.findOne(id);
+    if (!letter || !letter.fileId) {
+      // Return 404 or maybe a default placeholder logic?
+      // For now 404
+      res.status(404).send('Not found');
+      return;
+    }
+
+    const imagePath = await this.lettersService.getPreviewImage(letter.fileId);
+    
+    // Serve as image/jpeg (or infer from extension)
+    res.setHeader('Content-Type', 'image/jpeg');
+    const stream = createReadStream(imagePath);
+    stream.pipe(res);
+  }
+
   @Post('ocr-preview')
+  @UseGuards(JwtAuthGuard)
   ocrPreview(@Body() dto: OcrPreviewDto) {
     return this.lettersService.previewOcr(dto);
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateLetterDto) {
     return this.lettersService.create(dto);
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll(@Query() query: ListLettersQueryDto) {
     return this.lettersService.findAll(
       query.keyword,
@@ -52,11 +197,13 @@ export class LettersController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   findOne(@Param('id') id: string) {
     return this.lettersService.findOne(id);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   update(
     @Param('id') id: string,
     @Body() dto: UpdateLetterDto,
@@ -67,6 +214,7 @@ export class LettersController {
   }
 
   @Get('debug-query')
+  @UseGuards(JwtAuthGuard)
   async debugQuery(@Query() query: ListLettersQueryDto) {
     return {
       query,

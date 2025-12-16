@@ -247,7 +247,7 @@ export default function PendingSignaturesPage() {
                 <div className="document-preview" ref={containerRef}>
                   <img
                     ref={imageRef}
-                    src={selectedRequest.letter?.fileUrl || ''}
+                    src={`${API_BASE}/api/v1/letters/${selectedRequest.letterId}/preview-image`}
                     alt="Dokumen"
                     draggable={false}
                   />

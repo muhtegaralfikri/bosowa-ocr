@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 import { FilesService } from '../files/files.service';
+import * as fs from 'fs';
 import { EditLogsService } from '../edit-logs/edit-logs.service';
 import { AiExtractionService } from '../ocr/ai-extraction.service';
 import {
@@ -19,6 +20,7 @@ import {
   extractTanggal,
 } from '../ocr/ocr.parsers';
 import { OcrService } from '../ocr/ocr.service';
+import { PdfConverterService } from '../ocr/pdf-converter.service';
 import { VisionOcrService } from '../ocr/vision-ocr.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
 import { OcrPreviewDto } from './dto/ocr-preview.dto';
@@ -32,6 +34,7 @@ export class LettersService {
   constructor(
     private readonly ocrService: OcrService,
     private readonly visionOcrService: VisionOcrService,
+    private readonly pdfConverterService: PdfConverterService,
     private readonly filesService: FilesService,
     private readonly editLogsService: EditLogsService,
     private readonly aiExtractionService: AiExtractionService,
@@ -41,23 +44,67 @@ export class LettersService {
 
   async previewOcr(dto: OcrPreviewDto) {
     const file = await this.filesService.getFile(dto.fileId);
+    const isPdf = this.pdfConverterService.isPdf(file.filePath);
 
     // Use Google Vision API if available, otherwise fallback to Tesseract
     let ocrRawText: string;
+    let imagePaths: string[] = [];
 
-    if (this.visionOcrService.isAvailable()) {
-      try {
-        this.logger.log('Using Google Vision API for OCR');
-        ocrRawText = await this.visionOcrService.recognizeDocument(
-          file.filePath,
-        );
-      } catch {
-        this.logger.warn('Vision API failed, falling back to Tesseract');
-        ocrRawText = await this.ocrService.recognize(file.filePath);
+    try {
+      // If PDF, convert to images first
+      if (isPdf) {
+        this.logger.log('Detected PDF file, converting to images...');
+        imagePaths = await this.pdfConverterService.convertToImages(file.filePath);
+        
+        if (imagePaths.length === 0) {
+          throw new BadRequestException('PDF conversion failed - no pages extracted');
+        }
+        
+        this.logger.log(`Converted PDF to ${imagePaths.length} page(s)`);
+        
+        // OCR each page and combine text
+        const pageTexts: string[] = [];
+        for (let i = 0; i < imagePaths.length; i++) {
+          const pagePath = imagePaths[i];
+          let pageText: string;
+          
+          if (this.visionOcrService.isAvailable()) {
+            try {
+              pageText = await this.visionOcrService.recognizeDocument(pagePath);
+            } catch {
+              this.logger.warn(`Vision API failed for page ${i + 1}, falling back to Tesseract`);
+              pageText = await this.ocrService.recognize(pagePath);
+            }
+          } else {
+            pageText = await this.ocrService.recognize(pagePath);
+          }
+          
+          pageTexts.push(`--- Page ${i + 1} ---\n${pageText}`);
+        }
+        
+        ocrRawText = pageTexts.join('\n\n');
+      } else {
+        // Regular image file
+        if (this.visionOcrService.isAvailable()) {
+          try {
+            this.logger.log('Using Google Vision API for OCR');
+            ocrRawText = await this.visionOcrService.recognizeDocument(
+              file.filePath,
+            );
+          } catch {
+            this.logger.warn('Vision API failed, falling back to Tesseract');
+            ocrRawText = await this.ocrService.recognize(file.filePath);
+          }
+        } else {
+          this.logger.log('Using Tesseract for OCR (Vision API not configured)');
+          ocrRawText = await this.ocrService.recognize(file.filePath);
+        }
       }
-    } else {
-      this.logger.log('Using Tesseract for OCR (Vision API not configured)');
-      ocrRawText = await this.ocrService.recognize(file.filePath);
+    } finally {
+      // Clean up converted PDF images
+      if (imagePaths.length > 0) {
+        await this.pdfConverterService.cleanupImages(imagePaths);
+      }
     }
 
     const method = dto.extractionMethod || 'auto';
@@ -426,5 +473,23 @@ export class LettersService {
     if (typeof value === 'symbol') return value.toString();
     if (typeof value === 'function') return value.name || '[function]';
     return '[unknown]';
+  }
+
+  async getFilePath(fileId: string): Promise<string> {
+    const file = await this.filesService.getFile(fileId);
+    return file.filePath;
+  }
+
+  async getPreviewImage(fileId: string): Promise<string> {
+    const filePath = await this.getFilePath(fileId);
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('File not found on server');
+    }
+
+    if (this.pdfConverterService.isPdf(filePath)) {
+      return this.pdfConverterService.convertFirstPage(filePath);
+    }
+
+    return filePath;
   }
 }

@@ -1,5 +1,6 @@
 import type { PointerEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { FileText } from 'lucide-react';
 
 interface Props {
   file: File;
@@ -21,6 +22,8 @@ export default function ManualCropper({ file, onCropConfirm, onResetToOriginal }
   const [selection, setSelection] = useState<Selection | null>(null);
   const startRef = useRef<{ x: number; y: number } | null>(null);
 
+  const isPdf = useMemo(() => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'), [file]);
+
   useEffect(() => {
     const reader = new FileReader();
     reader.onload = () => setPreviewUrl(reader.result as string);
@@ -29,11 +32,12 @@ export default function ManualCropper({ file, onCropConfirm, onResetToOriginal }
   }, [file]);
 
   const canCrop = useMemo(
-    () => selection && selection.width > 10 && selection.height > 10,
-    [selection],
+    () => !isPdf && selection && selection.width > 10 && selection.height > 10,
+    [isPdf, selection],
   );
 
   const handlePointerDown = (evt: PointerEvent<HTMLDivElement>) => {
+    if (isPdf) return; // No cropping for PDF
     const rect = evt.currentTarget.getBoundingClientRect();
     startRef.current = { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
     setSelection({ x: startRef.current.x, y: startRef.current.y, width: 0, height: 0 });
@@ -41,7 +45,7 @@ export default function ManualCropper({ file, onCropConfirm, onResetToOriginal }
   };
 
   const handlePointerMove = (evt: PointerEvent<HTMLDivElement>) => {
-    if (!dragging || !startRef.current) return;
+    if (!dragging || !startRef.current || isPdf) return;
     const rect = evt.currentTarget.getBoundingClientRect();
     const currentX = evt.clientX - rect.left;
     const currentY = evt.clientY - rect.top;
@@ -60,7 +64,7 @@ export default function ManualCropper({ file, onCropConfirm, onResetToOriginal }
   };
 
   const performCrop = async () => {
-    if (!selection || !imgRef.current) return;
+    if (!selection || !imgRef.current || isPdf) return;
     const img = imgRef.current;
     const scaleX = img.naturalWidth / img.clientWidth;
     const scaleY = img.naturalHeight / img.clientHeight;
@@ -93,6 +97,64 @@ export default function ManualCropper({ file, onCropConfirm, onResetToOriginal }
     onCropConfirm(croppedFile);
   };
 
+  // PDF Preview Mode
+  if (isPdf) {
+    return (
+      <div className="cropper">
+        <div className="pdf-preview-container">
+          <div className="pdf-preview-info">
+            <FileText size={48} />
+            <h3>Dokumen PDF</h3>
+            <p>Preview PDF - Cropping tidak tersedia untuk PDF</p>
+          </div>
+          {previewUrl && (
+            <embed
+              src={previewUrl}
+              type="application/pdf"
+              width="100%"
+              height="400"
+              className="pdf-preview-embed"
+            />
+          )}
+        </div>
+        <div className="actions">
+          <button type="button" className="ghost-btn" onClick={onResetToOriginal}>
+            Pakai file asli
+          </button>
+        </div>
+        <style>{`
+          .pdf-preview-container {
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+          }
+          .pdf-preview-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1.5rem;
+            color: var(--text-secondary);
+          }
+          .pdf-preview-info h3 {
+            margin: 0;
+            color: var(--text-primary);
+          }
+          .pdf-preview-info p {
+            margin: 0;
+            font-size: 0.875rem;
+          }
+          .pdf-preview-embed {
+            border: none;
+            border-top: 1px solid var(--border-color);
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Image Preview Mode (with cropping)
   return (
     <div className="cropper">
       <div
@@ -128,3 +190,4 @@ export default function ManualCropper({ file, onCropConfirm, onResetToOriginal }
     </div>
   );
 }
+

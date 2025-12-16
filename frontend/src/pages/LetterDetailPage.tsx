@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Pencil, X, Save, FileSignature, Check, Clock, XCircle, Eye, Download } from 'lucide-react';
+import { Pencil, X, Save, FileSignature, Check, Clock, XCircle, Eye, Download, ZoomIn, ZoomOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
@@ -11,22 +11,7 @@ import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-const downloadFile = async (url: string, filename: string) => {
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
-  } catch (error) {
-    console.error('Download failed:', error);
-  }
-};
+
 
 export default function LetterDetailPage() {
   const { id } = useParams();
@@ -38,12 +23,36 @@ export default function LetterDetailPage() {
   const [form, setForm] = useState<Partial<Letter>>({});
   const [saving, setSaving] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [activePreview, setActivePreview] = useState<{ url: string; type: 'pdf' | 'image' } | null>(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
   const { data: signatureRequests = [] } = useQuery({
     queryKey: ['signature-requests', id],
     queryFn: () => getSignatureRequestsByLetter(id!),
     enabled: !!id,
   });
+
+  // Fetch PDF as Blob to bypass IDM
+  useEffect(() => {
+    if (letter?.fileUrl?.toLowerCase().endsWith('.pdf') && (letter as any).fileId) {
+      const url = getPdfUrl((letter as any).fileId, letter.fileUrl);
+      
+      fetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+          // Force type to application/pdf
+          const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(pdfBlob);
+          setPdfBlobUrl(blobUrl);
+        })
+        .catch(err => console.error('Failed to load PDF blob:', err));
+
+      return () => {
+        if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
+      };
+    }
+  }, [letter]);
 
   useEffect(() => {
     if (id) {
@@ -91,9 +100,80 @@ export default function LetterDetailPage() {
     }
   };
 
-  const getImageUrl = (url: string) => {
-    if (url.startsWith('http')) return url;
-    return `${API_BASE}${url}`;
+  const getImageUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `${API_BASE}${path}`;
+  };
+
+  const handleViewDocument = async (path: string, type: 'pdf' | 'image', existingBlobUrl?: string | null) => {
+    if (existingBlobUrl) {
+      setActivePreview({ url: existingBlobUrl, type: 'pdf' });
+      setZoomLevel(1);
+      return;
+    }
+
+    // Determine if we need to use the POST endpoint for signed files (IDM bypass)
+    const isSignedFile = path.includes('/uploads/signed/');
+    let fullUrl = getImageUrl(path);
+    
+    if (type === 'pdf' || isSignedFile) {
+      try {
+        const toastId = toast.loading('Memuat preview dokumen...');
+        let res;
+
+        if (isSignedFile) {
+           const filename = path.split('/').pop();
+           res = await fetch(`${API_BASE}/api/v1/letters/signed-image-preview`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                // Add Authorization if needed, though endpoint is currently public-ish (LetterController guards apply?)
+                // LetterController HAS @UseGuards(JwtAuthGuard) on methods, but not class?
+                // Wait, in Step 453, LetterController class has NO @UseGuards.
+                // It has @UseGuards per method.
+                // The new endpoint I added has NO @UseGuards. So it is public.
+              },
+              body: JSON.stringify({ filename }),
+           });
+        } else {
+           res = await fetch(fullUrl);
+        }
+
+        if (!res.ok) throw new Error('Fetch failed');
+        
+        const blob = await res.blob();
+        // Force type to application/pdf for PDFs, or infer for images?
+        // If type is 'image', we can still display a blob URL.
+        const blobType = type === 'pdf' ? 'application/pdf' : 'image/jpeg';
+        const fileBlob = new Blob([blob], { type: blobType });
+        const blobUrl = URL.createObjectURL(fileBlob);
+        
+        setActivePreview({ url: blobUrl, type });
+        toast.dismiss(toastId);
+      } catch (e) {
+        console.error(e);
+        toast.error('Gagal memuat preview');
+      }
+    } else {
+      // Standard image loading (non-signed)
+      setActivePreview({ url: fullUrl, type: 'image' });
+    }
+    setZoomLevel(1);
+  };
+
+  const handleDirectDownload = (url: string) => {
+    window.location.href = url;
+  };
+
+  const getPdfUrl = (fileId: string, _fileUrl: string) => {
+    if (fileId) {
+      // Use stream endpoint to bypass IDM
+      // Endpoint is under api/v1 global prefix
+      return `${API_BASE}/api/v1/letters/pdf-preview/${fileId}`;
+    }
+    // Fallback if no fileId (should not happen for new uploads)
+    return getImageUrl(_fileUrl || '');
   };
 
   if (!letter) {
@@ -255,13 +335,74 @@ export default function LetterDetailPage() {
         </div>
         <div>
           {letter.fileUrl ? (
-            <img
-              src={getImageUrl(letter.fileUrl)}
-              alt="Lampiran surat"
-              className="preview-image"
-            />
+            letter.fileUrl.toLowerCase().endsWith('.pdf') ? (
+              // PDF Preview using iframe with Blob URL
+              <div className="preview-pdf-container">
+                {pdfBlobUrl ? (
+                  <>
+                    <iframe
+                      src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                      title="PDF Preview"
+                      width="100%"
+                      height="600px"
+                      className="preview-pdf"
+                    />
+                    <div 
+                      className="pdf-overlay"
+                      onClick={() => handleViewDocument(letter.fileUrl!, 'pdf', pdfBlobUrl)}
+                    >
+                      <div className="zoom-hint">
+                        <ZoomIn size={20} />
+                        <span>Klik untuk zoom</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ padding: '20px', textAlign: 'center' }}>Memuat Dokumen PDF...</div>
+                )}
+              </div>
+            ) : (
+              // Image Preview with zoom
+              <div
+                className="preview-image-container"
+                onClick={() => handleViewDocument(letter.fileUrl!, 'image')}
+              >
+                <img
+                  src={getImageUrl(letter.fileUrl)}
+                  alt="Preview Surat"
+                  className="preview-image"
+                />
+                <div className="zoom-hint">
+                  <ZoomIn size={20} />
+                  <span>Klik untuk zoom</span>
+                </div>
+              </div>
+            )
           ) : (
             <p>Tidak ada lampiran</p>
+          )}
+          {letter.fileUrl && (
+            <button
+               type="button"
+                onClick={() => handleDirectDownload(`${API_BASE}/api/v1/letters/${letter.id}/download-pdf`)}
+               style={{ 
+                 marginTop: '1rem', 
+                 padding: '0.75rem', 
+                 width: '100%', 
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 justifyContent: 'center', 
+                 gap: '0.5rem',
+                 background: 'var(--primary)', 
+                 color: 'white', 
+                 border: 'none', 
+                 borderRadius: '6px', 
+                 cursor: 'pointer',
+                 fontWeight: 500
+               }}
+            >
+               <Download size={16} /> Download PDF
+            </button>
           )}
         </div>
       </div>
@@ -286,23 +427,26 @@ export default function LetterDetailPage() {
                   </span>
                   {req.status === 'SIGNED' && req.signedImagePath && (
                     <>
-                      <a
-                        href={getImageUrl(req.signedImagePath)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => handleViewDocument(
+                          req.signedImagePath!, 
+                          req.signedImagePath!.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
+                        )}
                         className="view-signed-btn"
                         title="Lihat dokumen ber-TTD"
                       >
                         <Eye size={14} /> Lihat
-                      </a>
+                      </button>
                       <button
                         type="button"
                         className="download-signed-btn"
                         title="Download dokumen ber-TTD"
-                        onClick={() => downloadFile(
-                          getImageUrl(req.signedImagePath!),
-                          `signed-${letter?.letterNumber || 'document'}.jpg`
-                        )}
+                        onClick={() => {
+                           const filename = req.signedImagePath!.split('/').pop();
+                           const downloadName = `${(letter?.letterNumber || 'document').replace(/[^a-zA-Z0-9-_]/g, '_')}_Signed.pdf`;
+                           handleDirectDownload(`${API_BASE}/api/v1/letters/signed-image-download/${filename}?downloadName=${downloadName}`);
+                        }}
                       >
                         <Download size={14} />
                       </button>
@@ -321,6 +465,53 @@ export default function LetterDetailPage() {
           letterNumber={letter.letterNumber}
           onClose={() => setShowSignatureModal(false)}
         />
+      )}
+
+      {!!activePreview && (
+        <div className="image-zoom-overlay" onClick={() => setActivePreview(null)}>
+          <div className="image-zoom-controls" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="zoom-control-btn"
+              onClick={() => setZoomLevel((prev) => Math.min(prev + 0.25, 3))}
+              title="Perbesar"
+            >
+              <ZoomIn size={20} />
+            </button>
+            <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
+            <button
+              type="button"
+              className="zoom-control-btn"
+              onClick={() => setZoomLevel((prev) => Math.max(prev - 0.25, 0.5))}
+              title="Perkecil"
+            >
+              <ZoomOut size={20} />
+            </button>
+            <button
+              type="button"
+              className="zoom-control-btn close"
+              onClick={() => setActivePreview(null)}
+              title="Tutup"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <div className="image-zoom-content" onClick={(e) => e.stopPropagation()}>
+            {activePreview.type === 'pdf' ? (
+                <iframe
+                  src={`${activePreview.url}#toolbar=0&navpanes=0&scrollbar=0`}
+                  title="PDF Zoom"
+                  className="pdf-zoom-embed"
+                />
+            ) : (
+              <img
+                src={activePreview.url}
+                alt="Document Preview"
+                style={{ transform: `scale(${zoomLevel})` }}
+              />
+            )}
+          </div>
+        </div>
       )}
 
       <style>{`
@@ -433,6 +624,294 @@ export default function LetterDetailPage() {
             flex: 1;
             justify-content: center;
             padding: 0.5rem;
+          }
+        }
+
+        /* PDF Preview Styles */
+        .preview-pdf-container {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 1px solid var(--border-color);
+          background: var(--bg-secondary);
+        }
+        .preview-pdf {
+          border: none;
+          min-height: 500px;
+        }
+        .pdf-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          cursor: zoom-in;
+          z-index: 10;
+          display: flex;
+          align-items: flex-end;
+          justify-content: flex-end;
+          padding: 12px;
+          transition: background 0.2s;
+        }
+        .pdf-overlay:hover {
+          background: rgba(0, 0, 0, 0.05);
+        }
+        .pdf-overlay:hover .zoom-hint {
+          opacity: 1;
+        }
+
+        /* Image Zoom Styles */
+        .preview-image-container {
+          position: relative;
+          cursor: zoom-in;
+          border-radius: 8px;
+          overflow: hidden;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .preview-image-container:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        .preview-image-container:hover .zoom-hint {
+          opacity: 1;
+        }
+        .zoom-hint {
+          position: absolute;
+          bottom: 12px;
+          right: 12px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 12px;
+          background: rgba(0, 0, 0, 0.75);
+          color: white;
+          border-radius: 6px;
+          font-size: 0.75rem;
+          opacity: 0;
+          transition: opacity 0.2s;
+          pointer-events: none;
+        }
+        .image-zoom-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.9);
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .image-zoom-controls {
+          position: absolute;
+          top: 20px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 16px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 12px;
+          z-index: 1001;
+        }
+        .zoom-control-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border: none;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+          cursor: pointer;
+          transition: background 0.2s, transform 0.1s;
+        }
+        .zoom-control-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+          transform: scale(1.05);
+        }
+        .zoom-control-btn.close {
+          background: rgba(239, 68, 68, 0.3);
+        }
+        .zoom-control-btn.close:hover {
+          background: rgba(239, 68, 68, 0.5);
+        }
+        .zoom-level {
+          color: white;
+          font-size: 0.875rem;
+          font-weight: 500;
+          min-width: 50px;
+          text-align: center;
+        }
+        .image-zoom-content {
+          max-width: 90vw;
+          max-height: 85vh;
+          width: 90vw;
+          height: 85vh;
+          overflow: auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .image-zoom-content img {
+          max-width: 100%;
+          max-height: 85vh;
+          object-fit: contain;
+          border-radius: 8px;
+          transition: transform 0.2s ease;
+        }
+        .pdf-zoom-embed {
+          width: 100%;
+          height: 100%;
+          border: none;
+          border-radius: 8px;
+          background: white;
+        }
+
+        /* Signature Status Redesign - Responsive & Dark Mode */
+        .signature-list {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          margin-top: 1rem;
+        }
+        .signature-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1rem 1.25rem;
+          background: var(--bg-panel);
+          border: 1px solid var(--border-light);
+          border-radius: 12px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+          transition: all 0.2s ease;
+        }
+        .signature-item:hover {
+          border-color: var(--accent-light);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          transform: translateY(-1px);
+        }
+        .signature-user {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          font-size: 1rem;
+        }
+        .signature-actions {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        
+        /* Badges */
+        .status-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.25rem 0.75rem;
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.025em;
+          text-transform: uppercase;
+        }
+        .status-badge.signed {
+          background: #dcfce7;
+          color: #166534;
+          border: 1px solid #bbf7d0;
+        }
+        .status-badge.pending {
+          background: #fef9c3;
+          color: #854d0e;
+          border: 1px solid #fde047;
+        }
+        .status-badge.rejected {
+          background: #fee2e2;
+          color: #991b1b;
+          border: 1px solid #fecaca;
+        }
+
+        /* Dark Mode Badge Overrides */
+        [data-theme="dark"] .status-badge.signed {
+          background: rgba(22, 101, 52, 0.2);
+          color: #86efac;
+          border-color: rgba(22, 101, 52, 0.4);
+        }
+        [data-theme="dark"] .status-badge.pending {
+          background: rgba(133, 77, 14, 0.2);
+          color: #fde047;
+          border-color: rgba(133, 77, 14, 0.4);
+        }
+        [data-theme="dark"] .status-badge.rejected {
+           background: rgba(153, 27, 27, 0.2);
+           color: #fca5a5;
+           border-color: rgba(153, 27, 27, 0.4);
+        }
+
+        /* Buttons */
+        .view-signed-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: transparent;
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          color: var(--text-secondary);
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .view-signed-btn:hover {
+          background: var(--bg-hover);
+          border-color: var(--accent-secondary);
+          color: var(--text-primary);
+        }
+        .download-signed-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          background: var(--bg-hover);
+          color: var(--accent-primary);
+          border: 1px solid transparent;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .download-signed-btn:hover {
+          background: var(--accent-light);
+          transform: translateY(-1px);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 640px) {
+          .signature-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+          .signature-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .status-badge {
+            order: -1; /* Display badge above name on mobile? Or standard flow? Standard flow is fine */
           }
         }
       `}</style>
