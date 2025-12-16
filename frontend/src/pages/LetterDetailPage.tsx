@@ -435,7 +435,6 @@ export default function LetterDetailPage() {
                         )}
                         className="view-signed-btn"
                         title="Lihat dokumen ber-TTD"
-                        style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                       >
                         <Eye size={14} /> Lihat
                       </button>
@@ -778,6 +777,142 @@ export default function LetterDetailPage() {
           border: none;
           border-radius: 8px;
           background: white;
+        }
+
+        /* Signature Status Redesign - Responsive & Dark Mode */
+        .signature-list {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          margin-top: 1rem;
+        }
+        .signature-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1rem 1.25rem;
+          background: var(--bg-panel);
+          border: 1px solid var(--border-light);
+          border-radius: 12px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+          transition: all 0.2s ease;
+        }
+        .signature-item:hover {
+          border-color: var(--accent-light);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          transform: translateY(-1px);
+        }
+        .signature-user {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          font-size: 1rem;
+        }
+        .signature-actions {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        
+        /* Badges */
+        .status-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.25rem 0.75rem;
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.025em;
+          text-transform: uppercase;
+        }
+        .status-badge.signed {
+          background: #dcfce7;
+          color: #166534;
+          border: 1px solid #bbf7d0;
+        }
+        .status-badge.pending {
+          background: #fef9c3;
+          color: #854d0e;
+          border: 1px solid #fde047;
+        }
+        .status-badge.rejected {
+          background: #fee2e2;
+          color: #991b1b;
+          border: 1px solid #fecaca;
+        }
+
+        /* Dark Mode Badge Overrides */
+        [data-theme="dark"] .status-badge.signed {
+          background: rgba(22, 101, 52, 0.2);
+          color: #86efac;
+          border-color: rgba(22, 101, 52, 0.4);
+        }
+        [data-theme="dark"] .status-badge.pending {
+          background: rgba(133, 77, 14, 0.2);
+          color: #fde047;
+          border-color: rgba(133, 77, 14, 0.4);
+        }
+        [data-theme="dark"] .status-badge.rejected {
+           background: rgba(153, 27, 27, 0.2);
+           color: #fca5a5;
+           border-color: rgba(153, 27, 27, 0.4);
+        }
+
+        /* Buttons */
+        .view-signed-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: transparent;
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          color: var(--text-secondary);
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .view-signed-btn:hover {
+          background: var(--bg-hover);
+          border-color: var(--accent-secondary);
+          color: var(--text-primary);
+        }
+        .download-signed-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          background: var(--bg-hover);
+          color: var(--accent-primary);
+          border: 1px solid transparent;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .download-signed-btn:hover {
+          background: var(--accent-light);
+          transform: translateY(-1px);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 640px) {
+          .signature-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+          .signature-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .status-badge {
+            order: -1; /* Display badge above name on mobile? Or standard flow? Standard flow is fine */
+          }
         }
       `}</style>
     </section>
