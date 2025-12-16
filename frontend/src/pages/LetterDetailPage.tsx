@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import type { Letter, SignatureRequest } from '../api/types';
-import { getSignatureRequestsByLetter } from '../api/signatures';
+import { getSignatureRequestsByLetter, getSharedSignedDocument } from '../api/signatures';
 import SignatureRequestModal from '../components/signature/SignatureRequestModal';
 import { useAuth } from '../context/AuthContext';
 
@@ -31,6 +31,12 @@ export default function LetterDetailPage() {
     queryKey: ['signature-requests', id],
     queryFn: () => getSignatureRequestsByLetter(id!),
     enabled: !!id,
+  });
+
+  const { data: sharedSignedPath } = useQuery({
+    queryKey: ['shared-signed', id],
+    queryFn: () => id ? getSharedSignedDocument(id) : null,
+    enabled: !!id && signatureRequests.some(req => req.status === 'SIGNED'),
   });
 
   // Fetch PDF as Blob to bypass IDM
@@ -453,6 +459,42 @@ export default function LetterDetailPage() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Shared Signed Document Section */}
+      {sharedSignedPath && (
+        <section className="panel" style={{ marginTop: '2rem' }}>
+          <div className="panel-head">
+            <div>
+              <p className="eyebrow">Dokumen Tertandatangani</p>
+              <h1>Dokumen Gabungan</h1>
+              <p className="small-note">Dokumen dengan semua tanda tangan yang telah ditambahkan</p>
+            </div>
+            <div className="actions">
+              <button
+                type="button"
+                onClick={() => handleViewDocument(
+                  sharedSignedPath,
+                  sharedSignedPath.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
+                )}
+                className="primary-btn"
+              >
+                <Eye size={16} /> Lihat
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                   const filename = sharedSignedPath.split('/').pop();
+                   const downloadName = `${(letter?.letterNumber || 'document').replace(/[^a-zA-Z0-9-_]/g, '_')}_Signed.pdf`;
+                   handleDirectDownload(`${API_BASE}/api/v1/letters/signed-image-download/${filename}?downloadName=${downloadName}`);
+                }}
+                className="ghost-btn"
+              >
+                <Download size={16} /> Download
+              </button>
+            </div>
+          </div>
+        </section>
       )}
 
       {showSignatureModal && (

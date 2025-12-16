@@ -50,6 +50,9 @@ export const createSignatureRequest = (
     .post<SignatureRequest[]>('/signature-requests', { letterId, assignments, notes })
     .then((res) => res.data);
 
+export const getSharedSignedDocument = (letterId: string) =>
+  api.get<string>(`/signature-requests/shared-signed/${letterId}`).then((res) => res.data);
+
 export const signDocument = (
   requestId: string,
   signatureId?: string,

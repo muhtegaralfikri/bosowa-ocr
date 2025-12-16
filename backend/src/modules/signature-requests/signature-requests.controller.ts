@@ -58,4 +58,9 @@ export class SignatureRequestsController {
   ) {
     return this.requestsService.reject(id, req.user.userId, notes);
   }
+
+  @Get('shared-signed/:letterId')
+  getSharedSigned(@Param('letterId') letterId: string) {
+    return this.requestsService.getSharedSignedPath(letterId);
+  }
 }
