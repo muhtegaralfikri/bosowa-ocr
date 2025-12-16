@@ -27,6 +27,54 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class LettersController {
   constructor(private readonly lettersService: LettersService) {}
 
+  @Get(':id/download-pdf')
+  async downloadAsPdf(@Param('id') id: string, @Res() res: Response) {
+    const letter = await this.lettersService.findOne(id);
+    if (!letter || !letter.fileId) {
+       res.status(404).send('Not found');
+       return;
+    }
+    const filePath = await this.lettersService.getFilePath(letter.fileId);
+    
+    // Set headers for download
+    const cleanLetterNumber = (letter.letterNumber || 'document').replace(/[^a-zA-Z0-9-_]/g, '_');
+    const filename = `${cleanLetterNumber}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    if (filePath.toLowerCase().endsWith('.pdf')) {
+       createReadStream(filePath).pipe(res);
+       return;
+    }
+
+    // Convert Image to PDF on the fly
+    try {
+        const { PDFDocument } = await import('pdf-lib');
+        const sharp = require('sharp');
+        
+        const docImage = sharp(filePath);
+        const metadata = await docImage.metadata();
+        const buffer = await docImage.png().toBuffer();
+
+        const pdfDoc = await PDFDocument.create();
+        const imageEmbed = await pdfDoc.embedPng(buffer);
+        const page = pdfDoc.addPage([imageEmbed.width, imageEmbed.height]);
+        page.drawImage(imageEmbed, {
+            x: 0,
+            y: 0,
+            width: imageEmbed.width,
+            height: imageEmbed.height,
+        });
+
+        const pdfBytes = await pdfDoc.save();
+        res.send(Buffer.from(pdfBytes));
+    } catch (e) {
+        console.error('PDF Conversion failed:', e);
+        res.status(500).send('Conversion failed');
+    }
+  }
+
   @Post('signed-image-preview')
   async previewSignedImage(@Body('filename') filename: string, @Res() res: Response) {
     if (!filename) {
@@ -36,7 +84,7 @@ export class LettersController {
 
     const filePath = join(process.cwd(), 'uploads', 'signed', filename);
     
-    // Security check to prevent directory traversal
+    // Security check
     if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
        res.status(400).send('Invalid filename');
        return;
@@ -47,11 +95,40 @@ export class LettersController {
       return;
     }
 
-    // Obfuscate Content-Type to bypass IDM interception
+    // Obfuscate Content-Type to bypass IDM interception for PREVIEW
+    // For preview we prefer octet-stream so browser doesn't hijack, but frontend handles blob.
+    // Actually frontend POST handles it.
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     
-    // Stream file
+    const stream = createReadStream(filePath);
+    stream.pipe(res);
+  }
+
+  @Get('signed-image-download/:filename')
+  async downloadSignedImage(
+    @Param('filename') filename: string, 
+    @Query('downloadName') downloadName: string,
+    @Res() res: Response
+  ) {
+    const filePath = join(process.cwd(), 'uploads', 'signed', filename);
+    
+    // Security check
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+       res.status(400).send('Invalid filename');
+       return;
+    }
+
+    if (!fs.existsSync(filePath)) {
+      res.status(404).send('Not found');
+      return;
+    }
+
+    // Set headers for proper download
+    const finalName = downloadName || filename;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${finalName}"`);
+    
     const stream = createReadStream(filePath);
     stream.pipe(res);
   }

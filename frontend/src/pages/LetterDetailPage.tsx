@@ -11,22 +11,7 @@ import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-const downloadFile = async (url: string, filename: string) => {
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
-  } catch (error) {
-    console.error('Download failed:', error);
-  }
-};
+
 
 export default function LetterDetailPage() {
   const { id } = useParams();
@@ -175,6 +160,10 @@ export default function LetterDetailPage() {
       setActivePreview({ url: fullUrl, type: 'image' });
     }
     setZoomLevel(1);
+  };
+
+  const handleDirectDownload = (url: string) => {
+    window.location.href = url;
   };
 
   const getPdfUrl = (fileId: string, _fileUrl: string) => {
@@ -392,6 +381,29 @@ export default function LetterDetailPage() {
           ) : (
             <p>Tidak ada lampiran</p>
           )}
+          {letter.fileUrl && (
+            <button
+               type="button"
+                onClick={() => handleDirectDownload(`${API_BASE}/api/v1/letters/${letter.id}/download-pdf`)}
+               style={{ 
+                 marginTop: '1rem', 
+                 padding: '0.75rem', 
+                 width: '100%', 
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 justifyContent: 'center', 
+                 gap: '0.5rem',
+                 background: 'var(--primary)', 
+                 color: 'white', 
+                 border: 'none', 
+                 borderRadius: '6px', 
+                 cursor: 'pointer',
+                 fontWeight: 500
+               }}
+            >
+               <Download size={16} /> Download PDF
+            </button>
+          )}
         </div>
       </div>
 
@@ -431,10 +443,11 @@ export default function LetterDetailPage() {
                         type="button"
                         className="download-signed-btn"
                         title="Download dokumen ber-TTD"
-                        onClick={() => downloadFile(
-                          getImageUrl(req.signedImagePath!),
-                          `signed-${letter?.letterNumber || 'document'}.jpg`
-                        )}
+                        onClick={() => {
+                           const filename = req.signedImagePath!.split('/').pop();
+                           const downloadName = `${(letter?.letterNumber || 'document').replace(/[^a-zA-Z0-9-_]/g, '_')}_Signed.pdf`;
+                           handleDirectDownload(`${API_BASE}/api/v1/letters/signed-image-download/${filename}?downloadName=${downloadName}`);
+                        }}
                       >
                         <Download size={14} />
                       </button>

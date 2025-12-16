@@ -267,26 +267,17 @@ export class SignatureRequestsService {
       const pdfDoc = await PDFDocument.load(pdfBuffer);
       const pages = pdfDoc.getPages();
       
-      // Default to first page (page 0)
-      // Frontend currently shows first page preview
       const page = pages[0];
       const { width, height } = page.getSize();
 
-      // Convert signature to PNG buffer using sharp to ensure compatibility
       const sigPngBuffer = await sharp(sigFullPath).png().toBuffer();
       const sigImage = await pdfDoc.embedPng(sigPngBuffer);
 
-      // Sizing calculation (match existing logic: 20% of width base)
       const BASE_RATIO = 0.2;
       const targetWidth = width * BASE_RATIO * (scale / 100);
       const scaleFactor = targetWidth / sigImage.width;
       const sigDims = sigImage.scale(scaleFactor);
 
-      // Coordinate calculation
-      // Frontend sends % from Top-Left. PDF uses Bottom-Left.
-      // x = (posX% * width) - (sigWidth/2)
-      // y = height - (posY% * height) - (sigHeight/2)
-      
       const x = (posX / 100) * width - sigDims.width / 2;
       const y = height - ((posY / 100) * height) - sigDims.height / 2;
 
@@ -303,14 +294,12 @@ export class SignatureRequestsService {
       return `/uploads/signed/${outputFilename}`;
     }
 
-    // Handle Image files (Existing logic)
+    // Handle Image files -> Convert to PDF
     const docImage = sharp(docFullPath);
     const docMetadata = await docImage.metadata();
 
-    // Calculate signature size as percentage of document width
-    // Base size (scale 100%) = 20% of document width to maintain proportion
-    const BASE_RATIO = 0.2; // 20% of document width
-    const aspectRatio = 2 / 1; // Width to height ratio for signature
+    const BASE_RATIO = 0.2; 
+    const aspectRatio = 2 / 1; 
     
     const docWidth = docMetadata.width || 800;
     const baseWidth = Math.round(docWidth * BASE_RATIO);
@@ -320,10 +309,9 @@ export class SignatureRequestsService {
 
     const signatureBuffer = await sharp(sigFullPath)
       .resize({ width: sigWidth, height: sigHeight, fit: 'inside' })
-      .png() // Ensure PNG format with transparency
+      .png() 
       .toBuffer();
 
-    // Offset by half signature size to match frontend's translate(-50%, -50%) centering
     const x = Math.round(
       (posX / 100) * (docMetadata.width || 800) - sigWidth / 2,
     );
@@ -331,7 +319,8 @@ export class SignatureRequestsService {
       (posY / 100) * (docMetadata.height || 600) - sigHeight / 2,
     );
 
-    await docImage
+    // Composite signature onto image
+    const signedImageBuffer = await docImage
       .composite([
         {
           input: signatureBuffer,
@@ -339,8 +328,29 @@ export class SignatureRequestsService {
           top: y,
         },
       ])
-      .toFile(outputPath);
+      .png() // Force PNG for embedding
+      .toBuffer();
 
-    return `/uploads/signed/${outputFilename}`;
+    // Convert to PDF
+    const { PDFDocument } = await import('pdf-lib');
+    const pdfDoc = await PDFDocument.create();
+    const imageEmbed = await pdfDoc.embedPng(signedImageBuffer);
+    const page = pdfDoc.addPage([imageEmbed.width, imageEmbed.height]);
+    
+    page.drawImage(imageEmbed, {
+      x: 0,
+      y: 0,
+      width: imageEmbed.width,
+      height: imageEmbed.height,
+    });
+
+    // Save as PDF
+    const pdfOutputFilename = outputFilename.replace(path.extname(outputFilename), '.pdf');
+    const pdfOutputPath = path.join(outputDir, pdfOutputFilename);
+    
+    const pdfBytes = await pdfDoc.save();
+    fs.writeFileSync(pdfOutputPath, pdfBytes);
+
+    return `/uploads/signed/${pdfOutputFilename}`;
   }
 }
