@@ -3,19 +3,13 @@ import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import api from '../api/client';
-
-interface User {
-  id: string;
-  username: string;
-  role: 'ADMIN' | 'MANAJEMEN' | 'USER';
-  createdAt: string;
-}
+import type { User } from '../api/types';
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [form, setForm] = useState({ username: '', password: '', role: 'USER' });
+  const [form, setForm] = useState({ username: '', password: '', role: '', unitBisnis: '' });
 
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
@@ -26,7 +20,7 @@ export default function UsersPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { username: string; password: string; role: string }) =>
+    mutationFn: (data: { username: string; password: string; role: string; unitBisnis?: string }) =>
       api.post('/users', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -58,20 +52,25 @@ export default function UsersPage() {
 
   const openCreateModal = () => {
     setEditingUser(null);
-    setForm({ username: '', password: '', role: 'USER' });
+    setForm({ username: '', password: '', role: '', unitBisnis: '' });
     setShowModal(true);
   };
 
   const openEditModal = (user: User) => {
     setEditingUser(user);
-    setForm({ username: user.username, password: '', role: user.role });
+    setForm({ 
+      username: user.username, 
+      password: '', 
+      role: user.role,
+      unitBisnis: user.unitBisnis || ''
+    });
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingUser(null);
-    setForm({ username: '', password: '', role: 'USER' });
+    setForm({ username: '', password: '', role: '', unitBisnis: '' });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -199,17 +198,40 @@ export default function UsersPage() {
                 />
               </label>
               {!editingUser && (
-                <label>
-                  Role
-                  <select
-                    value={form.role}
-                    onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  >
-                    <option value="USER">USER</option>
-                    <option value="MANAJEMEN">MANAJEMEN</option>
-                    <option value="ADMIN">ADMIN</option>
-                  </select>
-                </label>
+                <>
+                  <label>
+                    Role
+                    <select
+                      value={form.role}
+                      onChange={(e) => setForm({ ...form, role: e.target.value })}
+                    >
+                      <option value="">Pilih Role</option>
+                      <option value="USER">USER</option>
+                      <option value="MANAJEMEN">MANAJEMEN</option>
+                      <option value="ADMIN">ADMIN</option>
+                    </select>
+                  </label>
+                  
+                  {/* Show unit bisnis dropdown only for USER role */}
+                  {form.role === 'USER' && (
+                    <label>
+                      Unit Bisnis
+                      <select
+                        value={form.unitBisnis}
+                        onChange={(e) => setForm({ ...form, unitBisnis: e.target.value })}
+                        required
+                      >
+                        <option value="">Pilih Unit Bisnis</option>
+                        <option value="BOSOWA_TAXI">Bosowa Taxi</option>
+                        <option value="OTORENTAL_NUSANTARA">Otorental Nusantara</option>
+                        <option value="OTO_GARAGE_INDONESIA">Oto Garage Indonesia</option>
+                        <option value="MALLOMO">Mallomo</option>
+                        <option value="LAGALIGO_LOGISTIK">Lagaligo Logistik</option>
+                        <option value="PORT_MANAGEMENT">Port Management</option>
+                      </select>
+                    </label>
+                  )}
+                </>
               )}
               <div className="modal-actions">
                 <button type="button" className="ghost-btn" onClick={closeModal}>

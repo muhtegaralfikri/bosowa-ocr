@@ -86,4 +86,5 @@ export interface User {
   username: string;
   role: 'ADMIN' | 'MANAJEMEN' | 'USER';
   unitBisnis?: 'BOSOWA_TAXI' | 'OTORENTAL_NUSANTARA' | 'OTO_GARAGE_INDONESIA' | 'MALLOMO' | 'LAGALIGO_LOGISTIK' | 'PORT_MANAGEMENT' | null;
+  createdAt: string;
 }
