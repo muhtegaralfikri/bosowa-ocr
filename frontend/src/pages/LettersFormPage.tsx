@@ -246,9 +246,9 @@ export default function LettersFormPage() {
         
         {/* Show current unit bisnis info for regular users */}
         {!isAdminOrManajemen && user?.unitBisnis && (
-          <div style={{ padding: '0.75rem', backgroundColor: '#f8f9fa', borderRadius: '8px', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Unit Bisnis</div>
-            <div style={{ fontWeight: '600' }}>
+          <div className="unit-bisnis-readonly">
+            <div className="unit-bisnis-label">Unit Bisnis</div>
+            <div className="unit-bisnis-value">
               {(user.unitBisnis as any).replace('_', ' ')}
             </div>
           </div>
