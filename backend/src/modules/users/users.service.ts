@@ -64,6 +64,34 @@ export class UsersService {
     await this.usersRepo.delete(userId);
   }
 
+  async updateUser(
+    userId: string,
+    data: { username?: string; password?: string },
+  ): Promise<Omit<User, 'password'>> {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user) throw new Error('User not found');
+
+    if (data.username) {
+      // Check if username already exists
+      const existingUser = await this.usersRepo.findOne({
+        where: { username: data.username },
+      });
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error('Username already exists');
+      }
+      user.username = data.username;
+    }
+
+    if (data.password) {
+      user.password = await bcrypt.hash(data.password, SALT_ROUNDS);
+    }
+
+    const saved = await this.usersRepo.save(user);
+    const { password, ...rest } = saved;
+    void password;
+    return rest;
+  }
+
   findById(userId: string): Promise<User | null> {
     return this.usersRepo.findOne({ where: { id: userId } });
   }
