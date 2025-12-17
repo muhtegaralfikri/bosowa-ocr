@@ -174,19 +174,11 @@ export class LettersController {
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateLetterDto, @Request() req: ExpressRequest & { user?: { username?: string; role?: string; unitBisnis?: string } }) {
-    console.log('=== CREATE LETTER REQUEST ===');
-    console.log('Request headers:', req.headers);
-    console.log('User from token:', req.user);
-    console.log('Raw DTO:', dto);
-    
     // Auto-fill unit bisnis for regular users
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MANAJEMEN' && req.user?.unitBisnis) {
       dto.unitBisnis = req.user.unitBisnis as any;
-      console.log('Auto-filled unit bisnis:', req.user.unitBisnis);
     }
     
-    console.log('Final DTO:', dto);
-    console.log('=== END DEBUG ===');
     return this.lettersService.create(dto);
   }
 
@@ -235,26 +227,4 @@ export class LettersController {
     return this.lettersService.update(id, dto, updatedBy);
   }
 
-  @Get('debug-query')
-  @UseGuards(JwtAuthGuard)
-  async debugQuery(@Query() query: ListLettersQueryDto) {
-    return {
-      query,
-      receivedParams: {
-        keyword: query.keyword,
-        letterNumber: query.letterNumber,
-        namaPengirim: query.namaPengirim,
-        perihal: query.perihal,
-        jenisDokumen: query.jenisDokumen,
-        jenisSurat: query.jenisSurat,
-        tanggalMulai: query.tanggalMulai,
-        tanggalSelesai: query.tanggalSelesai,
-        nominalMin: query.nominalMin,
-        nominalMax: query.nominalMax,
-        page: query.page,
-        limit: query.limit,
-      },
-      message: 'Debug endpoint - all parameters received successfully'
-    };
-  }
 }

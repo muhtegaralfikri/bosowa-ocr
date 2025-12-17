@@ -15,8 +15,11 @@ export class VisionOcrService {
     );
     const apiKey = this.configService.get<string>('GOOGLE_VISION_API_KEY');
 
-    this.logger.log(`Credentials path: ${credentialsPath || 'not set'}`);
-    this.logger.log(`API key: ${apiKey ? 'set' : 'not set'}`);
+    // Hide sensitive info in production
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.log(`Credentials path: ${credentialsPath ? 'configured' : 'not set'}`);
+      this.logger.log(`API key: ${apiKey ? 'configured' : 'not set'}`);
+    }
 
     try {
       if (credentialsPath) {

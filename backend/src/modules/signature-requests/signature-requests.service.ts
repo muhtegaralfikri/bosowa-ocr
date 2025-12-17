@@ -90,10 +90,6 @@ export class SignatureRequestsService {
     requestedBy: string,
     dto: CreateSignatureRequestDto,
   ): Promise<SignatureRequest[]> {
-    console.log('=== CREATE SIGNATURE REQUEST ===');
-    console.log('DTO assignments:', dto.assignments);
-    console.log('Assignments length:', dto.assignments?.length);
-    
     const letter = await this.letterRepo.findOne({
       where: { id: dto.letterId },
     });
@@ -184,10 +180,6 @@ export class SignatureRequestsService {
     }
 
     const scale = dto.scale ?? 100;
-    console.log('=== EMBEDDING SIGNATURE ===');
-    console.log('Document path:', documentPath);
-    console.log('Letter ID:', request.letterId);
-    console.log('User signing:', userId);
     
     const signedImagePath = await this.embedSignature(
       documentPath,
@@ -197,8 +189,6 @@ export class SignatureRequestsService {
       request.letterId,
       scale,
     );
-    
-    console.log('Signed image path:', signedImagePath);
 
     request.status = SignatureRequestStatus.SIGNED;
     request.signedAt = new Date();
