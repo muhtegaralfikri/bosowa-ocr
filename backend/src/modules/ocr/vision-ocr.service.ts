@@ -13,32 +13,19 @@ export class VisionOcrService {
     const credentialsPath = this.configService.get<string>(
       'GOOGLE_APPLICATION_CREDENTIALS',
     );
-    const apiKey = this.configService.get<string>('GOOGLE_VISION_API_KEY');
+    
 
-    // Hide sensitive info in production
-    if (process.env.NODE_ENV !== 'production') {
-      this.logger.log(`Credentials path: ${credentialsPath ? 'configured' : 'not set'}`);
-      this.logger.log(`API key: ${apiKey ? 'configured' : 'not set'}`);
-    }
-
+    // Only use service account credentials (more reliable)
     try {
       if (credentialsPath) {
-        // Using service account credentials file
         this.client = new ImageAnnotatorClient({
           keyFilename: credentialsPath,
         });
         this.isConfigured = true;
         this.logger.log('Google Vision API initialized with service account');
-      } else if (apiKey) {
-        // Using API key
-        this.client = new ImageAnnotatorClient({
-          apiKey: apiKey,
-        });
-        this.isConfigured = true;
-        this.logger.log('Google Vision API initialized with API key');
       } else {
-        this.logger.warn(
-          'Google Vision API not configured (no credentials found)',
+        this.logger.error(
+          'Google Vision API not configured. Set GOOGLE_APPLICATION_CREDENTIALS in .env',
         );
       }
     } catch (error) {

@@ -25,7 +25,7 @@ export default function UploadPage() {
   const [ocrResult, setOcrResult] = useState<OcrPreviewResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [extractionMethod, setExtractionMethod] = useState<'auto' | 'ai' | 'regex'>('auto');
+
 
   const fileLabel = useMemo(() => {
     if (!preparedFile) return '';
@@ -70,7 +70,6 @@ export default function UploadPage() {
 
       const preview = await api.post('/letters/ocr-preview', {
         fileId: ocrFileMeta.fileId,
-        extractionMethod: 'auto',
       });
       setOcrResult(preview.data);
       toast.success('Analisis dokumen berhasil!');

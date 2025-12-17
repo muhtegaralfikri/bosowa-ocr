@@ -71,6 +71,7 @@ export default function PendingSignaturesPage() {
 
   // Mouse/Touch handlers for dragging signature
   const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent, type: 'move' | 'resize') => {
+    if (!e.cancelable) return; // Don't preventDefault on passive events
     e.preventDefault();
     e.stopPropagation();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
