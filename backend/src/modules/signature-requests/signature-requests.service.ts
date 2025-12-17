@@ -180,11 +180,13 @@ export class SignatureRequestsService {
     }
 
     const scale = dto.scale ?? 100;
+    
     const signedImagePath = await this.embedSignature(
       documentPath,
       signature.imagePath,
       posX,
       posY,
+      request.letterId,
       scale,
     );
 
@@ -205,6 +207,21 @@ export class SignatureRequestsService {
     );
 
     return saved;
+  }
+
+  // Get shared signed document path for a letter
+  async getSharedSignedPath(letterId: string): Promise<string | null> {
+    const letter = await this.letterRepo.findOne({ where: { id: letterId } });
+    if (!letter) return null;
+    
+    const outputDir = path.join(process.cwd(), 'uploads', 'signed');
+    const outputFilename = `signed-${letterId}-${path.basename(letter.fileUrl || '')}`;
+    const outputPath = path.join(outputDir, outputFilename);
+    
+    if (fs.existsSync(outputPath)) {
+      return `/uploads/signed/${outputFilename}`;
+    }
+    return null;
   }
 
   async reject(
@@ -243,6 +260,7 @@ export class SignatureRequestsService {
     signaturePath: string,
     posX: number,
     posY: number,
+    letterId: string,
     scale: number = 100,
   ): Promise<string> {
     const docFullPath = path.join(process.cwd(), documentPath);
@@ -257,15 +275,31 @@ export class SignatureRequestsService {
       fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    const outputFilename = `signed-${Date.now()}-${path.basename(documentPath)}`;
+    // Use fixed filename per letter so all signatures go to same document
+    const outputFilename = `signed-${letterId}-${path.basename(documentPath)}`;
     const outputPath = path.join(outputDir, outputFilename);
 
     // Handle PDF files
     if (documentPath.toLowerCase().endsWith('.pdf')) {
       const { PDFDocument } = await import('pdf-lib');
-      const pdfBuffer = fs.readFileSync(docFullPath);
-      const pdfDoc = await PDFDocument.load(pdfBuffer);
-      const pages = pdfDoc.getPages();
+      
+      // Check if signed document already exists
+      let pdfDoc: any;
+      let pages: any;
+      
+      if (fs.existsSync(outputPath)) {
+        // Load existing signed document and add new signature
+        const signedPdfBuffer = fs.readFileSync(outputPath);
+        pdfDoc = await PDFDocument.load(signedPdfBuffer);
+        pages = pdfDoc.getPages();
+        console.log('Adding signature to existing signed document:', outputPath);
+      } else {
+        // Create new signed document
+        const pdfBuffer = fs.readFileSync(docFullPath);
+        pdfDoc = await PDFDocument.load(pdfBuffer);
+        pages = pdfDoc.getPages();
+        console.log('Creating new signed document:', outputPath);
+      }
       
       const page = pages[0];
       const { width, height } = page.getSize();

@@ -469,6 +469,7 @@ textarea {
   border: 1px solid var(--border-color);
   background: var(--bg-input);
   color: var(--text-primary);
+  font-family: 'Sora', 'Segoe UI', system-ui, -apple-system, sans-serif;
   transition: background 0.3s ease, border-color 0.3s ease;
   appearance: none; /* Reset native appearance */
 }
@@ -544,7 +545,8 @@ textarea:focus {
 }
 
 input::placeholder,
-textarea::placeholder {
+textarea::placeholder,
+select option {
   font-family: 'Sora', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
@@ -804,6 +806,27 @@ textarea::placeholder {
 .actions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Medium screen breakpoint for actions */
+@media (max-width: 1024px) and (min-width: 721px) {
+  .panel-head .actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  
+  .panel-head .actions .search-input {
+    min-width: 180px;
+    flex: 1;
+  }
+  
+  .panel-head .actions .ghost-btn,
+  .panel-head .actions .primary-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 }
 
 .pagination-actions {
@@ -1181,6 +1204,7 @@ button.mobile-menu-link.logout {
   border: 1px solid var(--border-color);
   border-radius: 10px;
   font-size: 1rem;
+  font-family: 'Sora', 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--bg-input);
   color: var(--text-primary);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -2030,6 +2054,26 @@ button.mobile-menu-link.logout {
   color: #ef4444;
   min-width: 30px;
   text-align: right;
+}
+
+/* Form field error styling */
+.field-error {
+  display: block;
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+input.error, select.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+input.error:focus, select.error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
 }
 
 .empty-state-chart {

@@ -11,7 +11,40 @@ import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+// Helper functions for signature status
+const getOverallStatus = (requests: SignatureRequest[]) => {
+  const allSigned = requests.every(req => req.status === 'SIGNED');
+  const someSigned = requests.some(req => req.status === 'SIGNED');
+  const allRejected = requests.every(req => req.status === 'REJECTED');
+  const somePending = requests.some(req => req.status === 'PENDING');
+  
+  if (allSigned) return 'completed';
+  if (allRejected) return 'rejected';
+  if (someSigned || somePending) return 'in-progress';
+  return 'pending';
+};
 
+// Group signature requests by letterId and createdAt (same batch)
+const groupSignatureRequests = (requests: SignatureRequest[]) => {
+  if (!requests.length) return [];
+  
+  // Group requests by letter and creation time (within 1 minute = same batch)
+  const groups: { [key: string]: SignatureRequest[] } = {};
+  
+  requests.forEach(req => {
+    // Create key based on letterId and createdAt rounded to minutes
+    const createdAt = new Date(req.createdAt);
+    const roundedTime = new Date(createdAt.setSeconds(0, 0)); // Round to minute
+    const key = `${req.letterId}-${roundedTime.getTime()}`;
+    
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(req);
+  });
+  
+  return Object.values(groups);
+};
 
 export default function LetterDetailPage() {
   const { id } = useParams();
@@ -239,6 +272,9 @@ export default function LetterDetailPage() {
                 <strong>Jenis Dokumen</strong> {letter.jenisDokumen}
               </li>
               <li>
+                <strong>Unit Bisnis</strong> {letter.unitBisnis?.replace('_', ' ') || '-'}
+              </li>
+              <li>
                 <strong>Tanggal</strong> {letter.tanggalSurat}
               </li>
               <li>
@@ -280,10 +316,27 @@ export default function LetterDetailPage() {
                 Jenis Dokumen
                 <select
                   value={form.jenisDokumen || 'SURAT'}
-                  onChange={(e) => setForm({ ...form, jenisDokumen: e.target.value as 'SURAT' | 'INVOICE' })}
+                  onChange={(e) => setForm({ ...form, jenisDokumen: e.target.value as 'SURAT' | 'INVOICE' | 'INTERNAL_MEMO' | 'PAD' })}
                 >
                   <option value="SURAT">SURAT</option>
                   <option value="INVOICE">INVOICE</option>
+                  <option value="INTERNAL_MEMO">INTERNAL MEMO</option>
+                  <option value="PAD">PAD</option>
+                </select>
+              </label>
+              <label>
+                Unit Bisnis
+                <select
+                  value={form.unitBisnis || ''}
+                  onChange={(e) => setForm({ ...form, unitBisnis: e.target.value as any })}
+                  disabled
+                >
+                  <option value="BOSOWA_TAXI">Bosowa Taxi</option>
+                  <option value="OTORENTAL_NUSANTARA">Otorental Nusantara</option>
+                  <option value="OTO_GARAGE_INDONESIA">Oto Garage Indonesia</option>
+                  <option value="MALLOMO">Mallomo</option>
+                  <option value="LAGALIGO_LOGISTIK">Lagaligo Logistik</option>
+                  <option value="PORT_MANAGEMENT">Port Management</option>
                 </select>
               </label>
               <label>
@@ -381,81 +434,114 @@ export default function LetterDetailPage() {
           ) : (
             <p>Tidak ada lampiran</p>
           )}
-          {letter.fileUrl && (
-            <button
-               type="button"
-                onClick={() => handleDirectDownload(`${API_BASE}/api/v1/letters/${letter.id}/download-pdf`)}
-               style={{ 
-                 marginTop: '1rem', 
-                 padding: '0.75rem', 
-                 width: '100%', 
-                 display: 'flex', 
-                 alignItems: 'center', 
-                 justifyContent: 'center', 
-                 gap: '0.5rem',
-                 background: 'var(--primary)', 
-                 color: 'white', 
-                 border: 'none', 
-                 borderRadius: '6px', 
-                 cursor: 'pointer',
-                 fontWeight: 500
-               }}
-            >
-               <Download size={16} /> Download PDF
-            </button>
-          )}
+          
         </div>
       </div>
 
       {signatureRequests.length > 0 && (
         <div className="signature-status-section">
           <h3><FileSignature size={18} /> Status Tanda Tangan</h3>
-          <div className="signature-list">
-            {signatureRequests.map((req: SignatureRequest) => (
-              <div key={req.id} className={`signature-item status-${req.status.toLowerCase()}`}>
-                <div className="signature-user">
-                  {req.status === 'PENDING' && <Clock size={16} className="status-icon pending" />}
-                  {req.status === 'SIGNED' && <Check size={16} className="status-icon signed" />}
-                  {req.status === 'REJECTED' && <XCircle size={16} className="status-icon rejected" />}
-                  <span>{req.assignee?.username || 'Unknown'}</span>
+          
+          {/* Group signature requests by batch */}
+          {groupSignatureRequests(signatureRequests).map((group: SignatureRequest[], groupIndex: number) => (
+            <div key={groupIndex} className="signature-card">
+              <div className="signature-header">
+                <div className="signature-progress-header">
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill" 
+                      style={{ 
+                        width: `${(group.filter(req => req.status === 'SIGNED').length / group.length) * 100}%` 
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="signature-actions">
-                  <span className={`status-badge ${req.status.toLowerCase()}`}>
-                    {req.status === 'PENDING' && 'Menunggu'}
-                    {req.status === 'SIGNED' && 'Sudah TTD'}
-                    {req.status === 'REJECTED' && 'Ditolak'}
-                  </span>
-                  {req.status === 'SIGNED' && req.signedImagePath && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleViewDocument(
-                          req.signedImagePath!, 
-                          req.signedImagePath!.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
-                        )}
-                        className="view-signed-btn"
-                        title="Lihat dokumen ber-TTD"
-                      >
-                        <Eye size={14} /> Lihat
-                      </button>
-                      <button
-                        type="button"
-                        className="download-signed-btn"
-                        title="Download dokumen ber-TTD"
-                        onClick={() => {
-                           const filename = req.signedImagePath!.split('/').pop();
-                           const downloadName = `${(letter?.letterNumber || 'document').replace(/[^a-zA-Z0-9-_]/g, '_')}_Signed.pdf`;
-                           handleDirectDownload(`${API_BASE}/api/v1/letters/signed-image-download/${filename}?downloadName=${downloadName}`);
-                        }}
-                      >
-                        <Download size={14} />
-                      </button>
-                    </>
-                  )}
+                <div className={`signature-status ${getOverallStatus(group)}`}>
+                  {group.filter(req => req.status === 'SIGNED').length}/{group.length} Sudah TTD
                 </div>
               </div>
-            ))}
-          </div>
+              
+              <div className="signature-details">
+                
+                {/* Signers list */}
+                <div className="signers-list">
+                  {group.map((req: SignatureRequest) => (
+                    <div key={req.id} className="signer-item">
+                      <div className="signer-info">
+                        <div className="signer-name">
+                          {req.assignee?.username || 'Unknown'}
+                        </div>
+                        <div className={`signer-status ${req.status.toLowerCase()}`}>
+                          {req.status === 'PENDING' && (
+                            <>
+                              <Clock size={14} />
+                              <span>Menunggu</span>
+                            </>
+                          )}
+                          {req.status === 'SIGNED' && (
+                            <>
+                              <Check size={14} />
+                              <span>Sudah TTD</span>
+                            </>
+                          )}
+                          {req.status === 'REJECTED' && (
+                            <>
+                              <XCircle size={14} />
+                              <span>Ditolak</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {req.signedAt && (
+                        <div className="signer-date">
+                          {new Date(req.signedAt).toLocaleString('id-ID', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Actions - show when all signed in this group */}
+                {group.every(req => req.status === 'SIGNED') && (
+                  <div className="signature-actions">
+                    {group[0]?.signedImagePath && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleViewDocument(
+                            group[0].signedImagePath!,
+                            group[0].signedImagePath!.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
+                          )}
+                          className="primary-btn"
+                        >
+                          <Eye size={16} className="mr-2" />
+                          Lihat Dokumen Tertandatangani
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                             const filename = group[0].signedImagePath!.split('/').pop();
+                             const downloadName = `${(letter?.letterNumber || 'document').replace(/[^a-zA-Z0-9-_]/g, '_')}_Signed.pdf`;
+                             handleDirectDownload(`${API_BASE}/api/v1/letters/signed-image-download/${filename}?downloadName=${downloadName}`);
+                          }}
+                          className="ghost-btn"
+                        >
+                          <Download size={16} className="mr-2" />
+                          Download
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -517,63 +603,239 @@ export default function LetterDetailPage() {
       <style>{`
         .signature-status-section {
           margin-top: 2rem;
-          padding: 1.5rem;
-          background: var(--bg-hover);
-          border-radius: 8px;
+          padding: 1.25rem;
+          background: var(--bg-secondary);
+          border-radius: 16px;
+          border: 1px solid var(--border-color);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
         .signature-status-section h3 {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          margin: 0 0 1rem;
-          font-size: 1rem;
+          gap: 0.75rem;
+          margin: 0 0 1.25rem;
+          font-size: 1.125rem;
+          font-weight: 600;
           color: var(--text-primary);
         }
-        .signature-list {
+        
+        .signature-card {
+          background: var(--bg-primary);
+          border-radius: 12px;
+          border: 1px solid var(--border-color);
+          overflow: hidden;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+        .signature-card + .signature-card {
+          margin-top: 1rem;
+        }
+        
+        .signature-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 1.25rem;
+          background: var(--bg-hover);
+          border-bottom: 1px solid var(--border-color);
+          gap: 1rem;
+        }
+        .signature-progress-header {
+          flex: 1;
+          min-width: 0;
+        }
+        .signature-progress-header .progress-bar {
+          height: 8px;
+          background: var(--bg-secondary);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        .signature-progress-header .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+          border-radius: 4px;
+          transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .signature-status {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.5rem 1rem;
+          border-radius: 12px;
+          font-size: 0.813rem;
+          font-weight: 600;
+          white-space: nowrap;
+        }
+        
+        /* Light mode status colors */
+        @media (prefers-color-scheme: light) {
+          .signature-status.completed {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            color: #166534;
+          }
+          .signature-status.rejected {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+          }
+          .signature-status.in-progress {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+          }
+          .signature-status.pending {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            color: #4b5563;
+          }
+        }
+        
+        /* Dark mode status colors */
+        @media (prefers-color-scheme: dark) {
+          .signature-status.completed {
+            background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+            color: #6ee7b7;
+          }
+          .signature-status.rejected {
+            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+            color: #fca5a5;
+          }
+          .signature-status.in-progress {
+            background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+            color: #fcd34d;
+          }
+          .signature-status.pending {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: #9ca3af;
+          }
+        }
+        
+        /* Fallback for manual dark mode */
+        html.dark .signature-status.completed {
+          background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+          color: #6ee7b7;
+        }
+        html.dark .signature-status.rejected {
+          background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+          color: #fca5a5;
+        }
+        html.dark .signature-status.in-progress {
+          background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+          color: #fcd34d;
+        }
+        html.dark .signature-status.pending {
+          background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+          color: #9ca3af;
+        }
+        
+        .signature-details {
+          padding: 1.25rem;
+        }
+        
+        .progress-container {
+          margin-bottom: 1.5rem;
+        }
+        .progress-label {
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          margin-bottom: 0.75rem;
+          font-weight: 500;
+        }
+        .progress-bar {
+          width: 100%;
+          height: 10px;
+          background: var(--bg-hover);
+          border-radius: 8px;
+          overflow: hidden;
+          position: relative;
+        }
+        .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+          border-radius: 8px;
+          transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+        }
+        .progress-fill::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        
+        .signers-list {
           display: flex;
           flex-direction: column;
           gap: 0.75rem;
         }
-        .signature-item {
+        .signer-item {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 0.75rem 1rem;
+          padding: 1rem;
           background: var(--bg-secondary);
-          border-radius: 6px;
+          border-radius: 10px;
           border: 1px solid var(--border-color);
+          transition: all 0.2s ease;
         }
-        .signature-user {
+        .signer-item:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .signer-info {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 1rem;
+          flex: 1;
+        }
+        .signer-name {
+          font-weight: 600;
           color: var(--text-primary);
+          font-size: 0.938rem;
+          min-width: 120px;
         }
-        .status-icon.pending { color: #f59e0b; }
-        .status-icon.signed { color: #22c55e; }
-        .status-icon.rejected { color: #ef4444; }
-        .status-badge {
-          padding: 0.25rem 0.75rem;
-          border-radius: 9999px;
-          font-size: 0.75rem;
-          font-weight: 500;
-        }
-        .status-badge.pending {
-          background: #fef3c7;
-          color: #92400e;
-        }
-        .status-badge.signed {
-          background: #dcfce7;
-          color: #166534;
-        }
-        .status-badge.rejected {
-          background: #fee2e2;
-          color: #991b1b;
-        }
-        .signature-actions {
+        .signer-status {
           display: flex;
           align-items: center;
           gap: 0.5rem;
+          font-size: 0.813rem;
+          font-weight: 500;
+          padding: 0.375rem 0.75rem;
+          border-radius: 8px;
+          background: var(--bg-hover);
+        }
+        .signer-status.pending { 
+          color: #f59e0b; 
+          background: rgba(245, 158, 11, 0.1);
+        }
+        .signer-status.signed { 
+          color: #10b981; 
+          background: rgba(16, 185, 129, 0.1);
+        }
+        .signer-status.rejected { 
+          color: #ef4444; 
+          background: rgba(239, 68, 68, 0.1);
+        }
+        .signer-date {
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+          font-weight: 500;
+          white-space: nowrap;
+        }
+        
+        .signature-actions {
+          margin-top: 1.5rem;
+          padding-top: 1.25rem;
+          border-top: 1px solid var(--border-color);
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+        }
+        .mr-2 {
+          margin-right: 0.5rem;
         }
         .view-signed-btn,
         .download-signed-btn {
@@ -609,21 +871,138 @@ export default function LetterDetailPage() {
             padding: 1rem;
             margin-top: 1.5rem;
           }
-          .signature-item {
+          
+          .signature-status-section h3 {
+            font-size: 1rem;
+            gap: 0.5rem;
+          }
+          
+          .signature-card + .signature-card {
+            margin-top: 0.75rem;
+          }
+          
+          .signature-header {
+            padding: 1rem;
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: flex-start;
+            min-height: auto;
+          }
+          
+          .signature-title {
+            font-size: 0.938rem;
+          }
+          
+          .signature-status {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+            width: 100%;
+            justify-content: center;
+          }
+          
+          .signature-details {
+            padding: 1rem;
+          }
+          
+          .progress-container {
+            margin-bottom: 1rem;
+          }
+          
+          .progress-label {
+            font-size: 0.813rem;
+            margin-bottom: 0.5rem;
+          }
+          
+          .progress-bar {
+            height: 8px;
+          }
+          
+          .signer-item {
             flex-direction: column;
             align-items: flex-start;
             gap: 0.75rem;
             padding: 0.75rem;
           }
-          .signature-actions {
+          
+          .signer-info {
             width: 100%;
-            justify-content: space-between;
+            gap: 0.75rem;
           }
-          .view-signed-btn,
-          .download-signed-btn {
-            flex: 1;
+          
+          .signer-name {
+            font-size: 0.875rem;
+            min-width: auto;
+          }
+          
+          .signer-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+          }
+          
+          .signer-date {
+            font-size: 0.688rem;
+            align-self: flex-end;
+          }
+          
+          .signature-actions {
+            flex-direction: column;
+            gap: 0.75rem;
+            padding-top: 1rem;
+          }
+          
+          .signature-actions button {
+            width: 100%;
             justify-content: center;
+          }
+          
+          .mr-2 {
+            margin-right: 0.375rem;
+          }
+        }
+        
+        /* Small Mobile (320-374px) */
+        @media (max-width: 374px) {
+          .signature-status-section {
+            padding: 0.75rem;
+          }
+          
+          .signature-header,
+          .signature-details {
+            padding: 0.75rem;
+          }
+          
+          .signer-item {
             padding: 0.5rem;
+          }
+          
+          .signature-status-section h3 {
+            font-size: 0.938rem;
+          }
+          
+          .signature-title {
+            font-size: 0.875rem;
+          }
+          
+          .signer-name {
+            font-size: 0.813rem;
+          }
+          
+          .signer-status {
+            font-size: 0.688rem;
+            padding: 0.25rem 0.375rem;
+          }
+        }
+        
+        /* Prevent text overflow in status badges */
+        .signature-status {
+          max-width: 200px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        @media (max-width: 768px) {
+          .signature-status {
+            max-width: none;
           }
         }
 

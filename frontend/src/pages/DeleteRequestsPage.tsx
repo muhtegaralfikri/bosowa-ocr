@@ -110,8 +110,8 @@ export default function DeleteRequestsPage() {
             placeholder="Opsional"
           />
         </label>
-        <div className="full-row">
-          <button type="submit" className="primary-btn block-btn">
+        <div className="full-row" style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <button type="submit" className="primary-btn">
             Kirim permintaan
           </button>
         </div>

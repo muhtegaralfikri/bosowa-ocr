@@ -26,8 +26,8 @@ export class AuthService {
     return copy;
   }
 
-  private generateTokens(userId: string, username: string, role: string) {
-    const payload = { username, sub: userId, role };
+  private generateTokens(userId: string, username: string, role: string, unitBisnis?: string) {
+    const payload = { username, sub: userId, role, unitBisnis };
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: '15m',
@@ -47,7 +47,7 @@ export class AuthService {
       throw new UnauthorizedException('Username atau password salah');
     }
 
-    const tokens = this.generateTokens(user.id, user.username, user.role);
+    const tokens = this.generateTokens(user.id, user.username, user.role, user.unitBisnis || undefined);
     await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
 
     return {
@@ -77,7 +77,7 @@ export class AuthService {
         throw new UnauthorizedException('User tidak ditemukan');
       }
 
-      const tokens = this.generateTokens(user.id, user.username, user.role);
+      const tokens = this.generateTokens(user.id, user.username, user.role, user.unitBisnis || undefined);
       await this.usersService.updateRefreshToken(user.id, tokens.refreshToken);
 
       return {

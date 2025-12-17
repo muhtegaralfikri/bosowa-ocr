@@ -18,13 +18,17 @@ export class ListLettersQueryDto {
   @IsOptional()
   perihal?: string;
 
-  @IsIn(['SURAT', 'INVOICE'])
+  @IsIn(['SURAT', 'INVOICE', 'INTERNAL_MEMO', 'PAD'])
   @IsOptional()
-  jenisDokumen?: 'SURAT' | 'INVOICE';
+  jenisDokumen?: 'SURAT' | 'INVOICE' | 'INTERNAL_MEMO' | 'PAD';
 
   @IsIn(['MASUK', 'KELUAR'])
   @IsOptional()
   jenisSurat?: 'MASUK' | 'KELUAR';
+
+  @IsIn(['BOSOWA_TAXI', 'OTORENTAL_NUSANTARA', 'OTO_GARAGE_INDONESIA', 'MALLOMO', 'LAGALIGO_LOGISTIK', 'PORT_MANAGEMENT'])
+  @IsOptional()
+  unitBisnis?: 'BOSOWA_TAXI' | 'OTORENTAL_NUSANTARA' | 'OTO_GARAGE_INDONESIA' | 'MALLOMO' | 'LAGALIGO_LOGISTIK' | 'PORT_MANAGEMENT';
 
   @IsDateString()
   @IsOptional()

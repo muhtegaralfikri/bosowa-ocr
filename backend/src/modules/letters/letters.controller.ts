@@ -173,13 +173,26 @@ export class LettersController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() dto: CreateLetterDto) {
+  create(@Body() dto: CreateLetterDto, @Request() req: ExpressRequest & { user?: { username?: string; role?: string; unitBisnis?: string } }) {
+    // Auto-fill unit bisnis for regular users
+    if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MANAJEMEN' && req.user?.unitBisnis) {
+      dto.unitBisnis = req.user.unitBisnis as any;
+    }
+    
     return this.lettersService.create(dto);
   }
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll(@Query() query: ListLettersQueryDto) {
+  findAll(@Query() query: ListLettersQueryDto, @Request() req: ExpressRequest & { user?: { username?: string; role?: string; unitBisnis?: string } }) {
+    // Determine unit bisnis filter based on user role
+    let unitBisnisFilter = query.unitBisnis;
+    
+    // If user is not admin or manajemen, filter by their unit bisnis
+    if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MANAJEMEN' && req.user?.unitBisnis) {
+      unitBisnisFilter = req.user.unitBisnis as any;
+    }
+    
     return this.lettersService.findAll(
       query.keyword,
       query.letterNumber,
@@ -187,6 +200,7 @@ export class LettersController {
       query.perihal,
       query.jenisDokumen,
       query.jenisSurat,
+      unitBisnisFilter,
       query.tanggalMulai,
       query.tanggalSelesai,
       query.nominalMin,
@@ -213,26 +227,4 @@ export class LettersController {
     return this.lettersService.update(id, dto, updatedBy);
   }
 
-  @Get('debug-query')
-  @UseGuards(JwtAuthGuard)
-  async debugQuery(@Query() query: ListLettersQueryDto) {
-    return {
-      query,
-      receivedParams: {
-        keyword: query.keyword,
-        letterNumber: query.letterNumber,
-        namaPengirim: query.namaPengirim,
-        perihal: query.perihal,
-        jenisDokumen: query.jenisDokumen,
-        jenisSurat: query.jenisSurat,
-        tanggalMulai: query.tanggalMulai,
-        tanggalSelesai: query.tanggalSelesai,
-        nominalMin: query.nominalMin,
-        nominalMax: query.nominalMax,
-        page: query.page,
-        limit: query.limit,
-      },
-      message: 'Debug endpoint - all parameters received successfully'
-    };
-  }
 }

@@ -38,6 +38,7 @@ export class UsersService {
       username: dto.username,
       password: hashedPassword,
       role: dto.role || UserRole.USER,
+      unitBisnis: dto.unitBisnis,
     });
     const saved = await this.usersRepo.save(user);
     const { password, ...rest } = saved;
