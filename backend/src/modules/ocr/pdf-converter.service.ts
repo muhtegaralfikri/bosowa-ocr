@@ -1,12 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { existsSync, mkdirSync } from 'fs';
-
-// pdf-poppler types
-interface PdfInfo {
-  pages: number;
-}
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 
 @Injectable()
 export class PdfConverterService {
@@ -22,10 +17,11 @@ export class PdfConverterService {
   /**
    * Convert PDF to images (one per page)
    * Returns array of image file paths
+   * Uses pdf-to-img which is cross-platform (supports Linux)
    */
   async convertToImages(pdfPath: string): Promise<string[]> {
-    // Dynamic import for pdf-poppler (CommonJS module)
-    const pdfPoppler = await import('pdf-poppler');
+    // Dynamic import for pdf-to-img (ESM module)
+    const { pdf } = await import('pdf-to-img');
 
     const pdfDir = path.dirname(pdfPath);
     const pdfName = path.basename(pdfPath, '.pdf');
@@ -36,32 +32,18 @@ export class PdfConverterService {
       mkdirSync(outputDir, { recursive: true });
     }
 
-    const outputPrefix = path.join(outputDir, 'page');
-
     try {
-      // Get PDF info to know how many pages
-      const info: PdfInfo = await pdfPoppler.info(pdfPath);
-      this.logger.log(`PDF has ${info.pages} page(s)`);
-
-      // Convert options
-      const opts = {
-        format: 'jpeg',
-        out_dir: outputDir,
-        out_prefix: 'page',
-        page: null, // all pages
-        scale: 2048, // good resolution for OCR
-      };
-
-      await pdfPoppler.convert(pdfPath, opts);
-
-      // Collect generated image paths
       const imagePaths: string[] = [];
-      for (let i = 1; i <= info.pages; i++) {
-        // pdf-poppler generates files like page-1.jpg, page-2.jpg, etc.
-        const imagePath = path.join(outputDir, `page-${i}.jpg`);
-        if (existsSync(imagePath)) {
-          imagePaths.push(imagePath);
-        }
+      let pageNum = 1;
+
+      // pdf-to-img returns an async iterator of page images
+      const document = await pdf(pdfPath, { scale: 2.0 });
+      
+      for await (const image of document) {
+        const imagePath = path.join(outputDir, `page-${pageNum}.png`);
+        writeFileSync(imagePath, image);
+        imagePaths.push(imagePath);
+        pageNum++;
       }
 
       this.logger.log(`Converted PDF to ${imagePaths.length} image(s)`);
@@ -77,31 +59,27 @@ export class PdfConverterService {
    * Returns path to the generated image
    */
   async convertFirstPage(pdfPath: string): Promise<string> {
-    const pdfPoppler = await import('pdf-poppler');
+    const { pdf } = await import('pdf-to-img');
+    
     const pdfDir = path.dirname(pdfPath);
     const pdfName = path.basename(pdfPath, '.pdf');
-    const outputDir = path.join(pdfDir, `${pdfName}_preview`); // Separate dir for previews
+    const outputDir = path.join(pdfDir, `${pdfName}_preview`);
 
     if (!existsSync(outputDir)) {
       mkdirSync(outputDir, { recursive: true });
     }
 
     try {
-      const opts = {
-        format: 'jpeg',
-        out_dir: outputDir,
-        out_prefix: 'preview',
-        page: 1, // Only first page
-        scale: 1024, // Moderate resolution for preview
-      };
-
-      await pdfPoppler.convert(pdfPath, opts);
-
-      const imagePath = path.join(outputDir, 'preview-1.jpg');
-      if (existsSync(imagePath)) {
+      const document = await pdf(pdfPath, { scale: 1.5 });
+      
+      // Get only the first page
+      for await (const image of document) {
+        const imagePath = path.join(outputDir, 'preview-1.png');
+        writeFileSync(imagePath, image);
         return imagePath;
       }
-      throw new Error('Preview generation failed: Output file not found');
+      
+      throw new Error('Preview generation failed: No pages found in PDF');
     } catch (error: any) {
       this.logger.error('PDF preview generation failed', error);
       throw error;
