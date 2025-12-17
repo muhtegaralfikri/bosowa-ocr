@@ -151,6 +151,31 @@ a {
   filter: brightness(0) invert(1);
 }
 
+.sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sidebar-header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--sidebar-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-header-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--sidebar-text-active);
+}
+
 .sidebar-nav {
   flex: 1;
   padding: 1rem 0;

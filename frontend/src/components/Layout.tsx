@@ -72,7 +72,17 @@ export default function Layout({ children }: { children: ReactNode }) {
       <aside className="sidebar">
         <div className="sidebar-header">
           <img src={logo} alt="Bosowa Bandar Agensi" className="sidebar-logo" />
-          <NotificationBell />
+          <div className="sidebar-header-actions">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="sidebar-header-btn"
+              title={theme === 'light' ? 'Mode Gelap' : 'Mode Terang'}
+            >
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+            <NotificationBell />
+          </div>
         </div>
 
         <nav className="sidebar-nav">
@@ -106,15 +116,6 @@ export default function Layout({ children }: { children: ReactNode }) {
               >
                 <LogOut size={20} />
                 <span>Keluar</span>
-              </button>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="theme-toggle"
-                title={theme === 'light' ? 'Mode Gelap' : 'Mode Terang'}
-              >
-                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-                <span>{theme === 'light' ? 'Mode Gelap' : 'Mode Terang'}</span>
               </button>
             </div>
           )}
