@@ -806,6 +806,27 @@ select option {
 .actions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Medium screen breakpoint for actions */
+@media (max-width: 1024px) and (min-width: 721px) {
+  .panel-head .actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  
+  .panel-head .actions .search-input {
+    min-width: 180px;
+    flex: 1;
+  }
+  
+  .panel-head .actions .ghost-btn,
+  .panel-head .actions .primary-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 }
 
 .pagination-actions {
