@@ -464,10 +464,19 @@ p,
   background: linear-gradient(120deg, #0f5cbf, #1d74d8);
   color: #f5f8ff;
   box-shadow: 0 12px 32px rgba(29, 116, 216, 0.25);
+  transition: all 0.2s ease;
 }
 
 .primary-btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(29, 116, 216, 0.35);
+  background: linear-gradient(120deg, #0e56b3, #1a6ccc);
+}
+
+.primary-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 8px 24px rgba(29, 116, 216, 0.2);
+  background: linear-gradient(120deg, #0d4da6, #1764b7);
 }
 
 .form-grid {
@@ -613,6 +622,11 @@ select option {
   margin-top: 0.75rem;
   display: flex;
   justify-content: center;
+}
+
+.upload-actions .primary-btn {
+  position: relative;
+  z-index: 2;
 }
 
 .cropper {
