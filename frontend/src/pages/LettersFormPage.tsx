@@ -114,10 +114,10 @@ export default function LettersFormPage() {
     const newFieldErrors: Record<string, string> = {};
     
     if (!form.letterNumber) {
-      newFieldErrors.letterNumber = 'Nomor Surat wajib diisi';
+      newFieldErrors.letterNumber = 'Nomor Dokumen wajib diisi';
     }
     if (!form.tanggalSurat) {
-      newFieldErrors.tanggalSurat = 'Tanggal Surat wajib diisi';
+      newFieldErrors.tanggalSurat = 'Tanggal Dokumen wajib diisi';
     }
     if (isAdminOrManajemen && !form.unitBisnis) {
       newFieldErrors.unitBisnis = 'Unit Bisnis wajib dipilih untuk Admin/Manajemen';
@@ -135,16 +135,16 @@ export default function LettersFormPage() {
         totalNominal: Number(form.totalNominal),
         fileId: state.originalMeta?.fileId || state.uploadMeta?.fileId,
       });
-      setMessage('Surat tersimpan');
-      toast.success('Surat tersimpan');
+      setMessage('Dokumen tersimpan');
+      toast.success('Dokumen tersimpan');
       clearDraft();
       // Invalidate letters cache so list updates automatically
       queryClient.invalidateQueries({ queryKey: ['letters'] });
       navigate('/letters');
     } catch {
-      setMessage('Gagal menyimpan surat');
+      setMessage('Gagal menyimpan dokumen');
       toast.error(
-        'Gagal menyimpan surat. Pastikan semua field wajib terisi dan backend aktif.',
+        'Gagal menyimpan dokumen. Pastikan semua field wajib terisi dan backend aktif.',
       );
     }
   };
@@ -153,8 +153,8 @@ export default function LettersFormPage() {
     <section className="panel">
       <div className="panel-head">
         <div>
-          <p className="eyebrow">Form Surat</p>
-          <h1>Input metadata surat</h1>
+          <p className="eyebrow">Form Dokumen</p>
+          <h1>Input metadata dokumen</h1>
           {extractionMethod && (
             <p className="small-note">
               Ekstraksi: {extractionMethod === 'ai' ? 'AI' : 'Regex'} 
@@ -174,7 +174,7 @@ export default function LettersFormPage() {
       )}
       <form className="form-grid two-col" onSubmit={handleSubmit}>
         <label>
-          Nomor Surat
+          Nomor Dokumen
           <input
             value={form.letterNumber}
             onChange={(e) => {
@@ -192,7 +192,7 @@ export default function LettersFormPage() {
           )}
         </label>
         <label>
-          Jenis Surat
+          Tipe Dokumen
           <select
             value={form.jenisSurat}
             onChange={(e) => setForm({ ...form, jenisSurat: e.target.value })}
@@ -254,7 +254,7 @@ export default function LettersFormPage() {
           </div>
         )}
         <label>
-          Tanggal Surat
+          Tanggal Dokumen
           <input
             type="date"
             value={form.tanggalSurat}
@@ -330,7 +330,7 @@ export default function LettersFormPage() {
         </label>
         <div className="full-row">
           <button type="submit" className="primary-btn">
-            Simpan surat
+            Simpan dokumen
           </button>
           {errors && <div className="error-box">{errors}</div>}
           {message && <p>{message}</p>}

@@ -77,12 +77,12 @@ export default function StatsPage() {
           <div className="stat-card">
             <h3>
               <TrendingUp size={18} style={{ display: 'inline', marginRight: 8, verticalAlign: 'text-bottom' }} />
-              Trafik Surat Bulanan
+              Trafik Dokumen Bulanan
             </h3>
             
             {stats.monthlyLetters.length === 0 ? (
                <p className="text-secondary" style={{ fontStyle: 'italic', textAlign: 'center', padding: '2rem' }}>
-                 Belum ada data surat.
+                 Belum ada data dokumen.
                </p>
             ) : (
               <div className="chart-scroll-container">
@@ -90,7 +90,7 @@ export default function StatsPage() {
                   {stats.monthlyLetters.map((item) => (
                     <div className="chart-column" key={item.month}>
                       <div className="bars-group">
-                        {/* Surat Masuk (Biru/Accent) */}
+                        {/* Dokumen Masuk (Biru/Accent) */}
                         <div 
                           className="bar masuk" 
                           style={{ height: `${(item.masuk / maxVal) * 100}%` }} 
@@ -98,7 +98,7 @@ export default function StatsPage() {
                         >
                           <span className="bar-value">{item.masuk > 0 ? item.masuk : ''}</span>
                         </div>
-                        {/* Surat Keluar (Hijau) */}
+                        {/* Dokumen Keluar (Hijau) */}
                         <div 
                           className="bar keluar" 
                           style={{ height: `${(item.keluar / maxVal) * 100}%` }} 

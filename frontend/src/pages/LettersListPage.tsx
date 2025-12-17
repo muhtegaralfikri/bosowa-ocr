@@ -12,9 +12,9 @@ const PAGE_SIZE = 10;
 // Define base columns
 const allColumns = [
   { key: 'unitBisnis', label: 'Unit Bisnis' },
-  { key: 'letterNumber', label: 'Nomor Surat' },
-  { key: 'jenisSurat', label: 'Jenis Surat' },
-  { key: 'jenisDokumen', label: 'Jenis Dokumen' },
+  { key: 'letterNumber', label: 'Nomor Dokumen' },
+  { key: 'jenisSurat', label: 'Jenis Dokumen' },
+  { key: 'jenisDokumen', label: 'Kategori' },
   { key: 'tanggalSurat', label: 'Tanggal' },
   { key: 'namaPengirim', label: 'Pengirim' },
   { key: 'perihal', label: 'Perihal' },
@@ -108,7 +108,7 @@ export default function LettersListPage() {
           const res = await api.get('/letters', { params });
           return res.data as PaginatedResponse<Letter>;
         } catch (err) {
-          toast.error('Gagal memuat daftar surat');
+          toast.error('Gagal memuat daftar dokumen');
           throw err;
         }
       },
@@ -157,7 +157,7 @@ export default function LettersListPage() {
       <div className="panel-head">
         <div>
           <p className="eyebrow">Daftar</p>
-          <h1>Surat & Invoice</h1>
+          <h1>Dokumen</h1>
         </div>
         <div className="actions">
           <input
@@ -173,7 +173,7 @@ export default function LettersListPage() {
             {showAdvanced ? 'Sembunyikan Filter' : 'Filter Lanjutan'}
           </button>
           <Link to="/letters/new" className="primary-btn">
-            Tambah Surat
+            Tambah Dokumen
           </Link>
         </div>
       </div>
@@ -230,7 +230,7 @@ export default function LettersListPage() {
             </label>
             
             <label>
-              Jenis Surat
+              Jenis Dokumen
               <select
                 value={filters.jenisSurat}
                 onChange={(e) => handleFilterChange('jenisSurat', e.target.value)}
@@ -324,7 +324,7 @@ export default function LettersListPage() {
           )}
           {!isLoading && letters.length === 0 && (
             <div className="table-row table-message">
-              <span>Tidak ada surat</span>
+              <span>Tidak ada dokumen</span>
             </div>
           )}
           {letters.map((letter: Letter) => (

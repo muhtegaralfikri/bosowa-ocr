@@ -23,8 +23,8 @@ import NotificationBell from './notification/NotificationBell';
 const THEME_KEY = 'bosowa-ocr-theme';
 
 const navItems = [
-  { path: '/upload', label: 'Unggah', mobileLabel: 'Unggah', icon: Upload },
-  { path: '/letters', label: 'Daftar Surat', mobileLabel: 'Surat', icon: FileText },
+  { path: '/upload', label: 'Unggah Dokumen', mobileLabel: 'Unggah', icon: Upload },
+  { path: '/letters', label: 'Daftar Dokumen', mobileLabel: 'Dokumen', icon: FileText },
   { path: '/delete-requests', label: 'Permintaan Hapus', mobileLabel: 'Hapus', icon: Trash2 },
   { path: '/pending-signatures', label: 'Menunggu TTD', mobileLabel: 'Inbox TTD', icon: FileSignature, manajemenOnly: true },
   { path: '/signature-settings', label: 'Pengaturan TTD', mobileLabel: 'TTD Saya', icon: PenTool, manajemenOnly: true },

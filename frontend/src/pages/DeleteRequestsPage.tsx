@@ -94,7 +94,7 @@ export default function DeleteRequestsPage() {
       {/* Form Area */}
       <form className="form-grid" onSubmit={submit}>
         <label>
-          Nomor Surat / Invoice
+          Nomor Dokumen
           <input
             value={letterNumber}
             onChange={(e) => setLetterNumber(e.target.value)}
@@ -130,7 +130,7 @@ export default function DeleteRequestsPage() {
               style={{ gridTemplateColumns: '1.2fr 2fr 2fr 1.2fr 1.6fr' }}
             >
               <span>ID</span>
-              <span>Nomor Surat</span>
+              <span>Nomor Dokumen</span>
               <span>Alasan</span>
               <span>Status</span>
               <span>{actionHeader}</span>

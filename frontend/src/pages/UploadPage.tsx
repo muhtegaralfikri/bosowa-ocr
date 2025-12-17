@@ -87,8 +87,8 @@ export default function UploadPage() {
     <section className="panel">
       <div className="panel-head">
         <div>
-          <p className="eyebrow">Unggah + OCR</p>
-          <h1>Unggah surat/invoice</h1>
+          <p className="eyebrow">Unggah</p>
+          <h1>Dokumen</h1>
           <p>Drop file, ambil dari kamera, lalu crop manual sebelum OCR.</p>
         </div>
         <button
@@ -119,7 +119,7 @@ export default function UploadPage() {
               <div className="panel-head">
                 <div>
                   <p className="eyebrow">Manual crop</p>
-          <h3>Pilih kop surat sebelum OCR</h3>
+          <h3>Pilih area dokumen sebelum OCR</h3>
                 </div>
                 <button
                   type="button"
