@@ -123,7 +123,7 @@ export default function LetterDetailPage() {
       });
       setLetter(res.data);
       setIsEditing(false);
-      toast.success('Surat berhasil diperbarui');
+      toast.success('Dokumen berhasil diperbarui');
       // Invalidate letters cache so list updates automatically
       queryClient.invalidateQueries({ queryKey: ['letters'] });
     } catch {
@@ -221,7 +221,7 @@ export default function LetterDetailPage() {
     <section className="panel">
       <div className="panel-head">
         <div>
-          <p className="eyebrow">Detail Surat</p>
+          <p className="eyebrow">Detail Dokumen</p>
           <h1>{letter.letterNumber}</h1>
         </div>
         <div className="actions">
@@ -266,7 +266,7 @@ export default function LetterDetailPage() {
           {!isEditing ? (
             <ul className="meta">
               <li>
-                <strong>Jenis Surat</strong> {letter.jenisSurat}
+                <strong>Tipe</strong> {letter.jenisSurat}
               </li>
               <li>
                 <strong>Jenis Dokumen</strong> {letter.jenisDokumen}
@@ -303,7 +303,7 @@ export default function LetterDetailPage() {
                 />
               </label>
               <label>
-                Jenis Surat
+                Tipe Dokumen
                 <select
                   value={form.jenisSurat || 'MASUK'}
                   onChange={(e) => setForm({ ...form, jenisSurat: e.target.value as 'MASUK' | 'KELUAR' })}

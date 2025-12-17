@@ -70,14 +70,13 @@ export default function UploadPage() {
 
       const preview = await api.post('/letters/ocr-preview', {
         fileId: ocrFileMeta.fileId,
-        extractionMethod,
+        extractionMethod: 'auto',
       });
       setOcrResult(preview.data);
-      const methodUsed = preview.data.extractionMethod === 'ai' ? 'AI' : 'Regex';
-      toast.success(`Berhasil! Metode: ${methodUsed}`);
+      toast.success('Analisis dokumen berhasil!');
     } catch {
-      setError('Upload atau OCR gagal. Pastikan backend jalan dan login masih aktif.');
-      toast.error('Upload atau OCR gagal. Pastikan backend jalan dan login masih aktif.');
+      setError('Upload atau analisis dokumen gagal. Pastikan backend jalan dan login masih aktif.');
+      toast.error('Upload atau analisis dokumen gagal. Pastikan backend jalan dan login masih aktif.');
     } finally {
       setLoading(false);
     }
@@ -87,9 +86,9 @@ export default function UploadPage() {
     <section className="panel">
       <div className="panel-head">
         <div>
-          <p className="eyebrow">Unggah + OCR</p>
-          <h1>Unggah surat/invoice</h1>
-          <p>Drop file, ambil dari kamera, lalu crop manual sebelum OCR.</p>
+          <p className="eyebrow">Unggah</p>
+          <h1>Dokumen</h1>
+          <p>Drop file, ambil dari kamera, lalu crop manual sebelum analisis.</p>
         </div>
         <button
           type="button"
@@ -119,7 +118,7 @@ export default function UploadPage() {
               <div className="panel-head">
                 <div>
                   <p className="eyebrow">Manual crop</p>
-          <h3>Pilih kop surat sebelum OCR</h3>
+          <h3>Pilih area dokumen sebelum analisis</h3>
                 </div>
                 <button
                   type="button"
@@ -127,7 +126,7 @@ export default function UploadPage() {
                   onClick={handleUpload}
                   disabled={!preparedFile || loading}
                 >
-                  {loading ? 'Memproses...' : 'Kirim ke OCR'}
+                  {loading ? 'Memproses...' : 'Analisis Dokumen'}
                 </button>
               </div>
               <ManualCropper
@@ -136,33 +135,6 @@ export default function UploadPage() {
                 onResetToOriginal={() => setPreparedFile(sourceFile)}
               />
               <p className="small-note">File aktif: {fileLabel || '-'}</p>
-              
-              <div className="extraction-method-selector">
-                <p className="small-note">Metode Ekstraksi:</p>
-                <div className="method-buttons">
-                  <button
-                    type="button"
-                    className={`method-btn ${extractionMethod === 'auto' ? 'active' : ''}`}
-                    onClick={() => setExtractionMethod('auto')}
-                  >
-                    Auto
-                  </button>
-                  <button
-                    type="button"
-                    className={`method-btn ${extractionMethod === 'ai' ? 'active' : ''}`}
-                    onClick={() => setExtractionMethod('ai')}
-                  >
-                    AI
-                  </button>
-                  <button
-                    type="button"
-                    className={`method-btn ${extractionMethod === 'regex' ? 'active' : ''}`}
-                    onClick={() => setExtractionMethod('regex')}
-                  >
-                    Regex
-                  </button>
-                </div>
-              </div>
             </div>
           )}
         </div>
@@ -171,11 +143,9 @@ export default function UploadPage() {
           {loading && (
             <div className="ocr-loading">
               <div className="ocr-loading-spinner"></div>
-              <p className="ocr-loading-text">Memproses OCR...</p>
+              <p className="ocr-loading-text">Memproses analisis...</p>
               <p className="ocr-loading-hint">
-                {extractionMethod === 'ai' ? 'Menganalisis dengan AI' : 
-                 extractionMethod === 'regex' ? 'Mengekstrak dengan Regex' : 
-                 'Memilih metode terbaik...'}
+                Menganalisis dengan AI...
               </p>
             </div>
           )}
@@ -190,14 +160,7 @@ export default function UploadPage() {
                 </a>
               </div>
               <div>
-                <h3>
-                  Hasil OCR
-                  {ocrResult?.extractionMethod && (
-                    <span className={`extraction-badge ${ocrResult.extractionMethod}`}>
-                      {ocrResult.extractionMethod === 'ai' ? 'AI' : 'Regex'}
-                    </span>
-                  )}
-                </h3>
+                <h3>Hasil Analisis</h3>
                 <pre className="code-box">
                   {ocrResult ? JSON.stringify(ocrResult, null, 2) : 'Belum ada hasil'}
                 </pre>
@@ -215,7 +178,7 @@ export default function UploadPage() {
 
           {!originalMeta && (
             <div className="card">
-              <p>Belum ada upload. Pilih file atau kamera, lalu klik "Kirim ke OCR".</p>
+              <p>Belum ada upload. Pilih file atau kamera, lalu klik "Analisis Dokumen".</p>
             </div>
           )}
         </div>

@@ -71,14 +71,14 @@ export default function AuditLogPage() {
 
   const getFieldLabel = (field: string) => {
     const labels: Record<string, string> = {
-      letterNumber: 'Nomor Surat',
-      tanggalSurat: 'Tanggal Surat',
+      letterNumber: 'Nomor Dokumen',
+      tanggalSurat: 'Tanggal Dokumen',
       namaPengirim: 'Nama Pengirim',
       alamatPengirim: 'Alamat Pengirim',
       teleponPengirim: 'Telepon Pengirim',
       perihal: 'Perihal',
       totalNominal: 'Total Nominal',
-      jenisSurat: 'Jenis Surat',
+      jenisSurat: 'Tipe Dokumen',
       jenisDokumen: 'Jenis Dokumen',
     };
     return labels[field] || field;
@@ -90,7 +90,7 @@ export default function AuditLogPage() {
         <div>
           <p className="eyebrow">History</p>
           <h1>Audit Log</h1>
-          <p>Riwayat perubahan data surat</p>
+          <p>Riwayat perubahan data dokumen</p>
         </div>
       </div>
 
@@ -99,7 +99,7 @@ export default function AuditLogPage() {
           <div className="table-row table-head">
             <span>Waktu</span>
             <span>User</span>
-            <span>Surat</span>
+            <span>Dokumen</span>
             <span>Field</span>
             <span>Sebelum</span>
             <span>Sesudah</span>
@@ -125,7 +125,7 @@ export default function AuditLogPage() {
                 <span className="cell-value user-badge">{log.updatedBy}</span>
               </div>
               <div className="table-cell">
-                <span className="cell-label">Surat</span>
+                <span className="cell-label">Dokumen</span>
                 <Link to={`/letters/${log.letterId}`} className="cell-value link">
                   {log.letter?.letterNumber || log.letterId.substring(0, 8)}
                 </Link>

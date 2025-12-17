@@ -40,7 +40,7 @@ export default function UploadBox({ onFileSelected, onOpenCamera }: Props) {
       <small>Bisa dari kamera HP (pilih kamera saat upload)</small>
       {onOpenCamera && (
         <div className="upload-actions">
-          <button type="button" className="ghost-btn" onClick={onOpenCamera}>
+          <button type="button" className="primary-btn" onClick={onOpenCamera}>
             Buka kamera
           </button>
         </div>

@@ -30,15 +30,15 @@ export default function UsersPage() {
     onError: () => toast.error('Gagal membuat user'),
   });
 
-  const updatePasswordMutation = useMutation({
-    mutationFn: ({ id, password }: { id: string; password: string }) =>
-      api.patch(`/users/${id}/password`, { password }),
+  const updateUserMutation = useMutation({
+    mutationFn: ({ id, username, password }: { id: string; username?: string; password?: string }) =>
+      api.patch(`/users/${id}`, { username, password }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('Password berhasil diubah');
+      toast.success('User berhasil diperbarui');
       closeModal();
     },
-    onError: () => toast.error('Gagal mengubah password'),
+    onError: () => toast.error('Gagal memperbarui user'),
   });
 
   const deleteMutation = useMutation({
@@ -76,11 +76,16 @@ export default function UsersPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingUser) {
-      if (form.password) {
-        updatePasswordMutation.mutate({ id: editingUser.id, password: form.password });
-      } else {
-        toast.error('Masukkan password baru');
+      // At least username or password should be provided
+      if (!form.username && !form.password) {
+        toast.error('Masukkan username atau password baru');
+        return;
       }
+      updateUserMutation.mutate({ 
+        id: editingUser.id, 
+        username: form.username || undefined,
+        password: form.password || undefined 
+      });
     } else {
       createMutation.mutate(form);
     }
@@ -146,7 +151,7 @@ export default function UsersPage() {
                     type="button"
                     className="icon-btn"
                     onClick={() => openEditModal(user)}
-                    title="Ubah Password"
+                    title="Edit User"
                   >
                     <Pencil size={16} />
                   </button>
@@ -169,32 +174,32 @@ export default function UsersPage() {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingUser ? 'Ubah Password' : 'Tambah User'}</h2>
+              <h2>{editingUser ? 'Edit User' : 'Tambah User'}</h2>
               <button type="button" className="icon-btn" onClick={closeModal}>
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="modal-body">
-              {!editingUser && (
-                <label>
-                  Username
-                  <input
-                    type="text"
-                    value={form.username}
-                    onChange={(e) => setForm({ ...form, username: e.target.value })}
-                    required
-                    minLength={3}
-                  />
-                </label>
-              )}
+              <label>
+                Username
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  required={!editingUser}
+                  minLength={3}
+                  placeholder={editingUser ? 'Kosongkan jika tidak diubah' : ''}
+                />
+              </label>
               <label>
                 {editingUser ? 'Password Baru' : 'Password'}
                 <input
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
+                  required={!editingUser}
                   minLength={4}
+                  placeholder={editingUser ? 'Kosongkan jika tidak diubah' : ''}
                 />
               </label>
               {!editingUser && (
