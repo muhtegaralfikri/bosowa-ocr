@@ -17,7 +17,6 @@ export default function SignatureSettingsPage() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'upload' | 'draw'>('upload');
-  const [isDefaultNew, setIsDefaultNew] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
 
   const { data: signatures = [], isLoading } = useQuery({
@@ -26,7 +25,7 @@ export default function SignatureSettingsPage() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => uploadSignature(file, isDefaultNew),
+    mutationFn: (file: File) => uploadSignature(file, true),
     onSuccess: () => {
       toast.success('Tanda tangan berhasil diupload');
       queryClient.invalidateQueries({ queryKey: ['my-signatures'] });
@@ -35,7 +34,7 @@ export default function SignatureSettingsPage() {
   });
 
   const drawMutation = useMutation({
-    mutationFn: (base64: string) => drawSignature(base64, isDefaultNew),
+    mutationFn: (base64: string) => drawSignature(base64, true),
     onSuccess: () => {
       toast.success('Tanda tangan berhasil disimpan');
       queryClient.invalidateQueries({ queryKey: ['my-signatures'] });
@@ -106,17 +105,6 @@ export default function SignatureSettingsPage() {
 
       <div className="card add-signature-card">
         <h2>Tambah Tanda Tangan Baru</h2>
-
-        <div className="default-checkbox">
-          <label>
-            <input
-              type="checkbox"
-              checked={isDefaultNew}
-              onChange={(e) => setIsDefaultNew(e.target.checked)}
-            />
-            <span>Jadikan sebagai tanda tangan default</span>
-          </label>
-        </div>
 
         <div className="tab-buttons">
           <button
@@ -232,21 +220,6 @@ export default function SignatureSettingsPage() {
         }
         .add-signature-card {
           margin-bottom: 2rem;
-        }
-        .default-checkbox {
-          margin-bottom: 1.5rem;
-        }
-        .default-checkbox label {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          cursor: pointer;
-          color: var(--text-primary);
-        }
-        .default-checkbox input[type="checkbox"] {
-          width: 18px;
-          height: 18px;
-          accent-color: var(--accent-primary);
         }
         
         /* Tab Buttons */
