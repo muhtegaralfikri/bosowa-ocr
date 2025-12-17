@@ -11,15 +11,6 @@ import { FilesService } from '../files/files.service';
 import * as fs from 'fs';
 import { EditLogsService } from '../edit-logs/edit-logs.service';
 import { AiExtractionService } from '../ocr/ai-extraction.service';
-import {
-  calculateOcrConfidence,
-  extractLetterNumber,
-  extractNamaPengirim,
-  extractNominalList,
-  extractPerihal,
-  extractTanggal,
-} from '../ocr/ocr.parsers';
-import { OcrService } from '../ocr/ocr.service';
 import { PdfConverterService } from '../ocr/pdf-converter.service';
 import { VisionOcrService } from '../ocr/vision-ocr.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
@@ -32,7 +23,6 @@ export class LettersService {
   private readonly logger = new Logger(LettersService.name);
 
   constructor(
-    private readonly ocrService: OcrService,
     private readonly visionOcrService: VisionOcrService,
     private readonly pdfConverterService: PdfConverterService,
     private readonly filesService: FilesService,
@@ -66,38 +56,23 @@ export class LettersService {
         const pageTexts: string[] = [];
         for (let i = 0; i < imagePaths.length; i++) {
           const pagePath = imagePaths[i];
-          let pageText: string;
           
           if (this.visionOcrService.isAvailable()) {
-            try {
-              pageText = await this.visionOcrService.recognizeDocument(pagePath);
-            } catch {
-              this.logger.warn(`Vision API failed for page ${i + 1}, falling back to Tesseract`);
-              pageText = await this.ocrService.recognize(pagePath);
-            }
+            const pageText = await this.visionOcrService.recognizeDocument(pagePath);
+            pageTexts.push(`--- Page ${i + 1} ---\n${pageText}`);
           } else {
-            pageText = await this.ocrService.recognize(pagePath);
+            throw new BadRequestException('Google Vision API tidak tersedia. Pastikan GOOGLE_APPLICATION_CREDENTIALS sudah diset.');
           }
-          
-          pageTexts.push(`--- Page ${i + 1} ---\n${pageText}`);
         }
         
         ocrRawText = pageTexts.join('\n\n');
       } else {
         // Regular image file
         if (this.visionOcrService.isAvailable()) {
-          try {
-            this.logger.log('Using Google Vision API for OCR');
-            ocrRawText = await this.visionOcrService.recognizeDocument(
-              file.filePath,
-            );
-          } catch {
-            this.logger.warn('Vision API failed, falling back to Tesseract');
-            ocrRawText = await this.ocrService.recognize(file.filePath);
-          }
+          this.logger.log('Using Google Vision API for OCR');
+          ocrRawText = await this.visionOcrService.recognizeDocument(file.filePath);
         } else {
-          this.logger.log('Using Tesseract for OCR (Vision API not configured)');
-          ocrRawText = await this.ocrService.recognize(file.filePath);
+          throw new BadRequestException('Google Vision API tidak tersedia. Pastikan GOOGLE_APPLICATION_CREDENTIALS sudah diset.');
         }
       }
     } finally {
@@ -107,7 +82,7 @@ export class LettersService {
       }
     }
 
-    const method = dto.extractionMethod || 'auto';
+    const method = dto.extractionMethod || 'ai';
 
     // If user explicitly requested AI but it's not available, throw error
     if (method === 'ai' && !this.aiExtractionService.isAvailable()) {
@@ -167,44 +142,10 @@ export class LettersService {
       }
     }
 
-    // Fallback to regex-based extraction
-    const { letterNumber, candidates } = extractLetterNumber(ocrRawText);
-    const tanggalSurat = extractTanggal(ocrRawText);
-    const perihal = extractPerihal(ocrRawText);
-    const { nominalList, totalNominal } = extractNominalList(ocrRawText);
-    const {
-      namaPengirim,
-      confidence: senderConfidence,
-      source: senderSource,
-    } = extractNamaPengirim(ocrRawText);
-
-    const ocrConfidence = calculateOcrConfidence({
-      letterNumber,
-      tanggalSurat,
-      namaPengirim,
-      senderConfidence,
-      perihal,
-      totalNominal,
-      ocrRawText,
-    });
-
-    return {
-      letterNumber,
-      candidates,
-      tanggalSurat,
-      namaPengirim,
-      alamatPengirim: null,
-      teleponPengirim: null,
-      namaPenerima: null,
-      senderConfidence,
-      senderSource,
-      perihal,
-      nominalList,
-      totalNominal,
-      ocrRawText,
-      ocrConfidence,
-      extractionMethod: 'regex',
-    };
+    // Always use AI - no regex fallback
+    throw new BadRequestException(
+      'AI extraction failed. Pastikan GROQ_API_KEY sudah diset di .env',
+    );
   }
 
   async create(dto: CreateLetterDto) {

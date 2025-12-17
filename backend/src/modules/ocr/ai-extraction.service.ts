@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 export interface ExtractedLetterData {
@@ -19,12 +18,11 @@ export interface ExtractedLetterData {
 @Injectable()
 export class AiExtractionService {
   private readonly logger = new Logger(AiExtractionService.name);
-  private genAI: GoogleGenerativeAI | null = null;
   private groq: Groq | null = null;
-  private provider: 'groq' | 'gemini' | null = null;
+  private provider: 'groq' | null = null;
 
   constructor(private readonly configService: ConfigService) {
-    // Try Groq first (preferred)
+    // Only use Groq AI (preferred and most reliable)
     const groqKey = this.configService.get<string>('GROQ_API_KEY');
     if (groqKey) {
       this.groq = new Groq({ apiKey: groqKey });
@@ -32,16 +30,8 @@ export class AiExtractionService {
       this.logger.log('Groq AI initialized successfully');
     }
 
-    // Fallback to Gemini
-    const geminiKey = this.configService.get<string>('GEMINI_API_KEY');
-    if (geminiKey && !this.provider) {
-      this.genAI = new GoogleGenerativeAI(geminiKey);
-      this.provider = 'gemini';
-      this.logger.log('Gemini AI initialized successfully');
-    }
-
     if (!this.provider) {
-      this.logger.warn('No AI API key found (GROQ_API_KEY or GEMINI_API_KEY)');
+      this.logger.error('Groq AI not available. Set GROQ_API_KEY in .env');
     }
   }
 
@@ -67,14 +57,12 @@ export class AiExtractionService {
 
       if (this.provider === 'groq' && this.groq) {
         response = await this.callGroq(prompt);
-      } else if (this.provider === 'gemini' && this.genAI) {
-        response = await this.callGemini(prompt);
       } else {
         throw new Error('No AI provider available');
       }
 
       this.logger.log('AI response received, parsing...');
-      const parsed = this.parseResponse(response);
+      const parsed = this.parseGroqResponse(response);
       this.logger.log(
         `AI extraction complete. Found: letterNumber=${parsed.letterNumber}, perihal=${parsed.perihal}`,
       );
@@ -102,18 +90,7 @@ export class AiExtractionService {
     return completion.choices[0]?.message?.content || '';
   }
 
-  private async callGemini(prompt: string): Promise<string> {
-    const model = this.genAI!.getGenerativeModel({
-      model: 'gemini-2.0-flash',
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 1024,
-      },
-    });
 
-    const result = await model.generateContent(prompt);
-    return result.response.text();
-  }
 
   private buildPrompt(ocrText: string): string {
     return `Kamu adalah asisten ekstraksi data dari dokumen surat/invoice Indonesia.
@@ -142,7 +119,7 @@ ${ocrText.substring(0, 4000)}
 Jawab dalam format JSON saja:`;
   }
 
-  private parseResponse(response: string): ExtractedLetterData {
+  private parseGroqResponse(response: string): ExtractedLetterData {
     try {
       let jsonStr = response.trim();
 
