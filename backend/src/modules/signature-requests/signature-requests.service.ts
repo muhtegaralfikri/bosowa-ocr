@@ -181,6 +181,8 @@ export class SignatureRequestsService {
 
     const scale = dto.scale ?? 100;
     
+    // Check if there's already a signed document for this letter
+    const existingSignedPath = await this.getSharedSignedPath(request.letterId);
     const signedImagePath = await this.embedSignature(
       documentPath,
       signature.imagePath,
@@ -188,6 +190,7 @@ export class SignatureRequestsService {
       posY,
       request.letterId,
       scale,
+      existingSignedPath, // Pass existing signed path if available
     );
 
     request.status = SignatureRequestStatus.SIGNED;
@@ -197,6 +200,24 @@ export class SignatureRequestsService {
     request.positionY = posY;
 
     const saved = await this.requestRepo.save(request);
+
+    // Update all other signature requests for this letter to point to the same signed document
+    // Only update those that already have a signedImagePath (all signed requests)
+    const otherSignedRequests = await this.requestRepo.find({
+      where: {
+        letterId: request.letterId,
+        status: SignatureRequestStatus.SIGNED,
+      },
+    });
+
+    for (const otherRequest of otherSignedRequests) {
+      if (otherRequest.id !== request.id) {
+        // Update other signed requests to use the same signedImagePath
+        // Keep position data intact
+        otherRequest.signedImagePath = signedImagePath;
+        await this.requestRepo.save(otherRequest);
+      }
+    }
 
     await this.notificationsService.create(
       request.requestedBy,
@@ -262,6 +283,7 @@ export class SignatureRequestsService {
     posY: number,
     letterId: string,
     scale: number = 100,
+    existingSignedPath?: string | null,
   ): Promise<string> {
     const docFullPath = path.join(process.cwd(), documentPath);
     const sigFullPath = path.join(process.cwd(), signaturePath);
@@ -287,7 +309,7 @@ export class SignatureRequestsService {
       let pdfDoc: any;
       let pages: any;
       
-      if (fs.existsSync(outputPath)) {
+      if (fs.existsSync(outputPath) && existingSignedPath) {
         // Load existing signed document and add new signature
         const signedPdfBuffer = fs.readFileSync(outputPath);
         pdfDoc = await PDFDocument.load(signedPdfBuffer);
@@ -329,8 +351,33 @@ export class SignatureRequestsService {
     }
 
     // Handle Image files -> Convert to PDF
-    const docImage = sharp(docFullPath);
-    const docMetadata = await docImage.metadata();
+    let docImage;
+    let docMetadata;
+    
+    // Check if there's an existing signed document to use as base
+    if (fs.existsSync(outputPath) && existingSignedPath) {
+      // Use the existing signed document as base
+      const existingPdfPath = path.join(process.cwd(), existingSignedPath);
+      const { PDFDocument } = await import('pdf-lib');
+      const existingPdfBuffer = fs.readFileSync(existingPdfPath);
+      const existingPdfDoc = await PDFDocument.load(existingPdfBuffer);
+      const existingPages = existingPdfDoc.getPages();
+      const existingPage = existingPages[0];
+      
+      // Extract the image from the existing PDF
+      const existingImageWidth = existingPage.getWidth();
+      const existingImageHeight = existingPage.getHeight();
+      
+      // Create a new PDF document with the existing page content
+      docMetadata = { width: existingImageWidth, height: existingImageHeight };
+      
+      // For simplicity, we'll convert the PDF back to an image, add signature, then back to PDF
+      // In a production environment, you might want a more efficient approach
+      docImage = sharp(docFullPath); // Use original document as base
+    } else {
+      docImage = sharp(docFullPath);
+      docMetadata = await docImage.metadata();
+    }
 
     const BASE_RATIO = 0.2; 
     const aspectRatio = 2 / 1; 
@@ -353,22 +400,57 @@ export class SignatureRequestsService {
       (posY / 100) * (docMetadata.height || 600) - sigHeight / 2,
     );
 
-    // Composite signature onto image
-    const signedImageBuffer = await docImage
-      .composite([
-        {
-          input: signatureBuffer,
-          left: x,
-          top: y,
-        },
-      ])
-      .png() // Force PNG for embedding
-      .toBuffer();
+    let finalImageBuffer;
+    
+    if (fs.existsSync(outputPath) && existingSignedPath && existingSignedPath.toLowerCase().endsWith('.pdf')) {
+      // If we have an existing PDF, we need to work with it directly
+      const { PDFDocument } = await import('pdf-lib');
+      const existingPdfPath = path.join(process.cwd(), existingSignedPath);
+      const existingPdfBuffer = fs.readFileSync(existingPdfPath);
+      const pdfDoc = await PDFDocument.load(existingPdfBuffer);
+      const pages = pdfDoc.getPages();
+      const page = pages[0];
+      
+      const sigPngBuffer = await sharp(sigFullPath).png().toBuffer();
+      const sigImage = await pdfDoc.embedPng(sigPngBuffer);
+      
+      const { width, height } = page.getSize();
+      const targetWidth = width * BASE_RATIO * (scale / 100);
+      const scaleFactor = targetWidth / sigImage.width;
+      const sigDims = sigImage.scale(scaleFactor);
+      
+      const pdfX = (posX / 100) * width - sigDims.width / 2;
+      const pdfY = height - ((posY / 100) * height) - sigDims.height / 2;
+      
+      page.drawImage(sigImage, {
+        x: pdfX,
+        y: pdfY,
+        width: sigDims.width,
+        height: sigDims.height,
+      });
+      
+      const pdfBytes = await pdfDoc.save();
+      fs.writeFileSync(outputPath, pdfBytes);
+      
+      return `/uploads/signed/${outputFilename}`;
+    } else {
+      // Composite signature onto image
+      finalImageBuffer = await docImage
+        .composite([
+          {
+            input: signatureBuffer,
+            left: x,
+            top: y,
+          },
+        ])
+        .png() // Force PNG for embedding
+        .toBuffer();
+    }
 
     // Convert to PDF
     const { PDFDocument } = await import('pdf-lib');
     const pdfDoc = await PDFDocument.create();
-    const imageEmbed = await pdfDoc.embedPng(signedImageBuffer);
+    const imageEmbed = await pdfDoc.embedPng(finalImageBuffer);
     const page = pdfDoc.addPage([imageEmbed.width, imageEmbed.height]);
     
     page.drawImage(imageEmbed, {
