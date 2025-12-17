@@ -2035,6 +2035,26 @@ button.mobile-menu-link.logout {
   text-align: right;
 }
 
+/* Form field error styling */
+.field-error {
+  display: block;
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+input.error, select.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+input.error:focus, select.error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
 .empty-state-chart {
   height: 200px;
   display: flex;

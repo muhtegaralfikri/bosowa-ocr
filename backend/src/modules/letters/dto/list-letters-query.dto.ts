@@ -18,9 +18,9 @@ export class ListLettersQueryDto {
   @IsOptional()
   perihal?: string;
 
-  @IsIn(['SURAT', 'INVOICE'])
+  @IsIn(['SURAT', 'INVOICE', 'INTERNAL_MEMO', 'PAD'])
   @IsOptional()
-  jenisDokumen?: 'SURAT' | 'INVOICE';
+  jenisDokumen?: 'SURAT' | 'INVOICE' | 'INTERNAL_MEMO' | 'PAD';
 
   @IsIn(['MASUK', 'KELUAR'])
   @IsOptional()

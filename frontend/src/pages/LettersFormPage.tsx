@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -76,6 +76,7 @@ export default function LettersFormPage() {
   const extractionMethod = state.ocrResult?.extractionMethod;
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [hasDraft, setHasDraft] = useState(
     () => !state.ocrResult && !!localStorage.getItem(DRAFT_KEY),
   );
@@ -101,23 +102,31 @@ export default function LettersFormPage() {
 
   const isAdminOrManajemen = user && (user.role === 'ADMIN' || user.role === 'MANAJEMEN');
 
-  const disabled = useMemo(() => {
-    // For admin/manajemen, require all fields including unitBisnis
-    if (isAdminOrManajemen) {
-      return !form.letterNumber || !form.tanggalSurat || !form.unitBisnis;
-    }
-    // For regular users, unitBisnis is auto-filled
-    return !form.letterNumber || !form.tanggalSurat;
-  }, [form, isAdminOrManajemen]);
+
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setMessage('');
     setErrors(null);
+    setFieldErrors({});
 
-    if (!form.letterNumber || !form.tanggalSurat) {
-      setErrors('Lengkapi Nomor Surat dan Tanggal Surat sebelum menyimpan.');
-      toast.error('Lengkapi Nomor Surat dan Tanggal Surat sebelum menyimpan.');
+    // Validate required fields
+    const newFieldErrors: Record<string, string> = {};
+    
+    if (!form.letterNumber) {
+      newFieldErrors.letterNumber = 'Nomor Surat wajib diisi';
+    }
+    if (!form.tanggalSurat) {
+      newFieldErrors.tanggalSurat = 'Tanggal Surat wajib diisi';
+    }
+    if (isAdminOrManajemen && !form.unitBisnis) {
+      newFieldErrors.unitBisnis = 'Unit Bisnis wajib dipilih untuk Admin/Manajemen';
+    }
+
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
+      setErrors('Mohon lengkapi field yang wajib diisi.');
+      toast.error('Mohon lengkapi field yang wajib diisi.');
       return;
     }
     try {
@@ -168,10 +177,19 @@ export default function LettersFormPage() {
           Nomor Surat
           <input
             value={form.letterNumber}
-            onChange={(e) => setForm({ ...form, letterNumber: e.target.value })}
+            onChange={(e) => {
+              setForm({ ...form, letterNumber: e.target.value });
+              if (fieldErrors.letterNumber) {
+                setFieldErrors({ ...fieldErrors, letterNumber: '' });
+              }
+            }}
             placeholder="007/SS/IV/2018"
             required
+            className={fieldErrors.letterNumber ? 'error' : ''}
           />
+          {fieldErrors.letterNumber && (
+            <span className="field-error">{fieldErrors.letterNumber}</span>
+          )}
         </label>
         <label>
           Jenis Surat
@@ -193,6 +211,8 @@ export default function LettersFormPage() {
           >
             <option value="SURAT">SURAT</option>
             <option value="INVOICE">INVOICE</option>
+            <option value="INTERNAL_MEMO">INTERNAL MEMO</option>
+            <option value="PAD">PAD</option>
           </select>
         </label>
         {/* Only show unit bisnis field for admin/manajemen */}
@@ -201,10 +221,14 @@ export default function LettersFormPage() {
             Unit Bisnis
             <select
               value={form.unitBisnis}
-              onChange={(e) =>
-                setForm({ ...form, unitBisnis: e.target.value })
-              }
+              onChange={(e) => {
+                setForm({ ...form, unitBisnis: e.target.value });
+                if (fieldErrors.unitBisnis) {
+                  setFieldErrors({ ...fieldErrors, unitBisnis: '' });
+                }
+              }}
               required
+              className={fieldErrors.unitBisnis ? 'error' : ''}
             >
               <option value="">Pilih Unit Bisnis</option>
               <option value="BOSOWA_TAXI">Bosowa Taxi</option>
@@ -214,6 +238,9 @@ export default function LettersFormPage() {
               <option value="LAGALIGO_LOGISTIK">Lagaligo Logistik</option>
               <option value="PORT_MANAGEMENT">Port Management</option>
             </select>
+            {fieldErrors.unitBisnis && (
+              <span className="field-error">{fieldErrors.unitBisnis}</span>
+            )}
           </label>
         )}
         
@@ -231,10 +258,19 @@ export default function LettersFormPage() {
           <input
             type="date"
             value={form.tanggalSurat}
-            onChange={(e) => setForm({ ...form, tanggalSurat: e.target.value })}
+            onChange={(e) => {
+              setForm({ ...form, tanggalSurat: e.target.value });
+              if (fieldErrors.tanggalSurat) {
+                setFieldErrors({ ...fieldErrors, tanggalSurat: '' });
+              }
+            }}
             placeholder="2025-02-12"
             required
+            className={fieldErrors.tanggalSurat ? 'error' : ''}
           />
+          {fieldErrors.tanggalSurat && (
+            <span className="field-error">{fieldErrors.tanggalSurat}</span>
+          )}
         </label>
         <label>
           Nama Pengirim
@@ -293,7 +329,7 @@ export default function LettersFormPage() {
           />
         </label>
         <div className="full-row">
-          <button type="submit" className="primary-btn" disabled={disabled}>
+          <button type="submit" className="primary-btn">
             Simpan surat
           </button>
           {errors && <div className="error-box">{errors}</div>}

@@ -224,6 +224,8 @@ export default function LettersListPage() {
                 <option value="">Semua</option>
                 <option value="SURAT">SURAT</option>
                 <option value="INVOICE">INVOICE</option>
+                <option value="INTERNAL_MEMO">INTERNAL MEMO</option>
+                <option value="PAD">PAD</option>
               </select>
             </label>
             

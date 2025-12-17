@@ -241,7 +241,7 @@ export class LettersService {
     letterNumber?: string,
     namaPengirim?: string,
     perihal?: string,
-    jenisDokumen?: 'SURAT' | 'INVOICE',
+    jenisDokumen?: 'SURAT' | 'INVOICE' | 'INTERNAL_MEMO' | 'PAD',
     jenisSurat?: 'MASUK' | 'KELUAR',
     unitBisnis?: string,
     tanggalMulai?: string,
@@ -394,10 +394,10 @@ export class LettersService {
       // Keyword search across multiple fields (use LIKE for MariaDB)
       if (keyword) {
         queryBuilder.andWhere(
-          '(letter.letterNumber LIKE :keyword OR letter.namaPengirim LIKE :keyword OR letter.perihal LIKE :keyword OR letter.jenisSurat LIKE :keyword OR letter.jenisDokumen LIKE :keyword)',
+          '(letter.letterNumber LIKE :keyword OR letter.namaPengirim LIKE :keyword OR letter.perihal LIKE :keyword OR letter.jenisSurat LIKE :keyword OR letter.jenisDokumen LIKE :keyword OR letter.unitBisnis LIKE :keyword)',
           { keyword: `%${keyword}%` }
         );
-        this.logger.log(`Keyword search: "${keyword}" - searching in letterNumber, namaPengirim, perihal, jenisSurat, jenisDokumen`);
+        this.logger.log(`Keyword search: "${keyword}" - searching in letterNumber, namaPengirim, perihal, jenisSurat, jenisDokumen, unitBisnis`);
       }
 
       // Order and pagination

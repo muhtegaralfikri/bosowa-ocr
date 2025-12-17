@@ -289,10 +289,12 @@ export default function LetterDetailPage() {
                 Jenis Dokumen
                 <select
                   value={form.jenisDokumen || 'SURAT'}
-                  onChange={(e) => setForm({ ...form, jenisDokumen: e.target.value as 'SURAT' | 'INVOICE' })}
+                  onChange={(e) => setForm({ ...form, jenisDokumen: e.target.value as 'SURAT' | 'INVOICE' | 'INTERNAL_MEMO' | 'PAD' })}
                 >
                   <option value="SURAT">SURAT</option>
                   <option value="INVOICE">INVOICE</option>
+                  <option value="INTERNAL_MEMO">INTERNAL MEMO</option>
+                  <option value="PAD">PAD</option>
                 </select>
               </label>
               <label>
