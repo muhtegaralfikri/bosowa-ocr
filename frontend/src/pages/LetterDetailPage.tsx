@@ -10,6 +10,9 @@ import SignatureRequestModal from '../components/signature/SignatureRequestModal
 import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const isMobileDevice = () =>
+  typeof navigator !== 'undefined' &&
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 // Helper functions for signature status
 const getOverallStatus = (requests: SignatureRequest[]) => {
@@ -51,6 +54,7 @@ export default function LetterDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const isMobile = isMobileDevice();
   const [letter, setLetter] = useState<Letter | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<Partial<Letter>>({});
@@ -66,26 +70,34 @@ export default function LetterDetailPage() {
     enabled: !!id,
   });
 
+  const getLetterPdfDownloadUrl = (letterId: string) => `${API_BASE}/api/v1/letters/${letterId}/download-pdf`;
+
   // Fetch PDF as Blob to bypass IDM
   useEffect(() => {
+    if (isMobile) return;
     if (letter?.fileUrl?.toLowerCase().endsWith('.pdf') && (letter as any).fileId) {
       const url = getPdfUrl((letter as any).fileId, letter.fileUrl);
-      
+      let isCancelled = false;
+
       fetch(url)
-        .then(res => res.blob())
-        .then(blob => {
-          // Force type to application/pdf
+        .then((res) => res.blob())
+        .then((blob) => {
+          if (isCancelled) return;
           const pdfBlob = new Blob([blob], { type: 'application/pdf' });
           const blobUrl = URL.createObjectURL(pdfBlob);
           setPdfBlobUrl(blobUrl);
         })
-        .catch(err => console.error('Failed to load PDF blob:', err));
+        .catch((err) => console.error('Failed to load PDF blob:', err));
 
       return () => {
-        if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
+        isCancelled = true;
+        setPdfBlobUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return null;
+        });
       };
     }
-  }, [letter]);
+  }, [letter, isMobile]);
 
   useEffect(() => {
     if (id) {
@@ -140,6 +152,13 @@ export default function LetterDetailPage() {
   };
 
   const handleViewDocument = async (path: string, type: 'pdf' | 'image', existingBlobUrl?: string | null) => {
+    if (isMobile && (type === 'pdf' || path.toLowerCase().endsWith('.pdf') || path.includes('/uploads/signed/'))) {
+      const isSignedFile = path.includes('/uploads/signed/');
+      const openUrl = isSignedFile ? getImageUrl(path) : id ? getLetterPdfDownloadUrl(id) : getImageUrl(path);
+      window.open(openUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     if (existingBlobUrl) {
       setActivePreview({ url: existingBlobUrl, type: 'pdf' });
       setZoomLevel(1);
@@ -389,9 +408,32 @@ export default function LetterDetailPage() {
         <div>
           {letter.fileUrl ? (
             letter.fileUrl.toLowerCase().endsWith('.pdf') ? (
-              // PDF Preview using iframe with Blob URL
+              // PDF Preview using iframe with Blob URL (desktop). Mobile uses open/download buttons.
               <div className="preview-pdf-container">
-                {pdfBlobUrl ? (
+                {isMobile ? (
+                  <div className="pdf-mobile-actions">
+                    <div style={{ padding: '16px', textAlign: 'center' }}>
+                      Preview PDF tidak didukung di browser mobile. Gunakan tombol di bawah untuk membuka dokumen.
+                    </div>
+                    <div className="pdf-mobile-buttons">
+                      <a
+                        className="pdf-open-btn"
+                        href={getLetterPdfDownloadUrl(id!)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Buka PDF
+                      </a>
+                      <button
+                        type="button"
+                        className="pdf-download-btn"
+                        onClick={() => handleDirectDownload(getLetterPdfDownloadUrl(id!))}
+                      >
+                        Unduh
+                      </button>
+                    </div>
+                  </div>
+                ) : pdfBlobUrl ? (
                   <>
                     <iframe
                       src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=0`}
@@ -400,7 +442,7 @@ export default function LetterDetailPage() {
                       height="600px"
                       className="preview-pdf"
                     />
-                    <div 
+                    <div
                       className="pdf-overlay"
                       onClick={() => handleViewDocument(letter.fileUrl!, 'pdf', pdfBlobUrl)}
                     >
@@ -584,11 +626,22 @@ export default function LetterDetailPage() {
           </div>
           <div className="image-zoom-content" onClick={(e) => e.stopPropagation()}>
             {activePreview.type === 'pdf' ? (
+              isMobile ? (
+                <div style={{ padding: '16px', textAlign: 'center' }}>
+                  Preview PDF tidak didukung di mobile.{' '}
+                  {id && (
+                    <a href={getLetterPdfDownloadUrl(id)} target="_blank" rel="noreferrer">
+                      Buka PDF
+                    </a>
+                  )}
+                </div>
+              ) : (
                 <iframe
                   src={`${activePreview.url}#toolbar=0&navpanes=0&scrollbar=0`}
                   title="PDF Zoom"
                   className="pdf-zoom-embed"
                 />
+              )
             ) : (
               <img
                 src={activePreview.url}
@@ -1156,6 +1209,34 @@ export default function LetterDetailPage() {
           border: none;
           border-radius: 8px;
           background: white;
+        }
+        .pdf-mobile-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          padding: 8px;
+        }
+        .pdf-mobile-buttons {
+          display: flex;
+          gap: 10px;
+          justify-content: center;
+          padding: 0 16px 16px;
+        }
+        .pdf-open-btn, .pdf-download-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 10px 14px;
+          border-radius: 10px;
+          font-weight: 700;
+          border: 1px solid var(--border-color);
+          background: var(--bg-primary);
+          color: var(--text-primary);
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .pdf-open-btn:hover, .pdf-download-btn:hover {
+          background: var(--bg-hover);
         }
 
         /* Signature Status Redesign - Responsive & Dark Mode */
