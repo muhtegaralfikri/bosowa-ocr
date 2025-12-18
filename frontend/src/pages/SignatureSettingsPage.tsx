@@ -11,7 +11,7 @@ import {
 } from '../api/signatures';
 import SignatureCanvas from '../components/signature/SignatureCanvas';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
 export default function SignatureSettingsPage() {
   const queryClient = useQueryClient();

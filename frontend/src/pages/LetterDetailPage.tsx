@@ -9,7 +9,7 @@ import { getSignatureRequestsByLetter } from '../api/signatures';
 import SignatureRequestModal from '../components/signature/SignatureRequestModal';
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 const isMobileDevice = () =>
   typeof navigator !== 'undefined' &&
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
