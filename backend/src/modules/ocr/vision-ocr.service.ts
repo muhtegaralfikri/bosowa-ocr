@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
-import * as fs from 'fs/promises';
 
 @Injectable()
 export class VisionOcrService {
@@ -45,13 +44,9 @@ export class VisionOcrService {
     try {
       this.logger.log(`Processing image with Google Vision: ${filePath}`);
 
-      // Read the image file
-      const imageBuffer = await fs.readFile(filePath);
-      const imageBase64 = imageBuffer.toString('base64');
-
       // Call Vision API for text detection
       const [result] = await this.client.textDetection({
-        image: { content: imageBase64 },
+        image: { source: { filename: filePath } },
       });
 
       const detections = result.textAnnotations;
@@ -80,12 +75,9 @@ export class VisionOcrService {
     try {
       this.logger.log(`Processing document with Google Vision: ${filePath}`);
 
-      const imageBuffer = await fs.readFile(filePath);
-      const imageBase64 = imageBuffer.toString('base64');
-
       // Use document text detection for better accuracy with documents
       const [result] = await this.client.documentTextDetection({
-        image: { content: imageBase64 },
+        image: { source: { filename: filePath } },
       });
 
       const fullTextAnnotation = result.fullTextAnnotation;

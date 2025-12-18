@@ -70,20 +70,57 @@ export default function LetterDetailPage() {
     enabled: !!id,
   });
 
-  const getLetterPdfDownloadUrl = (letterId: string) => `${API_BASE}/api/v1/letters/${letterId}/download-pdf`;
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(blobUrl);
+  };
+
+  const openBlobInNewTab = (blob: Blob) => {
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank', 'noopener,noreferrer');
+    // Delay revoke a bit so new tab can load it
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
+  };
+
+  const downloadLetterPdf = async (letterId: string) => {
+    const resp = await api.get(`/letters/${letterId}/download-pdf`, { responseType: 'blob' });
+    const pdfBlob = new Blob([resp.data], { type: 'application/pdf' });
+    const safeName = (letter?.letterNumber || 'document').replace(/[^a-zA-Z0-9-_]/g, '_');
+    downloadBlob(pdfBlob, `${safeName}.pdf`);
+  };
+
+  const openLetterPdfInNewTab = async (letterId: string) => {
+    const resp = await api.get(`/letters/${letterId}/download-pdf`, { responseType: 'blob' });
+    const pdfBlob = new Blob([resp.data], { type: 'application/pdf' });
+    openBlobInNewTab(pdfBlob);
+  };
+
+  const downloadSignedPdf = async (filename: string, downloadName?: string) => {
+    const resp = await api.get(`/letters/signed-image-download/${filename}`, {
+      params: { downloadName },
+      responseType: 'blob',
+    });
+    const pdfBlob = new Blob([resp.data], { type: 'application/pdf' });
+    downloadBlob(pdfBlob, downloadName || filename);
+  };
 
   // Fetch PDF as Blob to bypass IDM
   useEffect(() => {
     if (isMobile) return;
     if (letter?.fileUrl?.toLowerCase().endsWith('.pdf') && (letter as any).fileId) {
-      const url = getPdfUrl((letter as any).fileId, letter.fileUrl);
       let isCancelled = false;
 
-      fetch(url)
-        .then((res) => res.blob())
-        .then((blob) => {
+      api
+        .get(`/letters/pdf-preview/${(letter as any).fileId}`, { responseType: 'blob' })
+        .then((res) => {
           if (isCancelled) return;
-          const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+          const pdfBlob = new Blob([res.data], { type: 'application/pdf' });
           const blobUrl = URL.createObjectURL(pdfBlob);
           setPdfBlobUrl(blobUrl);
         })
@@ -152,13 +189,6 @@ export default function LetterDetailPage() {
   };
 
   const handleViewDocument = async (path: string, type: 'pdf' | 'image', existingBlobUrl?: string | null) => {
-    if (isMobile && (type === 'pdf' || path.toLowerCase().endsWith('.pdf') || path.includes('/uploads/signed/'))) {
-      const isSignedFile = path.includes('/uploads/signed/');
-      const openUrl = isSignedFile ? getImageUrl(path) : id ? getLetterPdfDownloadUrl(id) : getImageUrl(path);
-      window.open(openUrl, '_blank', 'noopener,noreferrer');
-      return;
-    }
-
     if (existingBlobUrl) {
       setActivePreview({ url: existingBlobUrl, type: 'pdf' });
       setZoomLevel(1);
@@ -172,36 +202,33 @@ export default function LetterDetailPage() {
     if (type === 'pdf' || isSignedFile) {
       try {
         const toastId = toast.loading('Memuat preview dokumen...');
-        let res;
+        let blob: Blob;
 
         if (isSignedFile) {
            const filename = path.split('/').pop();
-           res = await fetch(`${API_BASE}/api/v1/letters/signed-image-preview`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                // Add Authorization if needed, though endpoint is currently public-ish (LetterController guards apply?)
-                // LetterController HAS @UseGuards(JwtAuthGuard) on methods, but not class?
-                // Wait, in Step 453, LetterController class has NO @UseGuards.
-                // It has @UseGuards per method.
-                // The new endpoint I added has NO @UseGuards. So it is public.
-              },
-              body: JSON.stringify({ filename }),
-           });
+           if (!filename) throw new Error('Invalid signed filename');
+           const resp = await api.post('/letters/signed-image-preview', { filename }, { responseType: 'blob' });
+           blob = new Blob([resp.data], { type: 'application/pdf' });
         } else {
-           res = await fetch(fullUrl);
+           // For PDFs, prefer the streaming endpoint (avoids IDM, and now requires auth)
+           const fileId = (letter as any)?.fileId;
+           if (fileId) {
+             const resp = await api.get(`/letters/pdf-preview/${fileId}`, { responseType: 'blob' });
+             blob = new Blob([resp.data], { type: 'application/pdf' });
+           } else {
+             // Fallback: best effort (may be blocked by IDM depending on browser)
+             const resp = await fetch(fullUrl);
+             if (!resp.ok) throw new Error('Fetch failed');
+             blob = await resp.blob();
+           }
         }
 
-        if (!res.ok) throw new Error('Fetch failed');
-        
-        const blob = await res.blob();
-        // Force type to application/pdf for PDFs, or infer for images?
-        // If type is 'image', we can still display a blob URL.
-        const blobType = type === 'pdf' ? 'application/pdf' : 'image/jpeg';
-        const fileBlob = new Blob([blob], { type: blobType });
-        const blobUrl = URL.createObjectURL(fileBlob);
-        
-        setActivePreview({ url: blobUrl, type });
+        if (isMobile) {
+          openBlobInNewTab(blob);
+        } else {
+          const blobUrl = URL.createObjectURL(blob);
+          setActivePreview({ url: blobUrl, type: 'pdf' });
+        }
         toast.dismiss(toastId);
       } catch (e) {
         console.error(e);
@@ -214,19 +241,7 @@ export default function LetterDetailPage() {
     setZoomLevel(1);
   };
 
-  const handleDirectDownload = (url: string) => {
-    window.location.href = url;
-  };
 
-  const getPdfUrl = (fileId: string, _fileUrl: string) => {
-    if (fileId) {
-      // Use stream endpoint to bypass IDM
-      // Endpoint is under api/v1 global prefix
-      return `${API_BASE}/api/v1/letters/pdf-preview/${fileId}`;
-    }
-    // Fallback if no fileId (should not happen for new uploads)
-    return getImageUrl(_fileUrl || '');
-  };
 
   if (!letter) {
     return (
@@ -416,18 +431,17 @@ export default function LetterDetailPage() {
                       Preview PDF tidak didukung di browser mobile. Gunakan tombol di bawah untuk membuka dokumen.
                     </div>
                     <div className="pdf-mobile-buttons">
-                      <a
+                      <button
+                        type="button"
                         className="pdf-open-btn"
-                        href={getLetterPdfDownloadUrl(id!)}
-                        target="_blank"
-                        rel="noreferrer"
+                        onClick={() => openLetterPdfInNewTab(id!)}
                       >
                         Buka PDF
-                      </a>
+                      </button>
                       <button
                         type="button"
                         className="pdf-download-btn"
-                        onClick={() => handleDirectDownload(getLetterPdfDownloadUrl(id!))}
+                        onClick={() => downloadLetterPdf(id!)}
                       >
                         Unduh
                       </button>
@@ -570,7 +584,11 @@ export default function LetterDetailPage() {
                           onClick={() => {
                              const filename = group[0].signedImagePath!.split('/').pop();
                              const downloadName = `${(letter?.letterNumber || 'document').replace(/[^a-zA-Z0-9-_]/g, '_')}_Signed.pdf`;
-                             handleDirectDownload(`${API_BASE}/api/v1/letters/signed-image-download/${filename}?downloadName=${downloadName}`);
+                             if (!filename) {
+                               toast.error('Filename dokumen tidak valid');
+                               return;
+                             }
+                             downloadSignedPdf(filename, downloadName);
                           }}
                           className="ghost-btn"
                         >
@@ -630,9 +648,9 @@ export default function LetterDetailPage() {
                 <div style={{ padding: '16px', textAlign: 'center' }}>
                   Preview PDF tidak didukung di mobile.{' '}
                   {id && (
-                    <a href={getLetterPdfDownloadUrl(id)} target="_blank" rel="noreferrer">
+                    <button type="button" className="ghost-btn" onClick={() => openLetterPdfInNewTab(id)}>
                       Buka PDF
-                    </a>
+                    </button>
                   )}
                 </div>
               ) : (

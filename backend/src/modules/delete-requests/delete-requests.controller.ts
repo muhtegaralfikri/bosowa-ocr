@@ -7,6 +7,7 @@ import {
   Query,
   Post,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { CreateDeleteRequestDto } from './dto/create-delete-request.dto';
 import { UpdateDeleteRequestDto } from './dto/update-delete-request.dto';
@@ -23,8 +24,8 @@ export class DeleteRequestsController {
   constructor(private readonly deleteRequestsService: DeleteRequestsService) {}
 
   @Post('delete-requests')
-  create(@Body() dto: CreateDeleteRequestDto) {
-    return this.deleteRequestsService.create(dto);
+  create(@Body() dto: CreateDeleteRequestDto, @Request() req: any) {
+    return this.deleteRequestsService.create(dto, req.user);
   }
 
   @Get('delete-requests')

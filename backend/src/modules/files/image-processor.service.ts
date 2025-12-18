@@ -11,6 +11,7 @@ export class ImageProcessorService {
   private readonly MAX_HEIGHT = 2000;
   private readonly JPEG_QUALITY = 85;
   private readonly PNG_COMPRESSION = 8;
+  private readonly WEBP_QUALITY = 82;
 
   async compressImage(filePath: string): Promise<string> {
     const ext = path.extname(filePath).toLowerCase();
@@ -45,6 +46,8 @@ export class ImageProcessorService {
         await pipeline
           .png({ compressionLevel: this.PNG_COMPRESSION })
           .toFile(compressedPath);
+      } else if (ext === '.webp') {
+        await pipeline.webp({ quality: this.WEBP_QUALITY }).toFile(compressedPath);
       } else {
         await pipeline
           .jpeg({ quality: this.JPEG_QUALITY, mozjpeg: true })

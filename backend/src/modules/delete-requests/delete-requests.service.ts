@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,6 +10,14 @@ import { CreateDeleteRequestDto } from './dto/create-delete-request.dto';
 import { UpdateDeleteRequestDto } from './dto/update-delete-request.dto';
 import { DeleteRequest, DeleteRequestStatus } from './delete-request.entity';
 import { Letter } from '../letters/letter.entity';
+import { UserRole } from '../../common/enums/role.enum';
+import { UnitBisnis } from '../../common/enums/unit-bisnis.enum';
+
+interface AuthenticatedUser {
+  userId: string;
+  role: UserRole;
+  unitBisnis?: UnitBisnis | null;
+}
 
 @Injectable()
 export class DeleteRequestsService {
@@ -19,13 +28,21 @@ export class DeleteRequestsService {
     private readonly lettersRepo: Repository<Letter>,
   ) {}
 
-  async create(dto: CreateDeleteRequestDto) {
+  async create(dto: CreateDeleteRequestDto, user: AuthenticatedUser) {
     const letterNumber = dto.letterNumber.trim();
     const letter = await this.lettersRepo.findOne({
       where: { letterNumber },
     });
     if (!letter) {
       throw new NotFoundException('Letter not found');
+    }
+
+    if (user.role === UserRole.USER) {
+      if (!user.unitBisnis || letter.unitBisnis !== user.unitBisnis) {
+        throw new ForbiddenException(
+          'Anda tidak memiliki akses untuk mengajukan hapus dokumen ini',
+        );
+      }
     }
 
     const existingPending = await this.deleteRequestsRepo.findOne({

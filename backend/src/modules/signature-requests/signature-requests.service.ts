@@ -20,6 +20,8 @@ import { User } from '../users/user.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 import sharp from 'sharp';
+import { UserRole } from '../../common/enums/role.enum';
+import { UnitBisnis } from '../../common/enums/unit-bisnis.enum';
 
 @Injectable()
 export class SignatureRequestsService {
@@ -33,6 +35,102 @@ export class SignatureRequestsService {
     private readonly notificationsService: NotificationsService,
     private readonly signaturesService: SignaturesService,
   ) {}
+
+  private assertCanAccessLetter(
+    letter: Letter,
+    user: { role: UserRole; unitBisnis?: UnitBisnis | null },
+  ) {
+    if (user.role === UserRole.ADMIN || user.role === UserRole.MANAJEMEN) return;
+    if (
+      user.role === UserRole.USER &&
+      user.unitBisnis &&
+      letter.unitBisnis === user.unitBisnis
+    ) {
+      return;
+    }
+    throw new ForbiddenException('Anda tidak memiliki akses ke dokumen ini');
+  }
+
+  async findOneForUser(
+    id: string,
+    user: { userId: string; role: UserRole; unitBisnis?: UnitBisnis | null },
+  ): Promise<SignatureRequest> {
+    const request = await this.findOne(id);
+    this.assertCanAccessLetter(request.letter, user);
+
+    if (user.role === UserRole.ADMIN || user.role === UserRole.MANAJEMEN) {
+      return request;
+    }
+
+    if (request.requestedBy === user.userId || request.assignedTo === user.userId) {
+      return request;
+    }
+
+    throw new ForbiddenException('Anda tidak memiliki akses ke permintaan ini');
+  }
+
+  async findByLetterForUser(
+    letterId: string,
+    user: { role: UserRole; unitBisnis?: UnitBisnis | null },
+  ): Promise<SignatureRequest[]> {
+    const letter = await this.letterRepo.findOne({ where: { id: letterId } });
+    if (!letter) throw new NotFoundException('Letter not found');
+    this.assertCanAccessLetter(letter, user);
+    return this.findByLetter(letterId);
+  }
+
+  async createForUser(
+    user: { userId: string; role: UserRole; unitBisnis?: UnitBisnis | null },
+    dto: CreateSignatureRequestDto,
+  ): Promise<SignatureRequest[]> {
+    const letter = await this.letterRepo.findOne({ where: { id: dto.letterId } });
+    if (!letter) throw new NotFoundException('Letter not found');
+    this.assertCanAccessLetter(letter, user);
+    return this.create(user.userId, dto);
+  }
+
+  async getSharedSignedPathForUser(
+    letterId: string,
+    user: { role: UserRole; unitBisnis?: UnitBisnis | null },
+  ): Promise<string | null> {
+    const letter = await this.letterRepo.findOne({ where: { id: letterId } });
+    if (!letter) return null;
+    this.assertCanAccessLetter(letter, user);
+    return this.getSharedSignedPath(letterId);
+  }
+
+  private normalizeUploadsPath(urlOrPath: string): string {
+    if (!urlOrPath) {
+      throw new BadRequestException('Invalid document/signature path');
+    }
+
+    let pathname = urlOrPath;
+    if (pathname.startsWith('http')) {
+      try {
+        pathname = new URL(pathname).pathname;
+      } catch {
+        // keep as-is
+      }
+    }
+
+    pathname = pathname.replace(/^[\\/]+/, '');
+    // Only allow files under uploads/
+    if (!pathname.toLowerCase().startsWith('uploads/')) {
+      throw new BadRequestException('Invalid path: must be under uploads');
+    }
+
+    return pathname;
+  }
+
+  private resolveUploadsDiskPath(urlOrPath: string): string {
+    const normalized = this.normalizeUploadsPath(urlOrPath);
+    const full = path.resolve(process.cwd(), normalized);
+    const uploadsRoot = path.resolve(process.cwd(), 'uploads');
+    if (!full.startsWith(uploadsRoot + path.sep)) {
+      throw new BadRequestException('Invalid path traversal detected');
+    }
+    return full;
+  }
 
   async findAll(
     userId: string,
@@ -168,16 +266,7 @@ export class SignatureRequestsService {
     const posX = dto.positionX ?? request.positionX ?? 50;
     const posY = dto.positionY ?? request.positionY ?? 50;
 
-    // Extract relative path from fileUrl (remove http://localhost:3000 prefix)
-    let documentPath = request.letter.fileUrl || '';
-    if (documentPath.startsWith('http')) {
-      try {
-        const url = new URL(documentPath);
-        documentPath = url.pathname;
-      } catch {
-        // Keep original path
-      }
-    }
+    const documentPath = this.normalizeUploadsPath(request.letter.fileUrl || '');
 
     const scale = dto.scale ?? 100;
     
@@ -236,7 +325,15 @@ export class SignatureRequestsService {
     if (!letter) return null;
     
     const outputDir = path.join(process.cwd(), 'uploads', 'signed');
-    const outputFilename = `signed-${letterId}-${path.basename(letter.fileUrl || '')}`;
+    let baseName = '';
+    if (letter.fileUrl) {
+      try {
+        baseName = path.basename(new URL(letter.fileUrl).pathname);
+      } catch {
+        baseName = path.basename(letter.fileUrl);
+      }
+    }
+    const outputFilename = `signed-${letterId}-${baseName || 'document'}`;
     const outputPath = path.join(outputDir, outputFilename);
     
     if (fs.existsSync(outputPath)) {
@@ -285,8 +382,8 @@ export class SignatureRequestsService {
     scale: number = 100,
     existingSignedPath?: string | null,
   ): Promise<string> {
-    const docFullPath = path.join(process.cwd(), documentPath);
-    const sigFullPath = path.join(process.cwd(), signaturePath);
+    const docFullPath = this.resolveUploadsDiskPath(documentPath);
+    const sigFullPath = this.resolveUploadsDiskPath(signaturePath);
 
     if (!fs.existsSync(docFullPath) || !fs.existsSync(sigFullPath)) {
       throw new BadRequestException('Document or signature file not found');
@@ -357,7 +454,7 @@ export class SignatureRequestsService {
     // Check if there's an existing signed document to use as base
     if (fs.existsSync(outputPath) && existingSignedPath) {
       // Use the existing signed document as base
-      const existingPdfPath = path.join(process.cwd(), existingSignedPath);
+      const existingPdfPath = this.resolveUploadsDiskPath(existingSignedPath);
       const { PDFDocument } = await import('pdf-lib');
       const existingPdfBuffer = fs.readFileSync(existingPdfPath);
       const existingPdfDoc = await PDFDocument.load(existingPdfBuffer);
@@ -405,7 +502,7 @@ export class SignatureRequestsService {
     if (fs.existsSync(outputPath) && existingSignedPath && existingSignedPath.toLowerCase().endsWith('.pdf')) {
       // If we have an existing PDF, we need to work with it directly
       const { PDFDocument } = await import('pdf-lib');
-      const existingPdfPath = path.join(process.cwd(), existingSignedPath);
+      const existingPdfPath = this.resolveUploadsDiskPath(existingSignedPath);
       const existingPdfBuffer = fs.readFileSync(existingPdfPath);
       const pdfDoc = await PDFDocument.load(existingPdfBuffer);
       const pages = pdfDoc.getPages();
