@@ -99,6 +99,14 @@ export default function NotificationBell() {
     return date.toLocaleDateString('id-ID');
   };
 
+  const shortenMiddle = (text: string, maxLen = 36) => {
+    const raw = (text || '').trim();
+    if (raw.length <= maxLen) return raw;
+    const head = Math.max(Math.min(12, Math.floor(maxLen / 2)), 6);
+    const tail = Math.max(Math.min(10, maxLen - head - 1), 6);
+    return `${raw.slice(0, head)}…${raw.slice(-tail)}`;
+  };
+
   return (
     <div className="notification-bell" ref={dropdownRef}>
       <button className="bell-button" onClick={() => setIsOpen(!isOpen)}>
@@ -134,8 +142,12 @@ export default function NotificationBell() {
                 >
                   {getIcon(notif.type)}
                   <div className="notif-content">
-                    <p className="notif-title">{notif.title}</p>
-                    <p className="notif-message">{notif.message}</p>
+                    <p className="notif-title" title={notif.title}>
+                      {shortenMiddle(notif.title, 44)}
+                    </p>
+                    <p className="notif-message" title={notif.message}>
+                      {shortenMiddle(notif.message, 64)}
+                    </p>
                     <span className="notif-time">{formatTime(notif.createdAt)}</span>
                   </div>
                 </div>
@@ -266,6 +278,9 @@ export default function NotificationBell() {
           font-size: 0.875rem;
           margin: 0;
           color: var(--text-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .notif-message {
           font-size: 0.8rem;

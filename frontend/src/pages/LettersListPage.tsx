@@ -76,7 +76,7 @@ export default function LettersListPage() {
   ) => {
     switch (key) {
       case 'unitBisnis':
-        return letter.unitBisnis?.replace('_', ' ') || '-';
+        return letter.unitBisnis?.replaceAll('_', ' ') || '-';
       case 'letterNumber':
         return letter.letterNumber;
       case 'jenisSurat':
@@ -348,7 +348,7 @@ export default function LettersListPage() {
               {columns.map((col) => (
                 <div key={col.key} className="table-cell" style={{ minWidth: 0 }}>
                   <span className="cell-label">{col.label}</span>
-                  <span className={`cell-value ${(col.key === 'perihal' || col.key === 'namaPengirim' || col.key === 'letterNumber') ? 'truncate' : ''}`}>
+                  <span className={`cell-value ${(col.key === 'perihal' || col.key === 'namaPengirim' || col.key === 'letterNumber' || col.key === 'unitBisnis') ? 'truncate' : ''}`}>
                     {getCellValue(letter, col.key)}
                   </span>
                 </div>
