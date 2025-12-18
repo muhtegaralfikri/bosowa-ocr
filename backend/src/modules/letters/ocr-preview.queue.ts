@@ -13,10 +13,29 @@ export interface OcrPreviewJobData {
 export class OcrPreviewQueueService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(OcrPreviewQueueService.name);
   private connection: IORedis | null = null;
-  private queue: Queue<OcrPreviewJobData, unknown> | null = null;
-  private worker: Worker<OcrPreviewJobData, unknown> | null = null;
+  private queue: Queue | null = null;
+  private worker: Worker | null = null;
+  private jobTimeoutMs = 120000;
 
   constructor(private readonly lettersService: LettersService) {}
+
+  private async runWithTimeout<T>(ms: number, task: () => Promise<T>): Promise<T> {
+    if (!Number.isFinite(ms) || ms <= 0) {
+      return task();
+    }
+
+    let timer: NodeJS.Timeout | null = null;
+    try {
+      return await Promise.race([
+        task(),
+        new Promise<T>((_resolve, reject) => {
+          timer = setTimeout(() => reject(new Error('OCR job timeout')), ms);
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
 
   onModuleInit() {
     const redisUrl = process.env.REDIS_URL;
@@ -32,7 +51,12 @@ export class OcrPreviewQueueService implements OnModuleInit, OnModuleDestroy {
         );
 
     this.connection = connection;
-    this.queue = new Queue<OcrPreviewJobData, unknown>('ocr-preview', {
+    const timeoutRaw = Number(process.env.OCR_JOB_TIMEOUT_MS ?? 120000);
+    this.jobTimeoutMs = Number.isFinite(timeoutRaw)
+      ? Math.max(timeoutRaw, 1000)
+      : 120000;
+
+    this.queue = new Queue('ocr-preview', {
       connection,
       defaultJobOptions: {
         removeOnComplete: { age: 60 * 60, count: 1000 }, // 1h or 1000 jobs
@@ -50,7 +74,9 @@ export class OcrPreviewQueueService implements OnModuleInit, OnModuleDestroy {
     this.worker = new Worker<OcrPreviewJobData, unknown>(
       'ocr-preview',
       async (job) => {
-        return this.lettersService.previewOcr(job.data.dto);
+        return this.runWithTimeout(this.jobTimeoutMs, () =>
+          this.lettersService.previewOcr(job.data.dto),
+        );
       },
       { connection, concurrency },
     );
@@ -120,4 +146,3 @@ export class OcrPreviewQueueService implements OnModuleInit, OnModuleDestroy {
     return base;
   }
 }
-

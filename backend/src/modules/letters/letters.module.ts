@@ -7,6 +7,7 @@ import { LettersController } from './letters.controller';
 import { LettersService } from './letters.service';
 import { Letter } from './letter.entity';
 import { OcrPreviewQueueService } from './ocr-preview.queue';
+import { OcrPreviewCacheService } from './ocr-preview-cache.service';
 
 @Module({
   imports: [
@@ -16,6 +17,6 @@ import { OcrPreviewQueueService } from './ocr-preview.queue';
     EditLogsModule,
   ],
   controllers: [LettersController],
-  providers: [LettersService, OcrPreviewQueueService],
+  providers: [LettersService, OcrPreviewQueueService, OcrPreviewCacheService],
 })
 export class LettersModule {}

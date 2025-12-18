@@ -27,6 +27,7 @@ export default function UploadPage() {
     urlFull: string;
   } | null>(null);
   const [ocrResult, setOcrResult] = useState<OcrPreviewResponse | null>(null);
+  const [showRawText, setShowRawText] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [jobState, setJobState] = useState<string>('');
@@ -73,6 +74,7 @@ export default function UploadPage() {
     setPreparedFile(file);
     setShowCamera(false);
     setOcrResult(null);
+    setShowRawText(false);
     setOriginalMeta(null);
     setOcrMeta(null);
     setError('');
@@ -113,6 +115,7 @@ export default function UploadPage() {
 
       const result = await pollOcrJob(enqueue.data.jobId);
       setOcrResult(result);
+      setShowRawText(false);
       toast.success('Analisis dokumen berhasil!');
     } catch {
       setError('Upload atau analisis dokumen gagal. Pastikan backend jalan dan login masih aktif.');
@@ -201,9 +204,31 @@ export default function UploadPage() {
               </div>
               <div>
                 <h3>Hasil Analisis</h3>
-                <pre className="code-box">
-                  {ocrResult ? JSON.stringify(ocrResult, null, 2) : 'Belum ada hasil'}
-                </pre>
+                {ocrResult ? (
+                  <div className="grid" style={{ gap: '0.75rem' }}>
+                    <pre className="code-box">
+                      {JSON.stringify(
+                        { ...ocrResult, ocrRawText: '[hidden]' },
+                        null,
+                        2,
+                      )}
+                    </pre>
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      onClick={() => setShowRawText((v) => !v)}
+                    >
+                      {showRawText ? 'Sembunyikan OCR Raw Text' : 'Tampilkan OCR Raw Text'}
+                    </button>
+                    {showRawText && (
+                      <pre className="code-box" style={{ whiteSpace: 'pre-wrap' }}>
+                        {ocrResult.ocrRawText || '(kosong)'}
+                      </pre>
+                    )}
+                  </div>
+                ) : (
+                  <pre className="code-box">Belum ada hasil</pre>
+                )}
               </div>
               {ocrMeta && preparedFile !== sourceFile && (
                 <div>

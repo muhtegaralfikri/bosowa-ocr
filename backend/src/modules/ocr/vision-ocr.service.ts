@@ -20,6 +20,7 @@ export class VisionOcrService {
         this.client = new ImageAnnotatorClient({
           keyFilename: credentialsPath,
         });
+
         this.isConfigured = true;
         this.logger.log('Google Vision API initialized with service account');
       } else {
@@ -34,6 +35,11 @@ export class VisionOcrService {
 
   isAvailable(): boolean {
     return this.isConfigured && this.client !== null;
+  }
+
+  isPdfAsyncAvailable(): boolean {
+    // Async PDF OCR via GCS bucket intentionally disabled (cost control).
+    return false;
   }
 
   async recognizeText(filePath: string): Promise<string> {
@@ -101,4 +107,27 @@ export class VisionOcrService {
       throw error;
     }
   }
+
+  async recognizeDocumentBuffer(image: Buffer): Promise<string> {
+    if (!this.client) {
+      throw new Error('Google Vision API not configured');
+    }
+
+    try {
+      const [result] = await this.client.documentTextDetection({
+        image: { content: image },
+      });
+
+      const fullText = result.fullTextAnnotation?.text || '';
+      return fullText;
+    } catch (error: any) {
+      this.logger.error(
+        'Vision API document OCR (buffer) failed',
+        error?.message || error,
+      );
+      throw error;
+    }
+  }
+
+  // Async PDF OCR via GCS bucket intentionally removed (cost control).
 }

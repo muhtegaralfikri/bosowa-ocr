@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { FilesService } from '../files/files.service';
 import * as fs from 'fs';
 import { EditLogsService } from '../edit-logs/edit-logs.service';
@@ -20,6 +20,7 @@ import { CreateLetterDto } from './dto/create-letter.dto';
 import { OcrPreviewDto } from './dto/ocr-preview.dto';
 import { UpdateLetterDto } from './dto/update-letter.dto';
 import { Letter } from './letter.entity';
+import { OcrPreviewCacheService } from './ocr-preview-cache.service';
 
 export interface AuthenticatedUser {
   userId: string;
@@ -38,6 +39,7 @@ export class LettersService {
     private readonly filesService: FilesService,
     private readonly editLogsService: EditLogsService,
     private readonly aiExtractionService: AiExtractionService,
+    private readonly ocrPreviewCache: OcrPreviewCacheService,
     @InjectRepository(Letter)
     private readonly lettersRepo: Repository<Letter>,
   ) {}
@@ -73,39 +75,90 @@ export class LettersService {
   }
 
   async previewOcr(dto: OcrPreviewDto) {
+    const method = dto.extractionMethod || 'ai';
+    const cacheTtlRaw = Number(process.env.OCR_PREVIEW_CACHE_TTL_SECONDS ?? 10 * 60);
+    const cacheTtlSeconds = Number.isFinite(cacheTtlRaw) ? Math.max(cacheTtlRaw, 0) : 10 * 60;
+    const cacheKey = this.ocrPreviewCache.makeKey({
+      kind: 'ocrPreview',
+      fileId: dto.fileId,
+      method,
+    });
+    if (cacheTtlSeconds > 0) {
+      const cached = this.ocrPreviewCache.get<unknown>(cacheKey);
+      if (cached) return cached as any;
+    }
+
     const file = await this.filesService.getFile(dto.fileId);
     const isPdf = this.pdfConverterService.isPdf(file.filePath);
 
     // Use Google Vision API if available, otherwise fallback to Tesseract
     let ocrRawText: string;
-    let imagePaths: string[] = [];
 
-    try {
-      // If PDF, convert to images first
-      if (isPdf) {
-        this.logger.log('Detected PDF file, converting to images...');
-        imagePaths = await this.pdfConverterService.convertToImages(file.filePath);
-        
-        if (imagePaths.length === 0) {
-          throw new BadRequestException('PDF conversion failed - no pages extracted');
+    const maxPagesRaw = Number(process.env.PDF_OCR_MAX_PAGES ?? 25);
+    const maxPages = Number.isFinite(maxPagesRaw)
+      ? Math.max(maxPagesRaw, 1)
+      : 25;
+
+    const pageConcurrencyRaw = Number(process.env.PDF_OCR_PAGE_CONCURRENCY ?? 2);
+    const pageConcurrency = Number.isFinite(pageConcurrencyRaw)
+      ? Math.max(pageConcurrencyRaw, 1)
+      : 2;
+
+    const maxCharsRaw = Number(process.env.OCR_RAW_TEXT_MAX_CHARS ?? 20000);
+    const maxChars = Number.isFinite(maxCharsRaw)
+      ? Math.max(maxCharsRaw, 1000)
+      : 20000;
+
+    // If PDF, convert to images first
+    if (isPdf) {
+        if (!this.visionOcrService.isAvailable()) {
+          throw new BadRequestException(
+            'Google Vision API tidak tersedia. Pastikan GOOGLE_APPLICATION_CREDENTIALS sudah diset.',
+          );
         }
-        
-        this.logger.log(`Converted PDF to ${imagePaths.length} page(s)`);
-        
-        // OCR each page and combine text
+
+        this.logger.log(
+          `Detected PDF file, OCR via in-memory page images (maxPages=${maxPages}, concurrency=${pageConcurrency})...`,
+        );
+
         const pageTexts: string[] = [];
-        for (let i = 0; i < imagePaths.length; i++) {
-          const pagePath = imagePaths[i];
-          
-          if (this.visionOcrService.isAvailable()) {
-            const pageText = await this.visionOcrService.recognizeDocument(pagePath);
-            pageTexts.push(`--- Page ${i + 1} ---\n${pageText}`);
-          } else {
-            throw new BadRequestException('Google Vision API tidak tersedia. Pastikan GOOGLE_APPLICATION_CREDENTIALS sudah diset.');
+        const inFlight = new Set<Promise<void>>();
+
+        const schedule = (pageIndex: number, buf: Buffer) => {
+          let task: Promise<void>;
+          task = (async () => {
+            const pageText = await this.visionOcrService.recognizeDocumentBuffer(
+              buf,
+            );
+            pageTexts[pageIndex] = `--- Page ${pageIndex + 1} ---\n${pageText}`;
+          })().finally(() => {
+            inFlight.delete(task);
+          });
+          inFlight.add(task);
+        };
+
+        let pageIndex = 0;
+        for await (const pageImage of this.pdfConverterService.iteratePageImages(
+          file.filePath,
+          { scale: 2.0 },
+        )) {
+          if (pageIndex >= maxPages) {
+            throw new BadRequestException(
+              `PDF terlalu banyak halaman (maksimal ${maxPages}). Mohon crop/pecah PDF sebelum upload.`,
+            );
           }
+
+          while (inFlight.size >= pageConcurrency) {
+            await Promise.race(inFlight);
+          }
+
+          schedule(pageIndex, pageImage);
+          pageIndex++;
         }
-        
-        ocrRawText = pageTexts.join('\n\n');
+
+        await Promise.all(inFlight);
+
+        ocrRawText = pageTexts.filter(Boolean).join('\n\n');
       } else {
         // Regular image file
         if (this.visionOcrService.isAvailable()) {
@@ -115,19 +168,15 @@ export class LettersService {
           throw new BadRequestException('Google Vision API tidak tersedia. Pastikan GOOGLE_APPLICATION_CREDENTIALS sudah diset.');
         }
       }
-    } finally {
-      // Clean up converted PDF images
-      if (imagePaths.length > 0) {
-        await this.pdfConverterService.cleanupImages(imagePaths);
-      }
-    }
 
-    const method = dto.extractionMethod || 'ai';
+    if (ocrRawText.length > maxChars) {
+      ocrRawText = ocrRawText.slice(0, maxChars) + '\n\n...[truncated]';
+    }
 
     // If user explicitly requested AI but it's not available, throw error
     if (method === 'ai' && !this.aiExtractionService.isAvailable()) {
       throw new BadRequestException(
-        'AI extraction tidak tersedia. Pastikan GEMINI_API_KEY sudah diset di .env',
+        'AI extraction tidak tersedia. Pastikan GROQ_API_KEY sudah diset di .env',
       );
     }
 
@@ -147,7 +196,7 @@ export class LettersService {
       const shouldUseAiResult = method === 'ai' || hasData;
 
       if (shouldUseAiResult) {
-        return {
+        const response = {
           letterNumber: aiResult.letterNumber,
           candidates: aiResult.letterNumber ? [aiResult.letterNumber] : [],
           tanggalSurat: aiResult.tanggalSurat,
@@ -179,6 +228,12 @@ export class LettersService {
           },
           extractionMethod: 'ai',
         };
+
+        if (cacheTtlSeconds > 0) {
+          this.ocrPreviewCache.set(cacheKey, response, cacheTtlSeconds);
+        }
+
+        return response;
       }
     }
 
@@ -234,68 +289,6 @@ export class LettersService {
   ) {
     const safeLimit = Math.min(Math.max(limit ?? 10, 1), 100);
     const safePage = Math.max(page ?? 1, 1);
-    
-    // Build WHERE clause more carefully
-    const where: any = {};
-    
-    // Specific field filters (these don't conflict with OR)
-    if (letterNumber) {
-      where.letterNumber = ILike(`%${letterNumber}%`);
-    }
-    
-    if (namaPengirim) {
-      where.namaPengirim = ILike(`%${namaPengirim}%`);
-    }
-    
-    if (perihal) {
-      where.perihal = ILike(`%${perihal}%`);
-    }
-    
-    if (jenisDokumen) {
-      where.jenisDokumen = jenisDokumen;
-    }
-    
-    if (jenisSurat) {
-      where.jenisSurat = jenisSurat;
-    }
-    
-    if (unitBisnis) {
-      where.unitBisnis = unitBisnis;
-    }
-    
-    // Date range filter
-    if (tanggalMulai || tanggalSelesai) {
-      const dateFilter: any = {};
-      if (tanggalMulai) {
-        dateFilter.$gte = tanggalMulai;
-      }
-      if (tanggalSelesai) {
-        dateFilter.$lte = tanggalSelesai;
-      }
-      where.tanggalSurat = dateFilter;
-    }
-    
-    // Nominal range filter
-    if (nominalMin || nominalMax) {
-      const nominalFilter: any = {};
-      if (nominalMin) {
-        nominalFilter.$gte = nominalMin;
-      }
-      if (nominalMax) {
-        nominalFilter.$lte = nominalMax;
-      }
-      where.totalNominal = nominalFilter;
-    }
-    
-    // Keyword search across multiple fields (simplify logic)
-    if (keyword) {
-      // Simple case: just keyword search
-      where.OR = [
-        { letterNumber: ILike(`%${keyword}%`) },
-        { namaPengirim: ILike(`%${keyword}%`) },
-        { perihal: ILike(`%${keyword}%`) },
-      ];
-    }
 
     // Use QueryBuilder for better OR condition support
     try {

@@ -2,11 +2,13 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
   Post,
   Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -24,7 +26,12 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  findAll(@Query('role') role?: UserRole) {
+  findAll(@Request() req: any, @Query('role') role?: UserRole) {
+    // Allow non-admin clients to list only MANAJEMEN users (for tagging signature requests).
+    // Admin can list all roles.
+    if (req.user?.role !== UserRole.ADMIN && role !== UserRole.MANAJEMEN) {
+      throw new ForbiddenException('Anda tidak memiliki akses untuk melihat daftar user');
+    }
     return this.usersService.findAll(role);
   }
 
