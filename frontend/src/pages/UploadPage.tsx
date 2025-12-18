@@ -2,7 +2,11 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import api from '../api/client';
-import type { OcrPreviewResponse } from '../api/types';
+import type {
+  OcrPreviewEnqueueResponse,
+  OcrPreviewJobStatusResponse,
+  OcrPreviewResponse,
+} from '../api/types';
 import CameraCapture from '../components/CameraCapture';
 import ManualCropper from '../components/ManualCropper';
 import UploadBox from '../components/UploadBox';
@@ -25,6 +29,37 @@ export default function UploadPage() {
   const [ocrResult, setOcrResult] = useState<OcrPreviewResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [jobState, setJobState] = useState<string>('');
+
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  const pollOcrJob = async (jobId: string) => {
+    const started = Date.now();
+    const timeoutMs = 2 * 60 * 1000; // 2 minutes
+
+    while (true) {
+      const res = await api.get<OcrPreviewJobStatusResponse>(
+        `/letters/ocr-preview/${jobId}`,
+      );
+      const job = res.data;
+      setJobState(job.state);
+
+      if (job.state === 'completed') {
+        if (!job.result) throw new Error('OCR job completed without result');
+        return job.result;
+      }
+
+      if (job.state === 'failed') {
+        throw new Error(job.error || 'OCR job failed');
+      }
+
+      if (Date.now() - started > timeoutMs) {
+        throw new Error('OCR job timeout');
+      }
+
+      await wait(1000);
+    }
+  };
 
 
   const fileLabel = useMemo(() => {
@@ -47,6 +82,7 @@ export default function UploadPage() {
     if (!preparedFile || !sourceFile) return;
     setLoading(true);
     setError('');
+    setJobState('');
     try {
       // upload file utuh untuk penyimpanan
       const formOriginal = new FormData();
@@ -68,10 +104,15 @@ export default function UploadPage() {
       }
       setOcrMeta(ocrFileMeta);
 
-      const preview = await api.post('/letters/ocr-preview', {
+      const enqueue = await api.post<OcrPreviewEnqueueResponse>(
+        '/letters/ocr-preview',
+        {
         fileId: ocrFileMeta.fileId,
-      });
-      setOcrResult(preview.data);
+        },
+      );
+
+      const result = await pollOcrJob(enqueue.data.jobId);
+      setOcrResult(result);
       toast.success('Analisis dokumen berhasil!');
     } catch {
       setError('Upload atau analisis dokumen gagal. Pastikan backend jalan dan login masih aktif.');
@@ -144,7 +185,7 @@ export default function UploadPage() {
               <div className="ocr-loading-spinner"></div>
               <p className="ocr-loading-text">Memproses analisis...</p>
               <p className="ocr-loading-hint">
-                Menganalisis dengan AI...
+                {jobState ? `Status: ${jobState}` : 'Menganalisis dengan AI...'}
               </p>
             </div>
           )}

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -24,11 +25,15 @@ import { UpdateLetterDto } from './dto/update-letter.dto';
 import { LettersService } from './letters.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import type { AuthenticatedUser } from './letters.service';
+import { OcrPreviewQueueService } from './ocr-preview.queue';
 
 @Controller('letters')
 @UseGuards(JwtAuthGuard)
 export class LettersController {
-  constructor(private readonly lettersService: LettersService) {}
+  constructor(
+    private readonly lettersService: LettersService,
+    private readonly ocrQueue: OcrPreviewQueueService,
+  ) {}
 
   @Get(':id/download-pdf')
   async downloadAsPdf(
@@ -208,8 +213,28 @@ export class LettersController {
   }
 
   @Post('ocr-preview')
-  ocrPreview(@Body() dto: OcrPreviewDto) {
-    return this.lettersService.previewOcr(dto);
+  ocrPreview(
+    @Body() dto: OcrPreviewDto,
+    @Req() req: ExpressRequest & { user: AuthenticatedUser },
+    @Query('sync') sync?: string,
+  ) {
+    const isSync = sync === 'true';
+    if (isSync) {
+      return this.lettersService.previewOcr(dto);
+    }
+    return this.ocrQueue.enqueue(dto, req.user);
+  }
+
+  @Get('ocr-preview/:jobId')
+  async getOcrPreviewJob(
+    @Param('jobId') jobId: string,
+    @Req() req: ExpressRequest & { user: AuthenticatedUser },
+  ) {
+    const job = await this.ocrQueue.getJobForUser(jobId, req.user);
+    if (!job) {
+      throw new NotFoundException('OCR job not found');
+    }
+    return OcrPreviewQueueService.toStatusResponse(job);
   }
 
   @Post()

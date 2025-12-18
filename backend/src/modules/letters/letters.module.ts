@@ -6,6 +6,7 @@ import { OcrModule } from '../ocr/ocr.module';
 import { LettersController } from './letters.controller';
 import { LettersService } from './letters.service';
 import { Letter } from './letter.entity';
+import { OcrPreviewQueueService } from './ocr-preview.queue';
 
 @Module({
   imports: [
@@ -15,6 +16,6 @@ import { Letter } from './letter.entity';
     EditLogsModule,
   ],
   controllers: [LettersController],
-  providers: [LettersService],
+  providers: [LettersService, OcrPreviewQueueService],
 })
 export class LettersModule {}
