@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { getPendingSignatures, signDocument, rejectSignatureRequest, getMySignatures } from '../api/signatures';
 import type { SignatureRequest, Signature } from '../api/types';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
 export default function PendingSignaturesPage() {
   const navigate = useNavigate();

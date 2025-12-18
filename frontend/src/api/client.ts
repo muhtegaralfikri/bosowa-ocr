@@ -3,9 +3,10 @@ import { toast } from 'sonner';
 
 export const AUTH_STORAGE_KEY = 'bosowa-user';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const apiOrigin = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+const apiBase = apiOrigin ? `${apiOrigin}/api/v1` : '/api/v1';
 const api = axios.create({
-  baseURL: `${baseURL}/api/v1`,
+  baseURL: apiBase,
 });
 
 let isRefreshing = false;
@@ -92,7 +93,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axios.post(`${baseURL}/api/v1/auth/refresh`, {
+        const res = await axios.post(`${apiBase}/auth/refresh`, {
           refreshToken: auth.refreshToken,
         });
 
