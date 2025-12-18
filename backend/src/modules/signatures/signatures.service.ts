@@ -98,7 +98,8 @@ export class SignaturesService {
   async remove(id: string, userId: string): Promise<void> {
     const signature = await this.findOne(id, userId);
     const wasDefault = signature.isDefault;
-    const filePath = path.join(process.cwd(), signature.imagePath);
+    const safeRelative = signature.imagePath.replace(/^[\\/]+/, '');
+    const filePath = path.join(process.cwd(), safeRelative);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }

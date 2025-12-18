@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { existsSync } from 'fs';
 
 @Injectable()
 export class PdfConverterService {
@@ -29,7 +29,7 @@ export class PdfConverterService {
 
     // Create output directory
     if (!existsSync(outputDir)) {
-      mkdirSync(outputDir, { recursive: true });
+      await fs.mkdir(outputDir, { recursive: true });
     }
 
     try {
@@ -41,7 +41,7 @@ export class PdfConverterService {
       
       for await (const image of document) {
         const imagePath = path.join(outputDir, `page-${pageNum}.png`);
-        writeFileSync(imagePath, image);
+        await fs.writeFile(imagePath, image);
         imagePaths.push(imagePath);
         pageNum++;
       }
@@ -66,7 +66,7 @@ export class PdfConverterService {
     const outputDir = path.join(pdfDir, `${pdfName}_preview`);
 
     if (!existsSync(outputDir)) {
-      mkdirSync(outputDir, { recursive: true });
+      await fs.mkdir(outputDir, { recursive: true });
     }
 
     try {
@@ -75,7 +75,7 @@ export class PdfConverterService {
       // Get only the first page
       for await (const image of document) {
         const imagePath = path.join(outputDir, 'preview-1.png');
-        writeFileSync(imagePath, image);
+        await fs.writeFile(imagePath, image);
         return imagePath;
       }
       

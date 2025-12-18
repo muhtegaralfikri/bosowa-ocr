@@ -5,6 +5,7 @@ import { FileText, Check, X, Clock, Eye, PenTool, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getPendingSignatures, signDocument, rejectSignatureRequest, getMySignatures } from '../api/signatures';
 import type { SignatureRequest, Signature } from '../api/types';
+import api from '../api/client';
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
@@ -19,6 +20,7 @@ export default function PendingSignaturesPage() {
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const [docPreviewUrl, setDocPreviewUrl] = useState<string | null>(null);
 
   const { data: pendingRequests = [], isLoading } = useQuery({
     queryKey: ['pending-signatures'],
@@ -62,6 +64,37 @@ export default function PendingSignaturesPage() {
     setSignaturePosition({ x: 50, y: 80 });
     setSignatureSize({ width: 150, height: 75 });
   };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setDocPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+
+    if (!selectedRequest) return;
+
+    api
+      .get(`/letters/${selectedRequest.letterId}/preview-image`, { responseType: 'blob' })
+      .then((res) => {
+        if (cancelled) return;
+        const blobUrl = URL.createObjectURL(new Blob([res.data]));
+        setDocPreviewUrl(blobUrl);
+      })
+      .catch((e) => {
+        console.error(e);
+        toast.error('Gagal memuat preview dokumen');
+      });
+
+    return () => {
+      cancelled = true;
+      setDocPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    };
+  }, [selectedRequest]);
 
   const getImageUrl = (path: string) => {
     if (!path) return '';
@@ -246,12 +279,18 @@ export default function PendingSignaturesPage() {
                 </div>
               ) : (
                 <div className="document-preview" ref={containerRef}>
-                  <img
-                    ref={imageRef}
-                    src={`${API_BASE}/api/v1/letters/${selectedRequest.letterId}/preview-image`}
-                    alt="Dokumen"
-                    draggable={false}
-                  />
+                  {docPreviewUrl ? (
+                    <img
+                      ref={imageRef}
+                      src={docPreviewUrl}
+                      alt="Dokumen"
+                      draggable={false}
+                    />
+                  ) : (
+                    <div style={{ padding: 16, textAlign: 'center' }}>
+                      Memuat preview...
+                    </div>
+                  )}
                   <div
                     className="signature-draggable"
                     style={{

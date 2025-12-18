@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -13,10 +14,19 @@ import { EditLogsService } from '../edit-logs/edit-logs.service';
 import { AiExtractionService } from '../ocr/ai-extraction.service';
 import { PdfConverterService } from '../ocr/pdf-converter.service';
 import { VisionOcrService } from '../ocr/vision-ocr.service';
+import { UserRole } from '../../common/enums/role.enum';
+import { UnitBisnis } from '../../common/enums/unit-bisnis.enum';
 import { CreateLetterDto } from './dto/create-letter.dto';
 import { OcrPreviewDto } from './dto/ocr-preview.dto';
 import { UpdateLetterDto } from './dto/update-letter.dto';
 import { Letter } from './letter.entity';
+
+export interface AuthenticatedUser {
+  userId: string;
+  username?: string;
+  role: UserRole;
+  unitBisnis?: UnitBisnis | null;
+}
 
 @Injectable()
 export class LettersService {
@@ -31,6 +41,36 @@ export class LettersService {
     @InjectRepository(Letter)
     private readonly lettersRepo: Repository<Letter>,
   ) {}
+
+  private assertCanAccessLetter(letter: Letter, user: AuthenticatedUser) {
+    if (user.role === UserRole.ADMIN || user.role === UserRole.MANAJEMEN) {
+      return;
+    }
+
+    if (user.role === UserRole.USER && user.unitBisnis) {
+      if (letter.unitBisnis === user.unitBisnis) return;
+    }
+
+    throw new ForbiddenException('Anda tidak memiliki akses ke dokumen ini');
+  }
+
+  async findOneForUser(id: string, user: AuthenticatedUser) {
+    const found = await this.lettersRepo.findOne({ where: { id } });
+    if (!found) {
+      throw new NotFoundException('Letter not found');
+    }
+    this.assertCanAccessLetter(found, user);
+    return found;
+  }
+
+  async findOneByFileIdForUser(fileId: string, user: AuthenticatedUser) {
+    const found = await this.lettersRepo.findOne({ where: { fileId } });
+    if (!found) {
+      throw new NotFoundException('Letter not found');
+    }
+    this.assertCanAccessLetter(found, user);
+    return found;
+  }
 
   async previewOcr(dto: OcrPreviewDto) {
     const file = await this.filesService.getFile(dto.fileId);
@@ -373,8 +413,13 @@ export class LettersService {
     return found;
   }
 
-  async update(id: string, dto: UpdateLetterDto, updatedBy?: string) {
-    const existing = await this.findOne(id);
+  async updateForUser(
+    id: string,
+    dto: UpdateLetterDto,
+    user: AuthenticatedUser,
+    updatedBy?: string,
+  ) {
+    const existing = await this.findOneForUser(id, user);
     const before = { ...existing };
     let fileUrl = existing.fileUrl;
     if (dto.fileId) {

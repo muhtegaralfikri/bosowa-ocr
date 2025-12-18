@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   Request,
   Query,
   UseGuards,
@@ -22,14 +23,20 @@ import { ListLettersQueryDto } from './dto/list-letters-query.dto';
 import { UpdateLetterDto } from './dto/update-letter.dto';
 import { LettersService } from './letters.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { AuthenticatedUser } from './letters.service';
 
 @Controller('letters')
+@UseGuards(JwtAuthGuard)
 export class LettersController {
   constructor(private readonly lettersService: LettersService) {}
 
   @Get(':id/download-pdf')
-  async downloadAsPdf(@Param('id') id: string, @Res() res: Response) {
-    const letter = await this.lettersService.findOne(id);
+  async downloadAsPdf(
+    @Param('id') id: string,
+    @Req() req: ExpressRequest & { user: AuthenticatedUser },
+    @Res() res: Response,
+  ) {
+    const letter = await this.lettersService.findOneForUser(id, req.user);
     if (!letter || !letter.fileId) {
        res.status(404).send('Not found');
        return;
@@ -76,11 +83,22 @@ export class LettersController {
   }
 
   @Post('signed-image-preview')
-  async previewSignedImage(@Body('filename') filename: string, @Res() res: Response) {
+  async previewSignedImage(
+    @Body('filename') filename: string,
+    @Req() req: ExpressRequest & { user: AuthenticatedUser },
+    @Res() res: Response,
+  ) {
     if (!filename) {
       res.status(400).send('Filename is required');
       return;
     }
+
+    const match = /^signed-([0-9a-fA-F-]{36})-/.exec(filename);
+    if (!match) {
+      res.status(400).send('Invalid filename');
+      return;
+    }
+    await this.lettersService.findOneForUser(match[1], req.user);
 
     const filePath = join(process.cwd(), 'uploads', 'signed', filename);
     
@@ -109,8 +127,16 @@ export class LettersController {
   async downloadSignedImage(
     @Param('filename') filename: string, 
     @Query('downloadName') downloadName: string,
+    @Req() req: ExpressRequest & { user: AuthenticatedUser },
     @Res() res: Response
   ) {
+    const match = /^signed-([0-9a-fA-F-]{36})-/.exec(filename);
+    if (!match) {
+      res.status(400).send('Invalid filename');
+      return;
+    }
+    await this.lettersService.findOneForUser(match[1], req.user);
+
     const filePath = join(process.cwd(), 'uploads', 'signed', filename);
     
     // Security check
@@ -134,7 +160,12 @@ export class LettersController {
   }
 
   @Get('pdf-preview/:fileId')
-  async streamPdf(@Param('fileId') fileId: string, @Res() res: Response) {
+  async streamPdf(
+    @Param('fileId') fileId: string,
+    @Req() req: ExpressRequest & { user: AuthenticatedUser },
+    @Res() res: Response,
+  ) {
+    await this.lettersService.findOneByFileIdForUser(fileId, req.user);
     const filePath = await this.lettersService.getFilePath(fileId);
     
     // Obfuscate Content-Type to bypass IDM interception
@@ -148,8 +179,12 @@ export class LettersController {
   }
 
   @Get(':id/preview-image')
-  async previewImage(@Param('id') id: string, @Res() res: Response) {
-    const letter = await this.lettersService.findOne(id);
+  async previewImage(
+    @Param('id') id: string,
+    @Req() req: ExpressRequest & { user: AuthenticatedUser },
+    @Res() res: Response,
+  ) {
+    const letter = await this.lettersService.findOneForUser(id, req.user);
     if (!letter || !letter.fileId) {
       // Return 404 or maybe a default placeholder logic?
       // For now 404
@@ -159,20 +194,25 @@ export class LettersController {
 
     const imagePath = await this.lettersService.getPreviewImage(letter.fileId);
     
-    // Serve as image/jpeg (or infer from extension)
-    res.setHeader('Content-Type', 'image/jpeg');
+    const lower = imagePath.toLowerCase();
+    const contentType = lower.endsWith('.png')
+      ? 'image/png'
+      : lower.endsWith('.webp')
+        ? 'image/webp'
+        : lower.endsWith('.gif')
+          ? 'image/gif'
+          : 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
     const stream = createReadStream(imagePath);
     stream.pipe(res);
   }
 
   @Post('ocr-preview')
-  @UseGuards(JwtAuthGuard)
   ocrPreview(@Body() dto: OcrPreviewDto) {
     return this.lettersService.previewOcr(dto);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateLetterDto, @Request() req: ExpressRequest & { user?: { username?: string; role?: string; unitBisnis?: string } }) {
     // Auto-fill unit bisnis for regular users
     if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MANAJEMEN' && req.user?.unitBisnis) {
@@ -183,7 +223,6 @@ export class LettersController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
   findAll(@Query() query: ListLettersQueryDto, @Request() req: ExpressRequest & { user?: { username?: string; role?: string; unitBisnis?: string } }) {
     // Determine unit bisnis filter based on user role
     let unitBisnisFilter = query.unitBisnis;
@@ -211,20 +250,22 @@ export class LettersController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
-  findOne(@Param('id') id: string) {
-    return this.lettersService.findOne(id);
+  findOne(@Param('id') id: string, @Req() req: ExpressRequest & { user: AuthenticatedUser }) {
+    return this.lettersService.findOneForUser(id, req.user);
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
   update(
     @Param('id') id: string,
     @Body() dto: UpdateLetterDto,
-    @Request() req: ExpressRequest & { user?: { username?: string } },
+    @Request() req: ExpressRequest & { user?: AuthenticatedUser },
   ) {
     const updatedBy = req.user?.username;
-    return this.lettersService.update(id, dto, updatedBy);
+    if (!req.user) {
+      // Should be impossible because controller is guarded, but keep it defensive
+      throw new Error('Unauthorized');
+    }
+    return this.lettersService.updateForUser(id, dto, req.user, updatedBy);
   }
 
 }

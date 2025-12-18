@@ -31,18 +31,18 @@ export class SignatureRequestsController {
   }
 
   @Get('by-letter/:letterId')
-  findByLetter(@Param('letterId') letterId: string) {
-    return this.requestsService.findByLetter(letterId);
+  findByLetter(@Param('letterId') letterId: string, @Request() req) {
+    return this.requestsService.findByLetterForUser(letterId, req.user);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.requestsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.requestsService.findOneForUser(id, req.user);
   }
 
   @Post()
   create(@Request() req, @Body() dto: CreateSignatureRequestDto) {
-    return this.requestsService.create(req.user.userId, dto);
+    return this.requestsService.createForUser(req.user, dto);
   }
 
   @Put(':id/sign')
@@ -60,7 +60,7 @@ export class SignatureRequestsController {
   }
 
   @Get('shared-signed/:letterId')
-  getSharedSigned(@Param('letterId') letterId: string) {
-    return this.requestsService.getSharedSignedPath(letterId);
+  getSharedSigned(@Param('letterId') letterId: string, @Request() req) {
+    return this.requestsService.getSharedSignedPathForUser(letterId, req.user);
   }
 }

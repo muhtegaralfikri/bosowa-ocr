@@ -15,7 +15,12 @@ import { Letter } from '../letters/letter.entity';
     MulterModule.registerAsync({
       useFactory: () => {
         const adapter = new DiskStorageAdapter();
-        return { storage: adapter.getMulterStorage() };
+        return {
+          storage: adapter.getMulterStorage(),
+          limits: {
+            fileSize: 10 * 1024 * 1024, // 10MB (keep in sync with FileValidationPipe)
+          },
+        };
       },
     }),
     TypeOrmModule.forFeature([UploadedFile, Letter]),

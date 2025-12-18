@@ -41,7 +41,7 @@ export default function LoginPage() {
       <section className="panel login-panel">
         <div className="login-header">
           <div>
-            <p className="eyebrow">Bosowa Transportation</p>
+            <p className="eyebrow">Bosowa Bandar Agensi</p>
             <h1>Masuk</h1>
             <p>Sistem Manajemen Dokumen Digital</p>
           </div>
