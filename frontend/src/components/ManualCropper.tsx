@@ -17,6 +17,9 @@ interface Selection {
 
 export default function ManualCropper({ file, onCropConfirm, onResetToOriginal }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const isMobile =
+    typeof navigator !== 'undefined' &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [dragging, setDragging] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -105,9 +108,13 @@ export default function ManualCropper({ file, onCropConfirm, onResetToOriginal }
           <div className="pdf-preview-info">
             <FileText size={48} />
             <h3>Dokumen PDF</h3>
-            <p>Preview PDF - Cropping tidak tersedia untuk PDF</p>
+            <p>
+              {isMobile
+                ? 'Preview PDF tidak didukung di browser mobile. Cropping tidak tersedia untuk PDF.'
+                : 'Preview PDF - Cropping tidak tersedia untuk PDF'}
+            </p>
           </div>
-          {previewUrl && (
+          {!isMobile && previewUrl && (
             <embed
               src={previewUrl}
               type="application/pdf"
