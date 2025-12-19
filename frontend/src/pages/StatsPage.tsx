@@ -1,10 +1,25 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
-import { AlertCircle, TrendingUp } from 'lucide-react';
+import { AlertCircle, HardDrive, TrendingUp } from 'lucide-react';
 
 interface StatsResponse {
   inputErrors: { user: string; total: number }[];
   monthlyLetters: { month: string; masuk: number; keluar: number }[];
+  storage?: {
+    summary: {
+      totalFiles: number;
+      totalBytes: number;
+      avgBytes: number;
+      missingFiles: number;
+    };
+    monthly: {
+      month: string;
+      files: number;
+      totalBytes: number;
+      avgBytes: number;
+      missingFiles: number;
+    }[];
+  };
 }
 
 export default function StatsPage() {
@@ -28,8 +43,20 @@ export default function StatsPage() {
     return Math.max(...stats.inputErrors.map(e => e.total), 1);
   };
 
+  const formatBytes = (bytes: number) => {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const idx = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+    const value = bytes / Math.pow(1024, idx);
+    return `${value.toFixed(value >= 10 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+  };
+
   const maxVal = getMaxLetters();
   const maxErr = getMaxErrors();
+  const monthlyTotals = stats
+    ? stats.monthlyLetters.map((m) => ({ month: m.month, total: m.masuk + m.keluar }))
+    : [];
+  const total12Months = monthlyTotals.reduce((acc, m) => acc + m.total, 0);
 
   return (
     <section className="panel">
@@ -94,7 +121,7 @@ export default function StatsPage() {
                         <div 
                           className="bar masuk" 
                           style={{ height: `${(item.masuk / maxVal) * 100}%` }} 
-                          data-title={`Masuk: ${item.masuk}`}
+                          data-title={`Masuk: ${item.masuk} • Total: ${item.masuk + item.keluar}`}
                         >
                           <span className="bar-value">{item.masuk > 0 ? item.masuk : ''}</span>
                         </div>
@@ -102,7 +129,7 @@ export default function StatsPage() {
                         <div 
                           className="bar keluar" 
                           style={{ height: `${(item.keluar / maxVal) * 100}%` }} 
-                          data-title={`Keluar: ${item.keluar}`}
+                          data-title={`Keluar: ${item.keluar} • Total: ${item.masuk + item.keluar}`}
                         >
                           <span className="bar-value">{item.keluar > 0 ? item.keluar : ''}</span>
                         </div>
@@ -121,6 +148,47 @@ export default function StatsPage() {
                 <span style={{ width: 10, height: 10, background: '#10b981', borderRadius: 2 }}></span> Keluar
               </span>
             </div>
+          </div>
+
+          {/* Card 3: Volume + Storage */}
+          <div className="stat-card">
+            <h3>
+              <HardDrive size={18} style={{ display: 'inline', marginRight: 8, verticalAlign: 'text-bottom' }} />
+              Volume & Ukuran Dokumen
+            </h3>
+
+            {monthlyTotals.length === 0 ? (
+              <p className="text-secondary" style={{ fontStyle: 'italic', textAlign: 'center', padding: '2rem' }}>
+                Belum ada data dokumen.
+              </p>
+            ) : (
+              <>
+                <div className="kpi-row">
+                  <div className="kpi-item">
+                    <div className="kpi-label">Total (12 bln)</div>
+                    <div className="kpi-value">{total12Months}</div>
+                  </div>
+                  <div className="kpi-item">
+                    <div className="kpi-label">Rata-rata size</div>
+                    <div className="kpi-value">
+                      {stats.storage ? formatBytes(stats.storage.summary.avgBytes) : '-'}
+                    </div>
+                  </div>
+                  <div className="kpi-item">
+                    <div className="kpi-label">Total storage</div>
+                    <div className="kpi-value">
+                      {stats.storage ? formatBytes(stats.storage.summary.totalBytes) : '-'}
+                    </div>
+                  </div>
+                </div>
+
+                {stats.storage?.summary.missingFiles ? (
+                  <p className="text-secondary" style={{ marginTop: '0.75rem', fontSize: '0.85rem' }}>
+                    Catatan: {stats.storage.summary.missingFiles} dokumen belum bisa dihitung ukurannya (file tidak ditemukan/record hilang).
+                  </p>
+                ) : null}
+              </>
+            )}
           </div>
         </div>
       )}

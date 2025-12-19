@@ -2051,6 +2051,32 @@ button.mobile-menu-link.logout {
   background: #10b981;
 }
 
+/* KPI row */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.kpi-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 0.75rem;
+}
+
+.kpi-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.kpi-value {
+  margin-top: 0.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 /* Value label visible on top */
 .bar-value {
   position: absolute;
@@ -2172,6 +2198,10 @@ input.error:focus, select.error:focus {
   
   .simple-bar-chart {
     min-width: 120%; /* Force scroll on small screens if many cols */
+  }
+
+  .kpi-row {
+    grid-template-columns: 1fr;
   }
 }
 
