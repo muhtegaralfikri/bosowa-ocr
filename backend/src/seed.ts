@@ -21,7 +21,7 @@ async function bootstrap() {
         username: 'admin',
         password: adminPassword,
         role: UserRole.ADMIN,
-        unitBisnis: null,
+        unitBisnis: undefined,
       });
       console.log('Admin user created successfully (username: admin, password: admin123)');
     }
@@ -37,7 +37,7 @@ async function bootstrap() {
         username: 'manajemen',
         password: manajemenPassword,
         role: UserRole.MANAJEMEN,
-        unitBisnis: null,
+        unitBisnis: undefined,
       });
       console.log('Manajemen user created successfully (username: manajemen, password: admin123)');
     }
