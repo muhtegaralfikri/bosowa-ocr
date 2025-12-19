@@ -15,6 +15,26 @@ export class PdfConverterService {
   }
 
   /**
+   * Iterate PDF pages as image buffers (no temp files).
+   * Uses pdf-to-img which returns an async iterator of page images.
+   */
+  async *iteratePageImages(
+    pdfPath: string,
+    opts?: { scale?: number },
+  ): AsyncGenerator<Buffer> {
+    // Dynamic import for pdf-to-img (ESM module)
+    const { pdf } = await import('pdf-to-img');
+
+    const scale = opts?.scale ?? 2.0;
+    const document = await pdf(pdfPath, { scale });
+
+    for await (const image of document) {
+      // pdf-to-img returns Uint8Array/Buffer depending on runtime
+      yield Buffer.isBuffer(image) ? image : Buffer.from(image);
+    }
+  }
+
+  /**
    * Convert PDF to images (one per page)
    * Returns array of image file paths
    * Uses pdf-to-img which is cross-platform (supports Linux)

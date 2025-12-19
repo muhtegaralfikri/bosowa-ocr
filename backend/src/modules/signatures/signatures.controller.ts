@@ -12,9 +12,11 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SignaturesService } from './signatures.service';
 import { CreateSignatureDto } from './dto/create-signature.dto';
+import { SignatureFileValidationPipe } from '../../common/pipes/signature-file-validation.pipe';
 
 @Controller('signatures')
 @UseGuards(JwtAuthGuard)
@@ -32,11 +34,16 @@ export class SignaturesController {
   }
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 2 * 1024 * 1024 },
+    }),
+  )
   upload(
     @Request() req,
     @Body() dto: CreateSignatureDto,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile(new SignatureFileValidationPipe()) file: Express.Multer.File,
   ) {
     return this.signaturesService.create(req.user.userId, dto, file);
   }

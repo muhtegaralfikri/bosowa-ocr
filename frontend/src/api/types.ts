@@ -15,6 +15,19 @@ export interface OcrPreviewResponse {
   extractionMethod?: 'ai' | 'regex';
 }
 
+export interface OcrPreviewEnqueueResponse {
+  jobId: string;
+}
+
+export interface OcrPreviewJobStatusResponse {
+  id: string;
+  state: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed' | 'paused';
+  progress?: unknown;
+  createdAt: number;
+  result?: OcrPreviewResponse;
+  error?: string;
+}
+
 export interface Letter {
   id: string;
   letterNumber: string;

@@ -53,7 +53,8 @@ export class SignaturesService {
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
-      const filename = `${userId}-${Date.now()}-${file.originalname}`;
+      const ext = this.extensionFromMime(file.mimetype) || '.bin';
+      const filename = `${userId}-${Date.now()}${ext}`;
       const filePath = path.join(uploadDir, filename);
       fs.writeFileSync(filePath, file.buffer);
       imagePath = `/uploads/signatures/${filename}`;
@@ -86,6 +87,21 @@ export class SignaturesService {
       isDefault: dto.isDefault ?? false,
     });
     return this.signatureRepo.save(signature);
+  }
+
+  private extensionFromMime(mime: string): string | null {
+    switch (mime) {
+      case 'image/jpeg':
+        return '.jpg';
+      case 'image/png':
+        return '.png';
+      case 'image/gif':
+        return '.gif';
+      case 'image/webp':
+        return '.webp';
+      default:
+        return null;
+    }
   }
 
   async setDefault(id: string, userId: string): Promise<Signature> {

@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -18,6 +19,7 @@ import { SignaturesService } from '../signatures/signatures.service';
 import { Letter } from '../letters/letter.entity';
 import { User } from '../users/user.entity';
 import * as fs from 'fs';
+import * as fsp from 'fs/promises';
 import * as path from 'path';
 import sharp from 'sharp';
 import { UserRole } from '../../common/enums/role.enum';
@@ -25,6 +27,8 @@ import { UnitBisnis } from '../../common/enums/unit-bisnis.enum';
 
 @Injectable()
 export class SignatureRequestsService {
+  private readonly logger = new Logger(SignatureRequestsService.name);
+
   constructor(
     @InjectRepository(SignatureRequest)
     private readonly requestRepo: Repository<SignatureRequest>,
@@ -147,7 +151,7 @@ export class SignatureRequestsService {
         order: { createdAt: 'DESC' },
       });
     } catch (error) {
-      console.error('findAll error:', error);
+      this.logger.error('findAll error', error as any);
       return [];
     }
   }
@@ -160,7 +164,7 @@ export class SignatureRequestsService {
         order: { createdAt: 'DESC' },
       });
     } catch (error) {
-      console.error('findPendingForUser error:', error);
+      this.logger.error('findPendingForUser error', error as any);
       return [];
     }
   }
@@ -228,7 +232,7 @@ export class SignatureRequestsService {
             saved.id,
           );
         } catch (err) {
-          console.error('Failed to create notification:', err);
+          this.logger.error('Failed to create notification', err as any);
         }
       }
     }
@@ -411,13 +415,13 @@ export class SignatureRequestsService {
         const signedPdfBuffer = fs.readFileSync(outputPath);
         pdfDoc = await PDFDocument.load(signedPdfBuffer);
         pages = pdfDoc.getPages();
-        console.log('Adding signature to existing signed document:', outputPath);
+        this.logger.log(`Adding signature to existing signed document: ${outputFilename}`);
       } else {
         // Create new signed document
         const pdfBuffer = fs.readFileSync(docFullPath);
         pdfDoc = await PDFDocument.load(pdfBuffer);
         pages = pdfDoc.getPages();
-        console.log('Creating new signed document:', outputPath);
+        this.logger.log(`Creating new signed document: ${outputFilename}`);
       }
       
       const page = pages[0];
@@ -442,7 +446,7 @@ export class SignatureRequestsService {
       });
 
       const pdfBytes = await pdfDoc.save();
-      fs.writeFileSync(outputPath, pdfBytes);
+      await fsp.writeFile(outputPath, pdfBytes);
       
       return `/uploads/signed/${outputFilename}`;
     }
@@ -527,7 +531,7 @@ export class SignatureRequestsService {
       });
       
       const pdfBytes = await pdfDoc.save();
-      fs.writeFileSync(outputPath, pdfBytes);
+      await fsp.writeFile(outputPath, pdfBytes);
       
       return `/uploads/signed/${outputFilename}`;
     } else {
@@ -562,7 +566,7 @@ export class SignatureRequestsService {
     const pdfOutputPath = path.join(outputDir, pdfOutputFilename);
     
     const pdfBytes = await pdfDoc.save();
-    fs.writeFileSync(pdfOutputPath, pdfBytes);
+    await fsp.writeFile(pdfOutputPath, pdfBytes);
 
     return `/uploads/signed/${pdfOutputFilename}`;
   }

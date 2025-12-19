@@ -10,6 +10,7 @@ import { Letter } from '../letters/letter.entity';
 export class CleanupService {
   private readonly logger = new Logger(CleanupService.name);
   private readonly uploadsDir = path.join(process.cwd(), 'uploads');
+  private readonly uploadsDirResolved = path.resolve(this.uploadsDir);
 
   constructor(
     @InjectRepository(UploadedFile)
@@ -98,7 +99,12 @@ export class CleanupService {
     const files = await this.filesRepo.find({ select: ['filePath'] });
     for (const file of files) {
       if (file.filePath) {
-        referencedPaths.add(file.filePath);
+        // Normalize DB path (can be absolute on disk) to uploads-relative, to match scan results.
+        const resolved = path.resolve(file.filePath);
+        const relative = resolved.startsWith(this.uploadsDirResolved + path.sep)
+          ? path.relative(this.uploadsDirResolved, resolved)
+          : file.filePath;
+        referencedPaths.add(relative.replace(/\\/g, '/'));
       }
     }
 
@@ -136,7 +142,10 @@ export class CleanupService {
     let orphanedCount = 0;
 
     for (const dbFile of allDbFiles) {
-      const fullPath = path.join(this.uploadsDir, dbFile.filePath);
+      // filePath in DB may already be absolute; normalize to disk path for existence check.
+      const fullPath = path.isAbsolute(dbFile.filePath)
+        ? dbFile.filePath
+        : path.join(this.uploadsDir, dbFile.filePath);
       if (!existingSet.has(fullPath)) {
         if (!dryRun) {
           await this.filesRepo.delete(dbFile.id);

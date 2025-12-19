@@ -276,6 +276,7 @@ notifications        -- Notifikasi sistem dengan read status
 ### Prerequisites
 - Node.js 18+ (dengan npm)
 - MySQL 8+ (dengan MySQL Workbench atau CLI)
+- Redis 6+ (required untuk OCR background jobs)
 - Tesseract OCR 3.05+ (`tesseract-ocr` + `tesseract-ocr-ind`)
 - FFmpeg 8.0+ (untuk image preprocessing)
 - Google Cloud Vision API credentials (optional, untuk enhanced OCR)
@@ -334,6 +335,11 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=bosowa_ocr
+
+# Background Jobs (OCR Queue)
+REDIS_URL=redis://localhost:6379
+OCR_WORKER_ENABLED=true
+OCR_WORKER_CONCURRENCY=1
 
 # JWT Configuration
 JWT_SECRET=your-super-secure-secret-key-minimum-32-characters

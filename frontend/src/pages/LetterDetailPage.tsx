@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Pencil, X, Save, FileSignature, Check, Clock, XCircle, Eye, Download, ZoomIn, ZoomOut } from 'lucide-react';
 import { toast } from 'sonner';
@@ -54,13 +54,13 @@ export default function LetterDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const isMobile = isMobileDevice();
+  const isMobile = useMemo(() => isMobileDevice(), []);
   const [letter, setLetter] = useState<Letter | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<Partial<Letter>>({});
   const [saving, setSaving] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [activePreview, setActivePreview] = useState<{ url: string; type: 'pdf' | 'image' } | null>(null);
+  const [activePreview, setActivePreview] = useState<{ url: string; type: 'pdf' | 'image'; ownedUrl?: boolean } | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
@@ -69,6 +69,11 @@ export default function LetterDetailPage() {
     queryFn: () => getSignatureRequestsByLetter(id!),
     enabled: !!id,
   });
+
+  const signatureRequestGroups = useMemo(
+    () => groupSignatureRequests(signatureRequests),
+    [signatureRequests],
+  );
 
   const downloadBlob = (blob: Blob, filename: string) => {
     const blobUrl = URL.createObjectURL(blob);
@@ -110,38 +115,66 @@ export default function LetterDetailPage() {
     downloadBlob(pdfBlob, downloadName || filename);
   };
 
-  // Fetch PDF as Blob to bypass IDM
+  const pdfPreviewFileId = useMemo(() => {
+    if (isMobile) return null;
+    if (!letter?.fileUrl?.toLowerCase().endsWith('.pdf')) return null;
+    return (letter as any)?.fileId as string | null;
+  }, [isMobile, letter?.fileUrl, (letter as any)?.fileId]);
+
+  // Fetch PDF as Blob to bypass IDM (desktop only)
   useEffect(() => {
-    if (isMobile) return;
-    if (letter?.fileUrl?.toLowerCase().endsWith('.pdf') && (letter as any).fileId) {
-      let isCancelled = false;
+    if (isMobile || !pdfPreviewFileId) {
+      setPdfBlobUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
+    }
 
-      api
-        .get(`/letters/pdf-preview/${(letter as any).fileId}`, { responseType: 'blob' })
-        .then((res) => {
-          if (isCancelled) return;
-          const pdfBlob = new Blob([res.data], { type: 'application/pdf' });
-          const blobUrl = URL.createObjectURL(pdfBlob);
-          setPdfBlobUrl(blobUrl);
-        })
-        .catch((err) => console.error('Failed to load PDF blob:', err));
+    const controller = new AbortController();
 
-      return () => {
-        isCancelled = true;
+    api
+      .get(`/letters/pdf-preview/${pdfPreviewFileId}`, {
+        responseType: 'blob',
+        signal: controller.signal,
+      })
+      .then((res) => {
+        const pdfBlob = new Blob([res.data], { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(pdfBlob);
         setPdfBlobUrl((prev) => {
           if (prev) URL.revokeObjectURL(prev);
-          return null;
+          return blobUrl;
         });
-      };
-    }
-  }, [letter, isMobile]);
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        console.error('Failed to load PDF blob:', err);
+      });
+
+    return () => {
+      controller.abort();
+      setPdfBlobUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    };
+  }, [isMobile, pdfPreviewFileId]);
 
   useEffect(() => {
     if (id) {
-      api.get(`/letters/${id}`).then((res) => {
-        setLetter(res.data);
-        setForm(res.data);
-      });
+      const controller = new AbortController();
+      api
+        .get(`/letters/${id}`, { signal: controller.signal })
+        .then((res) => {
+          setLetter(res.data);
+          setForm(res.data);
+        })
+        .catch((err) => {
+          if (controller.signal.aborted) return;
+          console.error('Failed to load letter:', err);
+        });
+
+      return () => controller.abort();
     }
   }, [id]);
 
@@ -190,7 +223,7 @@ export default function LetterDetailPage() {
 
   const handleViewDocument = async (path: string, type: 'pdf' | 'image', existingBlobUrl?: string | null) => {
     if (existingBlobUrl) {
-      setActivePreview({ url: existingBlobUrl, type: 'pdf' });
+      setActivePreview({ url: existingBlobUrl, type: 'pdf', ownedUrl: false });
       setZoomLevel(1);
       return;
     }
@@ -227,7 +260,7 @@ export default function LetterDetailPage() {
           openBlobInNewTab(blob);
         } else {
           const blobUrl = URL.createObjectURL(blob);
-          setActivePreview({ url: blobUrl, type: 'pdf' });
+          setActivePreview({ url: blobUrl, type: 'pdf', ownedUrl: true });
         }
         toast.dismiss(toastId);
       } catch (e) {
@@ -236,10 +269,19 @@ export default function LetterDetailPage() {
       }
     } else {
       // Standard image loading (non-signed)
-      setActivePreview({ url: fullUrl, type: 'image' });
+      setActivePreview({ url: fullUrl, type: 'image', ownedUrl: false });
     }
     setZoomLevel(1);
   };
+
+  // Revoke blob URLs created for previews when closed/replaced
+  useEffect(() => {
+    return () => {
+      if (activePreview?.ownedUrl && activePreview.url.startsWith('blob:')) {
+        URL.revokeObjectURL(activePreview.url);
+      }
+    };
+  }, [activePreview]);
 
 
 
@@ -499,7 +541,12 @@ export default function LetterDetailPage() {
           <h3><FileSignature size={18} /> Status Tanda Tangan</h3>
           
           {/* Group signature requests by batch */}
-          {groupSignatureRequests(signatureRequests).map((group: SignatureRequest[], groupIndex: number) => (
+          {signatureRequestGroups.map((group: SignatureRequest[], groupIndex: number) => {
+            const signedCount = group.filter((req) => req.status === 'SIGNED').length;
+            const progress = (signedCount / group.length) * 100;
+            const overallStatus = getOverallStatus(group);
+
+            return (
             <div key={groupIndex} className="signature-card">
               <div className="signature-header">
                 <div className="signature-progress-header">
@@ -507,13 +554,13 @@ export default function LetterDetailPage() {
                     <div 
                       className="progress-fill" 
                       style={{ 
-                        width: `${(group.filter(req => req.status === 'SIGNED').length / group.length) * 100}%` 
+                        width: `${progress}%` 
                       }}
                     />
                   </div>
                 </div>
-                <div className={`signature-status ${getOverallStatus(group)}`}>
-                  {group.filter(req => req.status === 'SIGNED').length}/{group.length} Sudah TTD
+                <div className={`signature-status ${overallStatus}`}>
+                  {signedCount}/{group.length} Sudah TTD
                 </div>
               </div>
               
@@ -601,7 +648,8 @@ export default function LetterDetailPage() {
                 )}
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
 

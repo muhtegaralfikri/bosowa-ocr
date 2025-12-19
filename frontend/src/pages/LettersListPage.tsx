@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import api from '../api/client';
@@ -45,6 +45,7 @@ export default function LettersListPage() {
   }, [user]);
 
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [filters, setFilters] = useState({
@@ -59,13 +60,23 @@ export default function LettersListPage() {
     nominalMax: ''
   });
 
+  // Debounce search input to avoid spamming API on every keystroke
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 300);
+
+    return () => window.clearTimeout(handle);
+  }, [searchInput]);
+
   const getCellValue = (
     letter: Letter,
     key: Column['key'],
   ) => {
     switch (key) {
       case 'unitBisnis':
-        return letter.unitBisnis?.replace('_', ' ') || '-';
+        return letter.unitBisnis?.replaceAll('_', ' ') || '-';
       case 'letterNumber':
         return letter.letterNumber;
       case 'jenisSurat':
@@ -120,8 +131,7 @@ export default function LettersListPage() {
   const totalPages = Math.max(data?.meta.pageCount ?? 1, 1);
 
   const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(1);
+    setSearchInput(value);
   };
 
   const handleFilterChange = (field: string, value: string) => {
@@ -144,6 +154,7 @@ export default function LettersListPage() {
       nominalMin: '',
       nominalMax: ''
     });
+    setSearchInput('');
     setSearch('');
     setPage(1);
   };
@@ -161,7 +172,7 @@ export default function LettersListPage() {
         </div>
         <div className="actions">
           <input
-            value={search}
+            value={searchInput}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Cari semua field"
             className="search-input"
@@ -337,7 +348,7 @@ export default function LettersListPage() {
               {columns.map((col) => (
                 <div key={col.key} className="table-cell" style={{ minWidth: 0 }}>
                   <span className="cell-label">{col.label}</span>
-                  <span className={`cell-value ${(col.key === 'perihal' || col.key === 'namaPengirim' || col.key === 'letterNumber') ? 'truncate' : ''}`}>
+                  <span className={`cell-value ${(col.key === 'perihal' || col.key === 'namaPengirim' || col.key === 'letterNumber' || col.key === 'unitBisnis') ? 'truncate' : ''}`}>
                     {getCellValue(letter, col.key)}
                   </span>
                 </div>

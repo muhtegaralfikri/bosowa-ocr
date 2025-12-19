@@ -16,15 +16,19 @@ export class UsersService {
     private readonly usersRepo: Repository<User>,
   ) {}
 
-  async findAll(role?: UserRole): Promise<Omit<User, 'password'>[]> {
+  async findAll(role?: UserRole): Promise<Array<Omit<User, 'password' | 'refreshToken'>>> {
     const where = role ? { role } : {};
-    const users = await this.usersRepo.find({
+    return this.usersRepo.find({
       where,
       order: { createdAt: 'DESC' },
-    });
-    return users.map(({ password, ...rest }) => {
-      void password;
-      return rest;
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        unitBisnis: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
   }
 

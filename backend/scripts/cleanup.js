@@ -16,6 +16,29 @@ require('dotenv').config();
 const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 const DRY_RUN = process.argv.includes('--dry-run');
 
+function normalizeUploadsRelativePath(value) {
+  if (!value) return null;
+  let pathname = value;
+
+  // If stored as URL-like (/uploads/...)
+  if (pathname.startsWith('/uploads/')) {
+    pathname = pathname.replace(/^\/uploads\//, '');
+  }
+
+  // If stored as absolute disk path, convert to uploads-relative
+  if (path.isAbsolute(pathname)) {
+    const rel = path.relative(UPLOADS_DIR, pathname);
+    return rel.replace(/\\/g, '/');
+  }
+
+  // If stored as "uploads/..." already, strip prefix
+  if (pathname.replace(/\\/g, '/').toLowerCase().startsWith('uploads/')) {
+    pathname = pathname.replace(/\\/g, '/').slice('uploads/'.length);
+  }
+
+  return pathname.replace(/\\/g, '/');
+}
+
 async function getAllFilesRecursive(dir) {
   const files = [];
 
@@ -65,15 +88,16 @@ async function getReferencedFiles(connection) {
   for (const row of letterRows) {
     if (row.fileUrl) {
       // fileUrl format: /uploads/2025/12/filename.jpg
-      const relativePath = row.fileUrl.replace(/^\/uploads\//, '');
-      referencedPaths.add(relativePath);
+      const relativePath = normalizeUploadsRelativePath(row.fileUrl);
+      if (relativePath) referencedPaths.add(relativePath);
     }
   }
 
   // Add paths from files table
   for (const row of fileRows) {
     if (row.filePath) {
-      referencedPaths.add(row.filePath);
+      const relativePath = normalizeUploadsRelativePath(row.filePath);
+      if (relativePath) referencedPaths.add(relativePath);
     }
   }
 
@@ -87,7 +111,9 @@ async function cleanupOrphanedDbRecords(connection, existingFiles) {
   const orphanedIds = [];
 
   for (const row of fileRows) {
-    const fullPath = path.join(UPLOADS_DIR, row.filePath);
+    const fullPath = path.isAbsolute(row.filePath)
+      ? row.filePath
+      : path.join(UPLOADS_DIR, row.filePath);
     if (!existingFiles.has(fullPath)) {
       orphanedIds.push(row.id);
     }

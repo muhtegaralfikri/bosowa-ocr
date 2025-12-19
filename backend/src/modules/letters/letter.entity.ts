@@ -17,6 +17,9 @@ import { EditLog } from '../edit-logs/edit-log.entity';
 @Index('idx_letters_created', ['createdAt'])
 @Index('idx_letters_jenis', ['jenisSurat', 'jenisDokumen'])
 @Index('idx_letters_unit_bisnis', ['unitBisnis'])
+@Index('idx_letters_tanggal', ['tanggalSurat'])
+@Index('idx_letters_nominal', ['totalNominal'])
+@Index('idx_letters_unit_created', ['unitBisnis', 'createdAt'])
 export class Letter {
   @PrimaryGeneratedColumn('uuid')
   id: string;
