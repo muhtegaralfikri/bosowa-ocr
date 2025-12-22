@@ -2,8 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { UsersService } from './modules/users/users.service';
 import { UserRole } from './common/enums/role.enum';
-import { UnitBisnis } from './common/enums/unit-bisnis.enum';
-import * as bcrypt from 'bcrypt';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -16,12 +14,10 @@ async function bootstrap() {
       console.log('Admin user already exists, skipping...');
     } else {
       // Create admin user
-      const adminPassword = await bcrypt.hash('admin123', 10);
       await usersService.create({
         username: 'admin',
-        password: adminPassword,
+        password: 'admin123',
         role: UserRole.ADMIN,
-        unitBisnis: undefined,
       });
       console.log('Admin user created successfully (username: admin, password: admin123)');
     }
@@ -32,14 +28,12 @@ async function bootstrap() {
       console.log('Manajemen user already exists, skipping...');
     } else {
       // Create manajemen user
-      const manajemenPassword = await bcrypt.hash('admin123', 10);
       await usersService.create({
         username: 'manajemen',
-        password: manajemenPassword,
+        password: 'manajemen123',
         role: UserRole.MANAJEMEN,
-        unitBisnis: undefined,
       });
-      console.log('Manajemen user created successfully (username: manajemen, password: admin123)');
+      console.log('Manajemen user created successfully (username: manajemen, password: manajemen123)');
     }
 
     console.log('Database seeding completed successfully!');

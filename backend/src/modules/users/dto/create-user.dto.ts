@@ -22,7 +22,7 @@ export class CreateUserDto {
   @IsEnum(UserRole, { message: 'Role harus ADMIN, MANAJEMEN, atau USER' })
   role?: UserRole;
 
-  @ValidateIf(o => o.role === UserRole.USER)
+  @ValidateIf((o) => o.role === UserRole.USER)
   @IsNotEmpty({ message: 'Unit bisnis wajib diisi untuk role USER' })
   @IsEnum(UnitBisnis, { message: 'Unit bisnis harus dipilih' })
   unitBisnis?: UnitBisnis;

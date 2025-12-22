@@ -87,7 +87,11 @@ export default function UsersPage() {
         password: form.password || undefined 
       });
     } else {
-      createMutation.mutate(form);
+      const payload =
+        form.role === 'USER'
+          ? form
+          : { username: form.username, password: form.password, role: form.role };
+      createMutation.mutate(payload);
     }
   };
 
@@ -208,7 +212,14 @@ export default function UsersPage() {
                     Role
                     <select
                       value={form.role}
-                      onChange={(e) => setForm({ ...form, role: e.target.value })}
+                      onChange={(e) => {
+                        const role = e.target.value;
+                        setForm({
+                          ...form,
+                          role,
+                          unitBisnis: role === 'USER' ? form.unitBisnis : '',
+                        });
+                      }}
                     >
                       <option value="">Pilih Role</option>
                       <option value="USER">USER</option>
