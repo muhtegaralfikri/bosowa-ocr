@@ -16,7 +16,7 @@ export class UsersService {
     private readonly usersRepo: Repository<User>,
   ) {}
 
-  async findAll(role?: UserRole): Promise<Array<Omit<User, 'password' | 'refreshToken'>>> {
+  async findAll(role?: UserRole,): Promise<Array<Omit<User, 'password' | 'refreshToken'>>> {
     const where = role ? { role } : {};
     return this.usersRepo.find({
       where,
@@ -38,11 +38,13 @@ export class UsersService {
 
   async create(dto: CreateUserDto): Promise<Omit<User, 'password'>> {
     const hashedPassword = await bcrypt.hash(dto.password, SALT_ROUNDS);
+    const role = dto.role || UserRole.USER;
+    const unitBisnis = role === UserRole.USER ? dto.unitBisnis || null : null;
     const user = this.usersRepo.create({
       username: dto.username,
       password: hashedPassword,
-      role: dto.role || UserRole.USER,
-      unitBisnis: dto.unitBisnis,
+      role,
+      unitBisnis,
     });
     const saved = await this.usersRepo.save(user);
     const { password, ...rest } = saved;
