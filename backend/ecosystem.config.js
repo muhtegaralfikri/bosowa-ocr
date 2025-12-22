@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'be-ocr-backend',
+      name: 'efiling',
       script: 'dist/main.js',
       cwd: __dirname,
       env_file: '.env',
