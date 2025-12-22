@@ -16,7 +16,9 @@ export class UsersService {
     private readonly usersRepo: Repository<User>,
   ) {}
 
-  async findAll(role?: UserRole,): Promise<Array<Omit<User, 'password' | 'refreshToken'>>> {
+  async findAll(
+    role?: UserRole,
+  ): Promise<Array<Omit<User, 'password' | 'refreshToken'>>> {
     const where = role ? { role } : {};
     return this.usersRepo.find({
       where,
